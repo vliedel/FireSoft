@@ -1,0 +1,108 @@
+/**
+ * IDL description of the sim
+ *
+ * This file is automatically parsed by the rurbuilder backends for the omniidl 
+ * compiler. The names of the functions will become port identifiers. The names 
+ * of the function variables are not used. For now, if the function variable 
+ * ends with a number, like "void Sensor(in long input2);" there will be two
+ * portnames created.
+ *
+ * Author: 
+ * Copyright: 
+ * Date: 
+ * License: 
+ */
+
+// Recommended namespace "rur"
+module rur {
+
+// The command-line parameters
+struct Param {
+  // multiple modules can be addressed in parallel, killed, etc. using "module_id"
+  string module_id;
+  // a certain parameter over the command-line (long becomes int) 
+  long parameter;
+};
+
+// Typedef for array of integers
+typedef sequence<long> long_seq;
+typedef sequence<float> float_seq;
+
+// We want to be able to give our class a name
+interface sim {
+
+  // -- All modules have a command and status link --
+
+  // Module takes certain predefined commands
+  void Command(in long cmd);
+  
+  // Outgoing status updates or replies
+  void Status(out long val);
+  
+  
+  // -- sim interfaces --
+  void GroundStation(inout float_seq seq);
+  void FromGroundStation(in float_seq seq);
+  
+  void RadioCommand0(out float_seq seq);
+  void RadioState0(in float_seq seq);
+  void AutoPilotCommand0(out float_seq seq);
+  void AutoPilotState0(in float_seq seq);
+  
+  void RadioCommand1(out float_seq seq);
+  void RadioState1(in float_seq seq);
+  void AutoPilotCommand1(out float_seq seq);
+  void AutoPilotState1(in float_seq seq);
+  
+  void RadioCommand2(out float_seq seq);
+  void RadioState2(in float_seq seq);
+  void AutoPilotCommand2(out float_seq seq);
+  void AutoPilotState2(in float_seq seq);
+  
+  void RadioCommand3(out float_seq seq);
+  void RadioState3(in float_seq seq);
+  void AutoPilotCommand3(out float_seq seq);
+  void AutoPilotState3(in float_seq seq);
+  
+  void RadioCommand4(out float_seq seq);
+  void RadioState4(in float_seq seq);
+  void AutoPilotCommand4(out float_seq seq);
+  void AutoPilotState4(in float_seq seq);
+  
+  void RadioCommand5(out float_seq seq);
+  void RadioState5(in float_seq seq);
+  void AutoPilotCommand5(out float_seq seq);
+  void AutoPilotState5(in float_seq seq);
+  
+  void RadioCommand6(out float_seq seq);
+  void RadioState6(in float_seq seq);
+  void AutoPilotCommand6(out float_seq seq);
+  void AutoPilotState6(in float_seq seq);
+  
+  void RadioCommand7(out float_seq seq);
+  void RadioState7(in float_seq seq);
+  void AutoPilotCommand7(out float_seq seq);
+  void AutoPilotState7(in float_seq seq);
+  
+  void RadioCommand8(out float_seq seq);
+  void RadioState8(in float_seq seq);
+  void AutoPilotCommand8(out float_seq seq);
+  void AutoPilotState8(in float_seq seq);
+  
+  void RadioCommand9(out float_seq seq);
+  void RadioState9(in float_seq seq);
+  void AutoPilotCommand9(out float_seq seq);
+  void AutoPilotState9(in float_seq seq);  
+  
+  // we can copy those 4 lines x times and have:
+  //    switch (uavid)
+  //       case 3: writeRadioCommand3();
+  
+  // we could change rur and specify at init which names you'll have (provide vector of strings)
+  
+  // we could change rur big time and be able to: writeradioCommand(vec, uavid)
+  
+  // something else? multiplex?
+};
+
+};

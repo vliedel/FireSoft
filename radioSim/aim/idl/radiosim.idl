@@ -1,0 +1,77 @@
+/**
+ * IDL description of the map
+ *
+ * This file is automatically parsed by the rurbuilder backends for the omniidl 
+ * compiler. The names of the functions will become port identifiers. The names 
+ * of the function variables are not used. For now, if the function variable 
+ * ends with a number, like "void Sensor(in long input2);" there will be two
+ * portnames created.
+ *
+ * Author: 
+ * Copyright: 
+ * Date: 
+ * License: 
+ */
+
+// Recommended namespace "rur"
+module rur {
+
+// The command-line parameters
+struct Param {
+  // multiple modules can be addressed in parallel, killed, etc. using "module_id"
+  string module_id;
+  // a certain parameter over the command-line (long becomes int) 
+  long parameter;
+};
+
+// Typedef for array of integers
+typedef sequence<long> long_seq;
+typedef sequence<float> float_seq;
+
+// We want to be able to give our class a name
+interface radiosim {
+
+  // -- All modules have a command and status link --
+
+  // Module takes certain predefined commands
+  void Command(in long cmd);
+  
+  // Outgoing status updates or replies
+  void Status(out long val);
+  
+  
+  // -- Radio interfaces --
+
+  // Let msg planner know when it can send msgs  
+  void ToMsgPlanner(out long cmd);
+  
+  // Msgs to be sent
+  void FromMsgPlanner(in float_seq msg);
+
+  // Received msgs update the uav map
+  void ToMapUAVs(out float_seq msg);
+  
+  // UAV map lets know when it updated the map
+  void FromMapUAVs(in long cmd);
+  
+  // Commands from ground station are stored in map self
+  void ToMapSelf(out float_seq msg);
+  
+  
+  // -- Only for simulator --
+  
+  // Commands from simulator
+  void SimCommand(in float_seq seq);
+  
+  // State to simulator
+  void SimState(out float_seq seq);
+  
+  // Input from other UAVs
+  //void FromUAVs(in float_seq seq); // use simcommand for this instead
+  
+  // Output to other UAVs
+  //void ToUAVs(out float_seq seq); // use simstate for this instead
+
+};
+
+};

@@ -1,0 +1,171 @@
+{
+	"field":
+	{
+		"OriginX": 8000.0,
+		"OriginY": 9000.0,
+		"AreaOriginX": 100.0,
+		"AreaOriginY": 200.0,
+		"AreaSizeX": 1000.0,
+		"AreaSizeY": 3000.0,
+		"AreaRotation": 0.78,
+		"LandPointX": 250.0,
+		"LandPointY": 350.0,
+		"LandHeading": 1.57,
+		"LandLeftTurn": true,
+		"LandLength":100.0
+	},
+	"UAV":
+	{
+		"CruiseSpeed": 22.0,
+		"MaxRollAngle": 0.52360,
+		"MaxVertSpeed": 3.0,
+		"MinTurnRadius": 120.0,
+		"BatteryTime": 2700.0,
+		"BatteryLowTime": 120.0,
+		"BatteryCriticalTime": 60.0,
+		"RadioRange": 1000.0,
+		"MinHeight": 100,
+		"MaxHeight": 200
+	},
+	"fitness":
+	{
+		"CriticalFitness": 1.0,
+		"CollisionAmplitude": 5.0,
+		"CollisionSigmaX": 10.0,
+		"CollisionSigmaY": 10.0,
+		"CollisionSigmaZ": 5.0,
+		"CoverageAmplitude": 1.0,
+		"CoverageSigmaX": 10.0,
+		"CoverageSigmaY": 10.0,
+		"CoverageMaxSum": 1.0,
+		"WallAmplitude": 10.0,
+		"WallSigma": 100.0,
+		"BatteryAmplitude": -3.0
+	},
+	"autoPilot":
+	{
+		"TickTime": 1000,
+		"Debug": true,
+		"PortName": "/dev/ttyUSB0",
+		"SensorReqIntervalTime": 125,
+		"WPStatustReqIntervalTime": 50,
+		"WPBoundReqIntervalTime": 250 
+	},
+	"autoPilotSim":
+	{
+		"TickTime": 1000,
+		"Debug": true,
+		"RollAngleGain": 1.1,
+		"VerticalSpeedGain": 0.1,
+		"CarrotReachTime": 0.5,
+		"LineAheadTime": 5.0,
+		"PreBankAngleInner": 0.087266,
+		"PreBankAngleOuter": 0.087266
+	},
+	"fitnessGenBattery":
+	{
+		"TickTime": 10000,
+		"Debug": true,
+		"IntervalTime": 125
+	},
+	"fitnessGenCollision":
+	{
+		"TickTime": 10000,
+		"Debug": true,
+		"IntervalTime": 50,
+		"PredictAheadTime": 1.0
+	},
+	"fitnessGenCoverage":
+	{
+		"TickTime": 10000,
+		"Debug": true,
+		"IntervalTime": 125,
+		"CoverageIntervalTime": 1000,
+		"CoverageSelfDelayTime": 3000,
+		"GridSizeX": 1000,
+		"GridSizeY": 1000
+	},
+	"fitnessGenStatic":
+	{
+		"TickTime": 10000,
+		"Debug": true,
+		"IntervalTime": 125,
+		"WallAmplitude": 1.1111E-04,
+		"WallSigma": 100.0
+	},
+	"groundStationSim":
+	{
+		"TickTime": 1000,
+		"Debug": true
+	},
+	"mapFire":
+	{
+		"TickTime": 1000,
+		"Debug": true,
+		"MapSize": 1
+	},
+	"mapFitness":
+	{
+		"TickTime": 1000,
+		"Debug": true,
+		"MapSize": 33554432
+	},
+	"mapSelf":
+	{
+		"TickTime": 100,
+		"Debug": true,
+		"MapSize": 16384
+	},
+	"mapUAVs":
+	{
+		"TickTime": 100,
+		"Debug": true,
+		"MapSize": 32768
+	},
+	"msgPlanner":
+	{
+		"TickTime": 1000,
+		"Debug": true
+	},
+	"radio":
+	{
+		"TickTime": 1000,
+		"Debug": true
+	},
+	"radioSim":
+	{
+		"TickTime": 1000,
+		"Debug": true
+	},
+	"sim":
+	{
+		"TickTime": 1000,
+		"Debug": true,
+		"TimeStep": 0.1,
+		"RadioRoundTime": 0.25,
+		"OutputFileName": "output/flight_output"
+	},
+	"templateModule":
+	{
+		"TickTime": 10000,
+		"Debug": true
+	},
+	"test":
+	{
+		"TickTime": 100,
+		"Debug": true
+	},
+	"wpPlanner":
+	{
+		"Debug": true,
+		"PlanIntervalTime": 250,
+		"NumWayPointPerPlan": 4,
+		"WayPointDT": 3.0,
+		"StepsPerWayPoint": 6,
+		"StraightPreference": 0.01,
+		"CollisionAvoidHeightDiff": 5.0,
+		"SaveFitnessMap": true,
+		"FitnessMapFileName": "output/fitness_map_"
+	}
+}
+

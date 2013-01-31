@@ -1,0 +1,51 @@
+/**
+ * IDL description of the map
+ *
+ * This file is automatically parsed by the rurbuilder backends for the omniidl 
+ * compiler. The names of the functions will become port identifiers. The names 
+ * of the function variables are not used. For now, if the function variable 
+ * ends with a number, like "void Sensor(in long input2);" there will be two
+ * portnames created.
+ *
+ * Author: 
+ * Copyright: 
+ * Date: 
+ * License: 
+ */
+
+// Recommended namespace "rur"
+module rur {
+
+// The command-line parameters
+struct Param {
+  // multiple modules can be addressed in parallel, killed, etc. using "module_id"
+  string module_id;
+  // a certain parameter over the command-line (long becomes int) 
+  long parameter;
+};
+
+// Typedef for array of integers
+typedef sequence<long> long_seq;
+
+// We want to be able to give our class a name
+interface radio {
+
+  // Input from radio processor
+  void ToBuffer(in long_seq msg);
+  // Length of radio message (needed by some middlewares)
+  //void ToBufferArrayLength(in long msg_l);
+
+  // Output is one value each time
+  void FromBuffer(out long_seq msg);
+  // Length of radio message (needed by some middlewares)
+  //void FromBufferArrayLength(out long msg_l);
+
+  // Module takes certain predefined commands
+  void Command(in long cmd)
+  
+  // Outgoing status updates or replies
+  void Status(out long val)
+
+};
+
+};
