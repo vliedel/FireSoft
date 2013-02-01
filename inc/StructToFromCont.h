@@ -297,33 +297,6 @@ struct StC<SequenceContainer, UavGeomStruct>
 
 
 template<typename InputForwardIter, typename OutputForwardIter>
-struct SfC<InputForwardIter, OutputForwardIter, UavStruct>
-{
-	static OutputForwardIter FromCont(UavStruct& struc, InputForwardIter first, InputForwardIter last)
-	{
-		struc.UavId = *first++;
-		first = SfC<InputForwardIter, OutputForwardIter, UavGeomStruct>::FromCont(struc.Geom, first, last);
-		struc.State = (UAVState) *first++;
-		first = SfC<InputForwardIter, OutputForwardIter, WayPoint>::FromCont(struc.WpNext, first, last);
-		first = SfC<InputForwardIter, OutputForwardIter, WayPoint>::FromCont(struc.WpFar, first, last);
-		return first;
-	}
-};
-template<typename SequenceContainer>
-struct StC<SequenceContainer, UavStruct>
-{
-	static void ToCont(UavStruct& struc, SequenceContainer& cont)
-	{
-		cont.push_back(struc.UavId);
-		StC<SequenceContainer, UavGeomStruct>::ToCont(struc.Geom, cont);
-		cont.push_back(struc.State);
-		StC<SequenceContainer, WayPoint>::ToCont(struc.WpNext, cont);
-		StC<SequenceContainer, WayPoint>::ToCont(struc.WpFar, cont);
-	}
-};
-
-
-template<typename InputForwardIter, typename OutputForwardIter>
 struct SfC<InputForwardIter, OutputForwardIter, WayPoint>
 {
 	static OutputForwardIter FromCont(WayPoint& struc, InputForwardIter first, InputForwardIter last)
@@ -336,11 +309,6 @@ struct SfC<InputForwardIter, OutputForwardIter, WayPoint>
 		struc.AngleArc = *first++;
 		struc.VerticalSpeed = *first++;
 		struc.ETA = *first++;
-//		struc.vMode = (VerticalMode) *first++;
-//		struc.altitude = *first++;
-//		struc.pitch = *first++;
-//		struc.throttle = *first++;
-//		struc.climbRate = *first++;
 		return first;
 	}
 };
@@ -357,11 +325,64 @@ struct StC<SequenceContainer, WayPoint>
 		cont.push_back(struc.AngleArc);
 		cont.push_back(struc.VerticalSpeed);
 		cont.push_back(struc.ETA);
-//		cont.push_back(struc.vMode);
-//		cont.push_back(struc.altitude);
-//		cont.push_back(struc.pitch);
-//		cont.push_back(struc.throttle);
-//		cont.push_back(struc.climbRate);
+	}
+};
+
+
+template<typename InputForwardIter, typename OutputForwardIter>
+struct SfC<InputForwardIter, OutputForwardIter, APStatusStruct>
+{
+	static OutputForwardIter FromCont(APStatusStruct& struc, InputForwardIter first, InputForwardIter last)
+	{
+		struc.FlyState = *first++;
+		struc.GPSState = *first++;
+		struc.ServoState = *first++;
+		struc.AutoPilotState = *first++;
+		struc.SensorState = *first++;
+		return first;
+	}
+};
+template<typename SequenceContainer>
+struct StC<SequenceContainer, APStatusStruct>
+{
+	static void ToCont(APStatusStruct& struc, SequenceContainer& cont)
+	{
+		cont.push_back(struc.FlyState);
+		cont.push_back(struc.GPSState);
+		cont.push_back(struc.ServoState);
+		cont.push_back(struc.AutoPilotState);
+		cont.push_back(struc.SensorState);
+	}
+};
+
+/*
+template<typename InputForwardIter, typename OutputForwardIter>
+struct SfC<InputForwardIter, OutputForwardIter, UavStruct>
+{
+	static OutputForwardIter FromCont(UavStruct& struc, InputForwardIter first, InputForwardIter last)
+	{
+		struc.UavId = *first++;
+		first = SfC<InputForwardIter, OutputForwardIter, UavGeomStruct>::FromCont(struc.Geom, first, last);
+		struc.State = (UAVState) *first++;
+		for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
+			first = SfC<InputForwardIter, OutputForwardIter, WayPoint>::FromCont(struc.WpNext[i], first, last);
+		struc.BatteryTimeLeft = *first++;
+		first = SfC<InputForwardIter, OutputForwardIter, APStatusStruct>::FromCont(struc.APStatus, first, last);
+		return first;
+	}
+};
+template<typename SequenceContainer>
+struct StC<SequenceContainer, UavStruct>
+{
+	static void ToCont(UavStruct& struc, SequenceContainer& cont)
+	{
+		cont.push_back(struc.UavId);
+		StC<SequenceContainer, UavGeomStruct>::ToCont(struc.Geom, cont);
+		cont.push_back(struc.State);
+		for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
+			StC<SequenceContainer, WayPoint>::ToCont(struc.WpNext[i], cont);
+		cont.push_back(struc.BatteryTimeLeft);
+		StC<SequenceContainer, APStatusStruct>::ToCont(struc.APStatus, cont);
 	}
 };
 
@@ -403,7 +424,7 @@ struct StC<SequenceContainer, MapUavStruct>
 //		cont.push_back(struc.WaPointFarETA);
 	}
 };
-
+*/
 
 template<typename InputForwardIter, typename OutputForwardIter>
 struct SfC<InputForwardIter, OutputForwardIter, WayPointsStruct>
@@ -462,33 +483,6 @@ struct StC<SequenceContainer, MapSelfNeighboursStruct>
 		cont.push_back(struc.ConnectedNeighboursNum);
 		for (int i=0; i<struc.ConnectedNeighboursNum; ++i)
 			cont.push_back(struc.ConnectedNeighbours[i]);
-	}
-};
-
-
-template<typename InputForwardIter, typename OutputForwardIter>
-struct SfC<InputForwardIter, OutputForwardIter, MapSelfAPStatusStruct>
-{
-	static OutputForwardIter FromCont(MapSelfAPStatusStruct& struc, InputForwardIter first, InputForwardIter last)
-	{
-		struc.FlyState = *first++;
-		struc.GPSState = *first++;
-		struc.ServoState = *first++;
-		struc.AutoPilotState = *first++;
-		struc.SensorState = *first++;
-		return first;
-	}
-};
-template<typename SequenceContainer>
-struct StC<SequenceContainer, MapSelfAPStatusStruct>
-{
-	static void ToCont(MapSelfAPStatusStruct& struc, SequenceContainer& cont)
-	{
-		cont.push_back(struc.FlyState);
-		cont.push_back(struc.GPSState);
-		cont.push_back(struc.ServoState);
-		cont.push_back(struc.AutoPilotState);
-		cont.push_back(struc.SensorState);
 	}
 };
 
@@ -694,18 +688,12 @@ struct SfC<InputForwardIter, OutputForwardIter, RadioMsgRelayPos>
 		struc.GroundSpeed = *first++;
 		struc.State = *first++;
 		struc.Roll = *first++;
-
-		struc.WpNextDX = *first++;
-		struc.WpNextDY = *first++;
-		struc.WpNextZ = *first++;
-		struc.WpNextMode = *first++;
-		struc.WpNextRadius = *first++;
-
-		struc.WpFarX = *first++;
-		struc.WpFarY = *first++;
-		struc.WpFarZ = *first++;
-		struc.WpFarETA = *first++;
-
+		for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
+			struc.DX[i] = *first++;
+		for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
+			struc.DY[i] = *first++;
+		struc.BatteryLeft = *first++;
+		struc.Status = *first++;
 		return first;
 	}
 };
@@ -723,17 +711,12 @@ struct StC<SequenceContainer, RadioMsgRelayPos>
 		cont.push_back(struc.GroundSpeed);
 		cont.push_back(struc.State);
 		cont.push_back(struc.Roll);
-
-		cont.push_back(struc.WpNextDX);
-		cont.push_back(struc.WpNextDY);
-		cont.push_back(struc.WpNextZ);
-		cont.push_back(struc.WpNextMode);
-		cont.push_back(struc.WpNextRadius);
-
-		cont.push_back(struc.WpFarX);
-		cont.push_back(struc.WpFarY);
-		cont.push_back(struc.WpFarZ);
-		cont.push_back(struc.WpFarETA);
+		for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
+			cont.push_back(struc.DX[i]);
+		for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
+			cont.push_back(struc.DY[i]);
+		cont.push_back(struc.BatteryLeft);
+		cont.push_back(struc.Status);
 	}
 };
 

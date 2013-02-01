@@ -79,11 +79,11 @@ void CMapSelf::Init(std::string module_id)
 		boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
 		Map->UavData.State = UAVSTATE_LANDED;
 		Map->UavData.Geom.Init();
-		Map->UavData.WpNext.Init();
-		Map->UavData.WpFar.Init();
+		for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
+			Map->UavData.WpNext[i].Init();
 		Map->UavData.UavId = id;
 		Map->PreviousState = UAVSTATE_LANDED;
-		Map->BatteryTimeLeft = config.BatteryTime;
+		Map->UavData.BatteryTimeLeft = config.BatteryTime;
 		// Init ground station command messages with invalid ids
 		for (int i=0; i<MAPSELF_GS_CMDS_HIST; ++i)
 			Map->LastGsCmds[i].MsgId = 255; // TODO: magic number
@@ -163,66 +163,22 @@ void CMapSelf::Tick()
 					boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
 					Map->WayPoints = wps;
 
-					std::cout << get_cur_1ms();
-					if (wps.WayPointsNum > 0)
+					for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
 					{
-						// Set wp Next
-						if (wps[0].wpMode == WP_CIRCLE)
-						{
-							Map->UavData.WpNext = wps[0];
-						}
-						else if (wps.WayPointsNum > 1)
-						{
-							//Map->UavData.WpNext = wps[1];
-							// Let's pretend we fly in a straight line to the end point
-							Map->UavData.WpNext.wpMode = WP_LINE;
-							wps[1].GetEndPos(Map->UavData.WpNext.to);
-							Map->UavData.WpNext.Radius = 0;
-						}
+						if (i < wps.WayPointsNum)
+							Map->UavData.WpNext[i] = wps[i];
 						else
-							Map->UavData.WpNext = wps[0];
-
-						// Set wp Far
-						if (wps[0].wpMode == WP_CIRCLE)
-						{
-							Map->UavData.WpFar = wps[0];
-//							Map->UavData.WpFar.wpMode = WP_CIRCLE;
-//							Map->UavData.WpFar.to = wps[0].to;
-//							Map->UavData.WpFar.Radius = wps[0].Radius;
-						}
-						else
-						{
-							//Map->UavData.WpFar = wps[wps.WayPointsNum-1];
-							// Instead of copying the wp, we are only interested in the last point of the wp path
-							// TODO: make this less ugly
-							Map->UavData.WpFar.wpMode = WP_LINE;
-							wps[wps.WayPointsNum-1].GetEndPos(Map->UavData.WpFar.to);
-						}
-
+							Map->UavData.WpNext[i].wpMode = WP_INVALID;
 					}
-					else
-					{
-						std::cout << "No waypoints!" << std::endl;
-						// TODO: What if there are NO waypoints????
-						Map->UavData.WpNext.wpMode = WP_LINE;
-						Map->UavData.WpNext.Radius = 0;
-						Map->UavData.WpNext.to = Map->UavData.Geom.Pos;
-
-						Map->UavData.WpFar.wpMode = WP_LINE;
-						Map->UavData.WpFar.to = Map->UavData.Geom.Pos;
-					}
-					std::cout << " wpNext=" << Map->UavData.WpNext;
-					std::cout << " wpFar=" << Map->UavData.WpFar.to.transpose() << std::endl;
-
 				}
 				else
-					std::cout << "Invalid vector to create WayPoints" << std::endl;
+					std::cout << "Error: invalid vector to create WayPoints" << std::endl;
 				break;
 			}
 			case PROT_MAPSELF_DATAIN_BATTERY:
 			{
 				boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
-				Map->BatteryTimeLeft = VecMsg->at(0);
+				Map->UavData.BatteryTimeLeft = VecMsg->at(0);
 				break;
 			}
 //			case PROT_MAPSELF_DATAIN_HOME:
@@ -251,11 +207,11 @@ void CMapSelf::Tick()
 			}
 			case PROT_MAPSELF_DATAIN_AP_STATUS:
 			{
-				MapSelfAPStatusStruct apStatus;
+				APStatusStruct apStatus;
 				if (VecMsg->end() == FromCont(apStatus, VecMsg->begin(), VecMsg->end()))
 				{
 					boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
-					Map->APStatus = apStatus;
+					Map->UavData.APStatus = apStatus;
 				}
 				else
 					std::cout << "Invalid vector to create ap status" << std::endl;

@@ -28,6 +28,7 @@
 #define MAPSELF_MAX_WAYPOINTS 16
 #define MAPSELF_GS_CMDS_HIST 16
 #define MAPUAV_RADIOMSG_HIST 16
+#define UAVSTRUCT_NEXTWP_NUM 3
 
 
 #include "Geometry.h"
@@ -97,14 +98,44 @@ class UavGeomStruct
 		}
 };
 
+class APStatusStruct
+{
+	public:
+		uint8_t		FlyState;		// See EAutoPilotFlyState
+		uint8_t		GPSState;		// 0 is none, 255 is best
+		uint8_t		ServoState;		// Bitmask, see defines AP_PROT_STATE_AP_*
+		uint8_t		AutoPilotState;	// Bitmask, see defines AP_PROT_STATE_SERVO_*
+		uint8_t		SensorState;	// Bitmask, see defines AP_PROT_STATE_SENSOR_*
+
+		APStatusStruct(): FlyState(255), GPSState(255), ServoState(255), AutoPilotState(255), SensorState(255) {}
+
+//		void Init()
+//		{
+//			FlyState = 255;
+//			GPSState = 255;
+//			ServoState = 255;
+//			AutoPilotState = 255;
+//			SensorState = 255;
+//		}
+
+		friend std::ostream& operator<<(std::ostream& os, const APStatusStruct& struc)
+		{
+			os << "FlyState=" << struc.FlyState << " GPSState=" << struc.GPSState << " ServoState=" << struc.ServoState;
+			os << "AutoPilotState=" << struc.AutoPilotState << " SensorState=" << struc.SensorState;
+			return os;
+		}
+};
+
 class UavStruct
 {
 	public:
-		int UavId;
-		UavGeomStruct Geom;
-		UAVState State;
-		WayPoint WpNext;
-		WayPoint WpFar;
+		int				UavId;
+		UavGeomStruct	Geom;
+		UAVState		State;
+		WayPoint		WpNext[UAVSTRUCT_NEXTWP_NUM];
+		float			BatteryTimeLeft;
+		APStatusStruct	APStatus;
+		//WayPoint WpFar;
 
 		friend std::ostream& operator<<(std::ostream& os, const UavStruct& struc)
 		{
@@ -112,9 +143,9 @@ class UavStruct
 			return os;
 		}
 
+		// TODO: conversions
 		void FromRadioMsg(RadioMsgRelay& msg)
 		{
-			// TODO: conversion?
 			if (msg.MessageType != RADIO_MSG_RELAY_POS)
 				return;
 			UavId = msg.Pos.UavId - 1;
@@ -122,37 +153,38 @@ class UavStruct
 			Geom.Pos.x() = msg.Pos.X;
 			Geom.Pos.y() = msg.Pos.Y;
 			Geom.Pos.z() = msg.Pos.Z;
-//			Geom.Speed.x() = msg.Pos.GroundSpeed; // wrong
-//			Geom.Speed.y() = msg.Pos.GroundSpeed; // wrong
-//			Geom.Speed.z() = msg.Pos.WpNextZ; // wrong
 			Geom.GroundSpeed = msg.Pos.GroundSpeed;
-			Geom.VerticalSpeed = msg.Pos.WpNextZ; // wrong
-//			Geom.Rot.x() = msg.Pos.Heading; // wrong too
-//			Geom.Rot.y() = msg.Pos.Roll; // wrong
-//			Geom.Rot.z() = msg.Pos.WpNextZ; // wrong
+			//Geom.VerticalSpeed = msg.Pos.DZ[0]; // wrong
+			Geom.VerticalSpeed = 0; // Assumption
+
 			Geom.Heading.angle() = msg.Pos.Heading;
 			Geom.Roll.angle() = msg.Pos.Roll;
-			Geom.Pitch.angle() = msg.Pos.WpNextZ; // Wrong
+			//Geom.Pitch.angle() = msg.Pos.DZ[0]; // Wrong
+			Geom.Pitch.angle() = 0; // Assumption
 			Geom.RotationUpToDate = false;
-			WpNext.to.x() = msg.Pos.X + msg.Pos.WpNextDX;
-			WpNext.to.y() = msg.Pos.Y + msg.Pos.WpNextDY;
-			WpNext.to.z() = msg.Pos.WpNextZ;
-			WpNext.wpMode = (WayPointMode)msg.Pos.WpNextMode;
-			WpNext.Radius = msg.Pos.WpNextRadius;
-			if (WpNext.wpMode == WP_ARC)
-			{
-				WpNext.AngleArc = 0.55; // TODO: magic number
-				WpNext.AngleStart = atan2(Geom.Pos.y(), Geom.Pos.x());
-				if (WpNext.AngleStart < 0)
-					WpNext.AngleStart += 2*M_PI;
-			}
 
-			WpFar.to.x() = msg.Pos.WpFarX;
-			WpFar.to.y() = msg.Pos.WpFarY;
-			WpFar.to.z() = msg.Pos.WpFarZ;
-			WpFar.ETA = msg.Pos.WpFarETA;
+			Position from(Geom.Pos);
+			for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
+			{
+				WpNext[i].from = from;
+				WpNext[i].to.x() = from.x() + msg.Pos.DX[i];
+				WpNext[i].to.y() = from.y() + msg.Pos.DY[i];
+				//WpNext.to.z() = from.z() + msg.Pos.DZ[i];
+				WpNext[i].to.z() = from.z(); // Assumption
+				WpNext[i].wpMode = WP_LINE;
+				WpNext[i].ETA = 0; // Unknown
+				WpNext[i].VerticalSpeed = 0; // Assumption
+				//WpNext[i].Radius = 0; // Only lines
+				//WpNext[i].AngleStart = 0; // Only lines
+				//WpNext[i].AngleArc = 0; // Only lines
+				from = WpNext[i].to;
+			}
+			BatteryTimeLeft = msg.Pos.BatteryLeft;
+			// TODO: retrieve APStatus from radio msg
+			//APStatus.AutoPilotState = msg.Pos.Status;
 		}
 
+		// TODO: conversions
 		void ToRadioMsg(RadioMsgRelay& msg)
 		{
 			msg.MessageType = RADIO_MSG_RELAY_POS;
@@ -160,24 +192,48 @@ class UavStruct
 			msg.Pos.X = Geom.Pos.x();
 			msg.Pos.Y = Geom.Pos.y();
 			msg.Pos.Z = Geom.Pos.z();
-			msg.Pos.State = State;
-//			msg.Pos.GroundSpeed = sqrt(Geom.Speed.dot(Geom.Speed));
-			msg.Pos.GroundSpeed = Geom.GroundSpeed;
-
-//			msg.Pos.Heading = Geom.Rot.x(); // Lol wrong
-//			msg.Pos.Roll = Geom.Rot.y(); // Lol wrong
 			msg.Pos.Heading = Geom.Heading.angle();
+			msg.Pos.GroundSpeed = Geom.GroundSpeed;
+			msg.Pos.State = State;
 			msg.Pos.Roll = Geom.Roll.angle();
 
-			msg.Pos.WpNextDX = WpNext.to.x() - Geom.Pos.x();
-			msg.Pos.WpNextDY = WpNext.to.y() - Geom.Pos.y();
-			msg.Pos.WpNextZ = WpNext.to.z();
-			msg.Pos.WpNextMode = WpNext.wpMode;
-			msg.Pos.WpNextRadius = WpNext.Radius;
-			msg.Pos.WpFarX = WpFar.to.x();
-			msg.Pos.WpFarY = WpFar.to.y();
-			msg.Pos.WpFarZ = WpFar.to.z();
-			msg.Pos.WpFarETA = WpFar.ETA;
+			// Assuming WpNext are lines...
+			Position from(Geom.Pos);
+			Position to;
+			for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
+			{
+				switch (WpNext[i].wpMode)
+				{
+					case WP_CIRCLE:
+					{
+						// Fill up all next DX and DY as we stay on the circle
+						// TODO: we might not be on the circle yet!
+						std::vector<Position> posList;
+						float distLeft;
+						// Assumes we are on the circle
+						WpNext[i].GetPath(posList, distLeft, 22*3, &to); // TODO: magic number
+						for (int j=0; i<UAVSTRUCT_NEXTWP_NUM; ++i, ++j)
+						{
+							msg.Pos.DX[i] = posList[j].x();
+							msg.Pos.DY[i] = posList[j].y();
+						}
+						break;
+					}
+					case WP_LINE:
+					case WP_ARC:
+						WpNext[i].GetEndPos(to);
+						msg.Pos.DX[i] = to.x() - from.x();
+						msg.Pos.DY[i] = to.y() - from.y();
+						break;
+					default:
+						msg.Pos.DX[i] = 0;
+						msg.Pos.DY[i] = 0;
+						break;
+				}
+				from = to;
+			}
+			msg.Pos.BatteryLeft = BatteryTimeLeft;
+			msg.Pos.Status = 0; // TODO: fill this from APStatus
 		}
 };
 
@@ -265,35 +321,6 @@ class MapSelfNeighboursStruct
 	*/
 };
 
-
-class MapSelfAPStatusStruct
-{
-	public:
-		uint8_t		FlyState;		// See EAutoPilotFlyState
-		uint8_t		GPSState;		// 0 is none, 255 is best
-		uint8_t		ServoState;		// Bitmask, see defines AP_PROT_STATE_AP_*
-		uint8_t		AutoPilotState;	// Bitmask, see defines AP_PROT_STATE_SERVO_*
-		uint8_t		SensorState;	// Bitmask, see defines AP_PROT_STATE_SENSOR_*
-
-		MapSelfAPStatusStruct(): FlyState(255), GPSState(255), ServoState(255), AutoPilotState(255), SensorState(255) {}
-
-//		void Init()
-//		{
-//			FlyState = 255;
-//			GPSState = 255;
-//			ServoState = 255;
-//			AutoPilotState = 255;
-//			SensorState = 255;
-//		}
-
-		friend std::ostream& operator<<(std::ostream& os, const MapSelfAPStatusStruct& struc)
-		{
-			os << "FlyState=" << struc.FlyState << " GPSState=" << struc.GPSState << " ServoState=" << struc.ServoState;
-			os << "AutoPilotState=" << struc.AutoPilotState << " SensorState=" << struc.SensorState;
-			return os;
-		}
-};
-
 class LandingStruct
 {
 	public:
@@ -315,11 +342,11 @@ class MapSelfStruct
 	public:
 		UavStruct 				UavData;
 		UAVState				PreviousState;
-		float 					BatteryTimeLeft;
+//		float 					BatteryTimeLeft;
 
 		Position				Home; // TODO: don't use anymore
 
-		MapSelfAPStatusStruct	APStatus;
+//		MapSelfAPStatusStruct	APStatus;
 		WayPointsStruct 		WayPoints;
 		MapSelfNeighboursStruct NeighBours;
 		RadioMsgRelayCmd		LastGsCmds[MAPSELF_GS_CMDS_HIST]; // Last cmd at index MAPSELF_GS_CMDS_HIST-1
@@ -342,8 +369,8 @@ class MapSelfStruct
 
 		friend std::ostream& operator<<(std::ostream& os, const MapSelfStruct& struc)
 		{
-			os << struc.UavData << " Previous state=" << struc.PreviousState << " Battery time left=" << struc.BatteryTimeLeft
-					<< " Home=" << struc.Home.transpose() << " " << struc.APStatus << " Connected neighbours=[" << struc.NeighBours << "]";
+			os << struc.UavData << " Previous state=" << struc.PreviousState \
+					<< " Home=" << struc.Home.transpose() << " Connected neighbours=[" << struc.NeighBours << "]";
 			return os;
 		}
 };

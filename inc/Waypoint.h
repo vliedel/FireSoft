@@ -37,7 +37,7 @@ enum WayPointMode {
 	WP_FREE,
 	WP_CIRCLE,
 	WP_ARC,
-	WP_NUMMODES
+	WP_INVALID
 };
 
 enum VerticalMode {
@@ -237,25 +237,40 @@ struct WayPoint {
 				// Assume curPos is on the circle
 				float alpha = 0;
 				float alphaEnd = 2*M_PI;
+				if (AngleArc < 0)
+					alphaEnd = -2*M_PI;
 				if (curPos != NULL)
 				{
 					Position diff = *curPos - to;
 					alpha = atan2(diff.y(), diff.x()); // -PI to PI
-					alphaEnd = alpha + 0.5; // TODO: very magic number
-//					if (alpha < 0)
-//						alpha += 2*M_PI; // 0 to 2PI
+					if (AngleArc > 0)
+						//alphaEnd = alpha + 0.5; // TODO: very magic number
+						alphaEnd = alpha + 2*M_PI;
+					else
+						alphaEnd = alpha - 2*M_PI;
 				}
 
-
-
-				Position pos;
+				Position pos = to;
 				float angleStep = stepDistance / Radius;
-				for (; alpha<alphaEnd; alpha+=angleStep)
+				if (AngleArc > 0)
 				{
-					pos = to;
-					pos.x() += Radius*cos(alpha);
-					pos.y() += Radius*sin(alpha);
-					posList.push_back(pos);
+					// LEFT
+					for (; alpha<alphaEnd; alpha+=angleStep)
+					{
+						pos.x() = to.x() + Radius*cos(alpha);
+						pos.y() = to.y() + Radius*sin(alpha);
+						posList.push_back(pos);
+					}
+				}
+				else
+				{
+					// RIGHT
+					for (; alpha>alphaEnd; alpha-=angleStep)
+					{
+						pos.x() = to.x() + Radius*cos(alpha);
+						pos.y() = to.y() + Radius*sin(alpha);
+						posList.push_back(pos);
+					}
 				}
 				distanceLeft = FLT_MAX;
 				break;

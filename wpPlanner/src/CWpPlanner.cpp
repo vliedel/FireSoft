@@ -173,7 +173,7 @@ void CWpPlanner::Plan()
 		id = MapSelf->UavData.UavId;
 		state = MapSelf->UavData.State;
 		oldState = MapSelf->PreviousState;
-		batteryTimeLeft = MapSelf->BatteryTimeLeft;
+		batteryTimeLeft = MapSelf->UavData.BatteryTimeLeft;
 		landing = MapSelf->Landing;
 		minHeight = MapSelf->HeightMin;
 		maxHeight = MapSelf->HeightMax;
@@ -237,7 +237,7 @@ void CWpPlanner::Plan()
 		float distLeft = pos.x() - landing.Pos.x();
 		distLeft += pos.y() - landing.Pos.y();
 		float timeNeeded = config.BatteryCriticalTime + distLeft/config.CruiseSpeed;
-		if (MapSelf->BatteryTimeLeft < timeNeeded)
+		if (batteryTimeLeft < timeNeeded)
 		{
 			if (newState == UAVSTATE_COLLISION_AVOIDING)
 				newOldState = UAVSTATE_GOING_HOME;
@@ -278,7 +278,7 @@ void CWpPlanner::Plan()
 			// Check if we can land: no other uavs below us landing or waiting to land
 			bool land=true;
 			{
-				boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexUavs);
+				boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
 				MapUavIterType it;
 				for (it = MapUavs->begin(); it != MapUavs->end(); ++it)
 				{

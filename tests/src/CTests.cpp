@@ -293,7 +293,7 @@ void CTests::Init(std::string module_id)
 	WayPoint wayPoint;
 	Check<WayPoint>(wayPoint, vec, vec2, "WayPoint");
 
-
+/*
 	int uavSize = 1+geomSize+1 + 2*wayPointSize;
 	vec.clear();
 	for (int i=0; i<uavSize; ++i)
@@ -334,7 +334,7 @@ void CTests::Init(std::string module_id)
 	MapUavStruct mapUavStruct;
 	Check<MapUavStruct>(mapUavStruct, vec, vec2, "MapUavStruct");
 
-/*
+
 	int mapSelfSize = uavSize+2+posSize+5 + 1+3*1 + 1+3*wayPointSize;
 	vec.clear();
 	for (int i=0; i<mapSelfSize; ++i)
@@ -372,31 +372,30 @@ void CTests::Init(std::string module_id)
 
 
 	vec.clear();
-	for (int i=0; i<1+(1+17)+(1+2*(11)); ++i)
+	for (int i=0; i<1+(1+16)+(1+2*(11)); ++i)
 		vec.push_back(i);
 	vec[0] = RADIO_MSG_POS_2FIRE; // msgtype
 	vec[1] = RADIO_MSG_RELAY_POS; // relay msgtype = pos
-	vec[13] = 0; // wp mode
-	vec[1+1+17] = RADIO_MSG_RELAY_FIRE; // relay msgtype = fires
-	vec[1+1+18+ 0] = 1; // uavid
-	vec[1+1+18+ 3] = 2; // varx
-	vec[1+1+18+ 4] = 3; // vary
-	vec[1+1+18+ 5] = 4; // rot
-	vec[1+1+18+ 6] = 5; // pcam
-	vec[1+1+18+ 7] = 6; // ptpa
-	vec[1+1+18+ 8] = 7; // pgas
-	vec[1+1+18+ 9] = 8; // Z
-	vec[1+1+18+ 10] = 0; // Forwards
+	vec[1+1+16] = RADIO_MSG_RELAY_FIRE; // relay msgtype = fires
+	vec[1+1+16+1+ 0] = 1; // uavid
+	vec[1+1+16+1+ 3] = 2; // varx
+	vec[1+1+16+1+ 4] = 3; // vary
+	vec[1+1+16+1+ 5] = 4; // rot
+	vec[1+1+16+1+ 6] = 5; // pcam
+	vec[1+1+16+1+ 7] = 6; // ptpa
+	vec[1+1+16+1+ 8] = 7; // pgas
+	vec[1+1+16+1+ 9] = 8; // Z
+	vec[1+1+16+1+ 10] = 0; // Forwards
 
-	vec[1+1+18+11+ 0] = 2; // uavid
-	vec[1+1+18+11+ 3] = 2; // varx
-	vec[1+1+18+11+ 4] = 3; // vary
-	vec[1+1+18+11+ 5] = 4; // rot
-	vec[1+1+18+11+ 6] = 5; // pcam
-	vec[1+1+18+11+ 7] = 6; // ptpa
-	vec[1+1+18+11+ 8] = 7; // pgas
-	vec[1+1+18+11+ 9] = 8; // Z
-	vec[1+1+18+11+ 10] = 0; // Forwards
+	vec[1+1+16+1+11+ 0] = 2; // uavid
+	vec[1+1+16+1+11+ 3] = 2; // varx
+	vec[1+1+16+1+11+ 4] = 3; // vary
+	vec[1+1+16+1+11+ 5] = 4; // rot
+	vec[1+1+16+1+11+ 6] = 5; // pcam
+	vec[1+1+16+1+11+ 7] = 6; // ptpa
+	vec[1+1+16+1+11+ 8] = 7; // pgas
+	vec[1+1+16+1+11+ 9] = 8; // Z
+	vec[1+1+16+1+11+ 10] = 0; // Forwards
 
 	RadioMsg radioMsg;
 	RadioMsgPacked msgp;
@@ -417,17 +416,16 @@ void CTests::Init(std::string module_id)
 
 
 	vec.clear();
-	for (int i=0; i<1+(1+17)+(1+15); ++i)
+	for (int i=0; i<1+(1+16)+(1+15); ++i)
 		vec.push_back(i);
 	vec[0] = RADIO_MSG_POS_CMD; // msgtype
 	vec[1] = RADIO_MSG_RELAY_POS; // relay msgtype = pos
-	vec[13] = 0; // wp mode
-	vec[1+1+17] = RADIO_MSG_RELAY_CMD; // relay msgtype = cmd
-	vec[1+1+18+ 0] = 1; // uavid
-	vec[1+1+18+ 1] = 2; // msgid
-	vec[1+1+18+ 12] = 1; // land left turn
-	vec[1+1+18+ 13] = 2; // mode
-	vec[1+1+18+ 14] = 1; // enable planner
+	vec[1+1+16] = RADIO_MSG_RELAY_CMD; // relay msgtype = cmd
+	vec[1+1+16+1+ 0] = 1; // uavid
+	vec[1+1+16+1+ 1] = 2; // msgid
+	vec[1+1+16+1+ 12] = 1; // land left turn
+	vec[1+1+16+1+ 13] = 2; // mode
+	vec[1+1+16+1+ 14] = 1; // enable planner
 
 //	RadioMsg radioMsg;
 //	RadioMsgPacked msgp;

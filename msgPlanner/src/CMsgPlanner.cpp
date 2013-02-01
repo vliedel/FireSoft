@@ -99,28 +99,13 @@ void CMsgPlanner::SelectMsgs()
 {
 	std::cout << "selecting msgs" << std::endl;
 	{
-		//boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf, boost::interprocess::try_to_lock);
-		//if (lockSelf)
-		//{
-
-		// Blocking lock request
 		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf);
 
 		MapSelf->UavData.ToRadioMsg(SelectedMsgs[0]);
-
-		//}
-		//else
-		//std::cout << "msgplanner has to wait for mapSelf" << std::endl;
 	}
 
 	{
-		//boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs, boost::interprocess::try_to_lock);
-		//if (lockUavs)
-		//{
-
-		// Blocking lock request
 		boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
-		std::cout << "locked mapuavs" << std::endl;
 
 		// Find the uavs that have been last sent, and send their last state
 		// TODO: This isn't very smart yet, cause we might not have updated their state for a long time and thus already sent the msg..
@@ -192,10 +177,6 @@ void CMsgPlanner::SelectMsgs()
 				iters[i]->second.LastRadioSentTime = get_cur_1ms();
 			}
 		}
-
-		//}
-		//else
-		//	std::cout << "msgplanner has to wait for mapUavs" << std::endl;
 	}
 
 }

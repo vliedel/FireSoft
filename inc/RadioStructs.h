@@ -55,6 +55,88 @@ enum ERadioMsgRelayType {
 struct RadioMsgRelayPos
 {
 	uint8_t UavId; // ID of the UAV where the msg originates from
+	int X;
+	int Y;
+	uint8_t Z;
+	uint8_t Heading;
+	uint8_t GroundSpeed;
+	uint8_t State; // Can be 3 so far
+	uint8_t Roll; // why? --> scanning area
+	int DX[3];
+	int DY[3];
+	uint8_t BatteryLeft;
+	uint16_t Status;
+
+	friend std::ostream& operator<<(std::ostream& os, const RadioMsgRelayPos& struc)
+	{
+		os << "UavId=" << +struc.UavId << " x=" << struc.X << " y=" << struc.Y << " z=" << +struc.Z << " heading=" << +struc.Heading << " speed=" << +struc.GroundSpeed << " state=" << +struc.State << " roll=" << +struc.Roll \
+				<< " DX0=" << struc.DX[0] << " DX1=" << struc.DX[1] << " DX2=" << struc.DX[2] \
+				<< " DY0=" << struc.DY[0] << " DY1=" << struc.DY[1] << " DY2=" << struc.DY[2] \
+				<< " BatteryLeft=" << +struc.BatteryLeft << " Status=" << +struc.Status;
+		return os;
+	}
+};
+// 110 bits
+#define RADIO_STRUCT_POS(n) \
+	unsigned _##n##_UavId : 4; \
+	unsigned _##n##_X : 11; \
+	unsigned _##n##_Y : 11; \
+	unsigned _##n##_Z : 7; \
+	unsigned _##n##_Heading : 6; \
+	unsigned _##n##_GroundSpeed : 4; \
+	unsigned _##n##_State : 4; \
+	unsigned _##n##_Roll : 5; \
+	signed _##n##_DX0 : 7; \
+	signed _##n##_DX1 : 7; \
+	signed _##n##_DX2 : 7; \
+	signed _##n##_DY0 : 7; \
+	signed _##n##_DY1 : 7; \
+	signed _##n##_DY2 : 7; \
+	unsigned _##n##_BatteryLeft : 8; \
+	unsigned _##n##_Status : 8;
+
+#define RADIO_STRUCT_POS_GET(struc, n, var) struc._##n##_##var
+
+#define RADIO_STRUCT_POS_UNPACK(unpacked, packed, n) \
+	unpacked.UavId = 		packed._##n##_UavId; \
+	unpacked.X = 			packed._##n##_X; \
+	unpacked.Y = 			packed._##n##_Y; \
+	unpacked.Z = 			packed._##n##_Z; \
+	unpacked.Heading = 		packed._##n##_Heading; \
+	unpacked.GroundSpeed = 	packed._##n##_GroundSpeed; \
+	unpacked.State = 		packed._##n##_State; \
+	unpacked.Roll = 		packed._##n##_Roll; \
+	unpacked.DX[0] =		packed._##n##_DX0; \
+	unpacked.DX[1] =		packed._##n##_DX1; \
+	unpacked.DX[2] =		packed._##n##_DX2; \
+	unpacked.DY[0] =		packed._##n##_DY0; \
+	unpacked.DY[1] =		packed._##n##_DY1; \
+	unpacked.DY[2] =		packed._##n##_DY2; \
+	unpacked.BatteryLeft = 	packed._##n##_BatteryLeft; \
+	unpacked.Status = 		packed._##n##_Status;
+
+#define RADIO_STRUCT_POS_PACK(unpacked, packed, n) \
+	packed._##n##_UavId = 			unpacked.UavId; \
+	packed._##n##_X = 				unpacked.X; \
+	packed._##n##_Y = 				unpacked.Y; \
+	packed._##n##_Z = 				unpacked.Z; \
+	packed._##n##_Heading = 		unpacked.Heading; \
+	packed._##n##_GroundSpeed = 	unpacked.GroundSpeed; \
+	packed._##n##_State = 			unpacked.State; \
+	packed._##n##_Roll = 			unpacked.Roll; \
+	packed._##n##_DX0 = 			unpacked.DX[0]; \
+	packed._##n##_DX1 = 			unpacked.DX[1]; \
+	packed._##n##_DX2 = 			unpacked.DX[2]; \
+	packed._##n##_DY0 = 			unpacked.DY[0]; \
+	packed._##n##_DY1 = 			unpacked.DY[1]; \
+	packed._##n##_DY2 = 			unpacked.DY[2]; \
+	packed._##n##_BatteryLeft = 	unpacked.BatteryLeft; \
+	packed._##n##_Status = 			unpacked.Status;
+
+/*
+struct RadioMsgRelayPos
+{
+	uint8_t UavId; // ID of the UAV where the msg originates from
 
 	int X;
 	int Y;
@@ -146,6 +228,7 @@ struct RadioMsgRelayPos
 	packed._##n##_WpFarY = 			unpacked.WpFarY; \
 	packed._##n##_WpFarZ = 			unpacked.WpFarZ; \
 	packed._##n##_WpFarETA = 		unpacked.WpFarETA;
+*/
 
 
 
@@ -259,7 +342,7 @@ struct RadioMsgRelayCmd
 				<< " AreaMinX=" << struc.AreaMinX << " AreaMinY=" << struc.AreaMinY \
 				<< " AreaDX=" << struc.AreaDX << " AreaDY=" << struc.AreaDY << " AreaRotation=" << struc.AreaRotation \
 				<< " LandX=" << struc.LandX << " LandY=" << struc.LandY << " LandHeading=" << struc.LandHeading \
-				<< " LandLeftTurn=" << struc.LandLeftTurn << " Mode=" << struc.Mode << " EnablePlanner=" << struc.EnablePlanner;
+				<< " LandLeftTurn=" << struc.LandLeftTurn << " Mode=" << +struc.Mode << " EnablePlanner=" << struc.EnablePlanner;
 		return os;
 	}
 };

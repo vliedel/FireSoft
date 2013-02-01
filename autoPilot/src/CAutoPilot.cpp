@@ -299,7 +299,7 @@ void CAutoPilot::ReadUart()
 		vecMsg.push_back(PROT_MAPSELF_DATAIN_GEOM);
 		writeMapSelf(vecMsg);
 
-		MapSelfAPStatusStruct apStatus;
+		APStatusStruct apStatus;
 		apStatus.FlyState = data.FlyState;
 		apStatus.GPSState = data.GPSState;
 		apStatus.ServoState = data.ServoState;

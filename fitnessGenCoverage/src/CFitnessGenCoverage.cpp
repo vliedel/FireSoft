@@ -131,11 +131,10 @@ void CFitnessGenCoverage::GenFitness()
 	std::cout << get_cur_1ms() << std::endl;
 	float rotation = 0.0;
 	Position pos;
-//	FitnessGaussian2D gaussian(0, FITSRC_COVERAGE, pos, amplitude, sigmaX, sigmaY, rotation);
+	std::vector<FitnessGaussian2D> gaussians;
 	FitnessGaussian2D gaussian(0, FITSRC_COVERAGE, pos, config.CoverageAmplitude, config.CoverageSigmaX, config.CoverageSigmaY, rotation);
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
-		boost::interprocess::scoped_lock<MapMutexType> lockFitness(*MutexFitness);
 
 		long time = get_cur_1ms();
 		MapUavIterType it;
@@ -145,14 +144,21 @@ void CFitnessGenCoverage::GenFitness()
 			{
 				gaussian.Center = it->second.data.Geom.Pos;
 				std::cout << get_cur_1ms() << " ";
-				FitnessMap->AddGaussian(gaussian);
+				//FitnessMap->AddGaussian(gaussian);
+				gaussians.push_back(gaussian);
 				lastAddedTime[it->second.data.UavId] = time;
 			}
 		}
 	}
 	{
-		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf);
 		boost::interprocess::scoped_lock<MapMutexType> lockFitness(*MutexFitness);
+
+		for (std::vector<FitnessGaussian2D>::iterator it=gaussians.begin(); it!=gaussians.end(); ++it)
+			FitnessMap->AddGaussian(*it);
+	}
+
+	{
+		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf);
 
 		long time = get_cur_1ms();
 		if (lastAddedTime[MapSelf->UavData.UavId] + config.CoverageIntervalTime < time)
@@ -167,18 +173,22 @@ void CFitnessGenCoverage::GenFitness()
 		}
 	}
 
-	long time = get_cur_1ms();
-	std::deque<CoverageSelfTrace>::iterator it;
-	while (!Trace.empty())
 	{
-		// Add items from the trace with a delay
-		if (Trace.front().Time + config.CoverageSelfDelayTime > time)
-			break;
+		boost::interprocess::scoped_lock<MapMutexType> lockFitness(*MutexFitness);
 
-		gaussian.Center = Trace.front().Pos;
-		std::cout << get_cur_1ms() << " ";
-		FitnessMap->AddGaussian(gaussian);
+		long time = get_cur_1ms();
+		std::deque<CoverageSelfTrace>::iterator it;
+		while (!Trace.empty())
+		{
+			// Add items from the trace with a delay
+			if (Trace.front().Time + config.CoverageSelfDelayTime > time)
+				break;
 
-		Trace.pop_front();
+			gaussian.Center = Trace.front().Pos;
+			std::cout << get_cur_1ms() << " ";
+			FitnessMap->AddGaussian(gaussian);
+
+			Trace.pop_front();
+		}
 	}
 }

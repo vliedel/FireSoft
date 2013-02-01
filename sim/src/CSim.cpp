@@ -205,7 +205,7 @@ void CSim::Tick()
 				//					}
 				case PROT_SIMSTAT_BATTERY:
 				{
-					itUav->UavData.BatteryTimeLeft = *it++;
+					itUav->UavData.UavData.BatteryTimeLeft = *it++;
 					break;
 				}
 				case PROT_SIMSTAT_WP:

@@ -101,16 +101,16 @@ void CFitnessGenBattery::GenFitness()
 		float distLeft = MapSelf->UavData.Geom.Pos.x() - MapSelf->Landing.Pos.x();
 		distLeft += MapSelf->UavData.Geom.Pos.y() - MapSelf->Landing.Pos.y();
 
-		std::cout << "BatteryTimeLeft=" << MapSelf->BatteryTimeLeft << " distLeft=" << distLeft << std::endl;
+		std::cout << "BatteryTimeLeft=" << MapSelf->UavData.BatteryTimeLeft << " distLeft=" << distLeft << std::endl;
 
 		float timeNeeded = config.BatteryLowTime + distLeft/config.CruiseSpeed;
-		if (MapSelf->BatteryTimeLeft < timeNeeded)
+		if (MapSelf->UavData.BatteryTimeLeft < timeNeeded)
 		{
 			//FitnessGaussian2D(int id, FitnessSource source, Position& center, float amplitude, float sigmaX, float sigmaY, float rotation, float minVal=0, float maxVal=0)
 			Position c;
 			c << MapSelf->Landing.Pos.x(), MapSelf->Landing.Pos.y(), 0;
 			// Amplitude = (Tlow - Tleft)/Tlow * Amax
-			float amplitude = (timeNeeded - MapSelf->BatteryTimeLeft) / timeNeeded * config.BatteryAmplitude;
+			float amplitude = (timeNeeded - MapSelf->UavData.BatteryTimeLeft) / timeNeeded * config.BatteryAmplitude;
 			//float sigma = std::max(config.MaxX, config.MaxY); // Same sigma for both
 			float sigma = std::max(MapSelf->AreaSize.x(), MapSelf->AreaSize.y()); // Same sigma for both
 			FitnessGaussian2D gauss(0, FITSRC_BATTERY, c, amplitude, sigma, sigma, 0.0);

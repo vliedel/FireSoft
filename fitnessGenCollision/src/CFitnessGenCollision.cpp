@@ -90,80 +90,22 @@ void CFitnessGenCollision::Tick()
 
 void CFitnessGenCollision::GenFitness()
 {
-/*
-	FitnessGaussian3D* gaus = NULL;
-	if (UavId != 0)
-	{
-		//std::cout << "Waiting for map uavs lock" << std::endl;
-		boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
-		//std::cout << "Locked map uavs" << std::endl;
-		int smallest = 1000;
-		MapUavIterType it, itFollow;
-		for (it = MapUavs->begin(); it != MapUavs->end(); ++it)
-		{
-			if (it->second.data.UavId < smallest)
-			{
-				smallest = it->second.data.UavId;
-				itFollow = it;
-			}
-		}
-		//std::cout << "Smallest=" << smallest << std::endl;
-		if (smallest != 1000)
-		{
-			//wp.to = itFollow->second.data.Geom.Pos + itFollow->second.data.Geom.Speed;
-			float amplitude = 1.0;
-			float sigmaX = 1.0;
-			float sigmaY = 1.0;
-			float sigmaZ = 1.0;
-			float rotation = 0.0;
-
-			gaus = new FitnessGaussian3D(0, FITSRC_COLLISION, itFollow->second.data.Geom.Pos, amplitude, sigmaX, sigmaY, sigmaZ, rotation);
-			std::cout << "added gaussian with center: " << itFollow->second.data.Geom.Pos.transpose() << std::endl;
-		}
-	}
-	if (gaus != NULL)
-	{
-		//std::cout << "Waiting for fitness lock" << std::endl;
-		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexFitness);
-		//std::cout << "Locked fitness" << std::endl;
-		FitnessVec->clear();
-		FitnessVec->push_back(*gaus);
-	}
-	delete gaus;
-*/
-
-
-
-	//std::vector<FitnessGaussian3D> gaussians;
-	// TODO: magic numbers
-//	float amplitude = FIT_COL_AMPLITUDE;
-//	float sigmaX = FIT_COL_SIGMA_HOR;
-//	float sigmaY = FIT_COL_SIGMA_HOR;
-//	float sigmaZ = FIT_COL_SIGMA_VERT;
 	float rotation = 0.0;
 	Position pos;
-
 	std::vector<Position> checkPos;
 	float distanceLeft;
-	float stepDist = 2*config.CollisionSigmaX; // TODO: magic number
+	float stepDist = 2*config.CollisionSigmaX;
 	std::vector<Position>::iterator itPos;
-
+	std::vector<FitnessGaussian3D> gaussians;
 	FitnessGaussian3D gaussian(0, FITSRC_COLLISION, pos, config.CollisionAmplitude,
 			config.CollisionSigmaX, config.CollisionSigmaY, config.CollisionSigmaZ, rotation);
+
 	{
-		//std::cout << "Waiting for map uavs lock" << std::endl;
 		boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
-		boost::interprocess::scoped_lock<MapMutexType> lockFitness(*MutexFitness);
-		//std::cout << "Locked map uavs" << std::endl;
 
 		MapUavIterType it;
-		FitnessVec->clear();
 		for (it = MapUavs->begin(); it != MapUavs->end(); ++it)
 		{
-			//gaussians.push_back()
-			//gaus = new FitnessGaussian3D(0, FITSRC_COLLISION, it->second.data.Geom.Pos, amplitude, sigmaX, sigmaY, sigmaZ, rotation);
-//			{
-//				boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexFitness);
 			if (it->second.data.State == UAVSTATE_LANDED)
 				continue;
 
@@ -171,37 +113,41 @@ void CFitnessGenCollision::GenFitness()
 			std::cout << it->second.data.UavId << " Adding gaussians with center:";
 			//FitnessGaussian3D gaussian(it->second.data.UavId, FITSRC_COLLISION, pos, amplitude, sigmaX, sigmaY, sigmaZ, rotation);
 			gaussian.Center = it->second.data.Geom.Pos;
-			FitnessVec->push_back(gaussian);
+			gaussians.push_back(gaussian);
 			std::cout << " [" << gaussian.Center.transpose() << "]";
 
 			// The future path of the UAV should also be avoided
 			//pos = it->second.data.Geom.Pos;
 			checkPos.clear();
-			it->second.data.WpNext.GetPath(checkPos, distanceLeft, stepDist, &(gaussian.Center));
-
-			// Just do the whole waypoint (so it can be ahead of the uav) <-- we don't have the start pos/angle of the wp
-			//it->second.data.WpNext.GetPath(checkPos, distanceLeft, stepDist);
-			std::cout << " distanceLeft=" << distanceLeft;
+			if (it->second.data.WpNext[0].wpMode != WP_INVALID)
+				it->second.data.WpNext[0].GetPath(checkPos, distanceLeft, stepDist, &(gaussian.Center)); // TODO: magic number
+			if (checkPos.size() > 5 && it->second.data.WpNext[1].wpMode != WP_INVALID)
+				it->second.data.WpNext[1].GetPath(checkPos, distanceLeft, stepDist);
 			for (itPos = checkPos.begin(); itPos != checkPos.end(); ++itPos)
 			{
 				gaussian.Center = *itPos;
-				FitnessVec->push_back(gaussian);
+				gaussians.push_back(gaussian);
 				std::cout << " [" << gaussian.Center.transpose() << "]";
 			}
+
 
 			// To be sure: also put a gaussian in the direction the uav is flying now
 			gaussian.Center = it->second.data.Geom.Pos;
 			gaussian.Center.x() += config.PredictAheadTime * it->second.data.Geom.GroundSpeed * cos(it->second.data.Geom.Heading.angle());
 			gaussian.Center.y() += config.PredictAheadTime * it->second.data.Geom.GroundSpeed * sin(it->second.data.Geom.Heading.angle());
 			gaussian.Center.z() -= config.PredictAheadTime * it->second.data.Geom.VerticalSpeed;
-			FitnessVec->push_back(gaussian);
+			gaussians.push_back(gaussian);
 			std::cout << " [" << gaussian.Center.transpose() << "]";
 
 			std::cout << std::endl;
-			std::cout << "wpNext=" << it->second.data.WpNext << std::endl;
-
-//			}
-			//delete gaus;
 		}
+	}
+
+	// Add gaussians to fitness map, outside uav map lock!
+	{
+		boost::interprocess::scoped_lock<MapMutexType> lockFitness(*MutexFitness);
+		FitnessVec->clear();
+		for (std::vector<FitnessGaussian3D>::iterator it=gaussians.begin(); it != gaussians.end(); ++it)
+			FitnessVec->push_back(*it);
 	}
 }
