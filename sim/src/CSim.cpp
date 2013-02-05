@@ -356,7 +356,7 @@ void CSim::Tick()
 
 
 		// Write current states of uavs to output file
-		FileOut << get_cur_1us() << " ";
+		FileOut << get_cur_1ms() << " ";
 		for (itUav=Uavs.begin(); itUav != Uavs.end(); ++itUav)
 		{
 			if (!itUav->AutoPilotSim)

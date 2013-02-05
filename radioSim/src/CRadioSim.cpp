@@ -99,19 +99,6 @@ void CRadioSim::Tick()
 
 					break;
 				}
-//				case PROT_SIMCMD_LAND:
-//				{
-//					// TODO: this command shouldn't be there, should be a full GS
-//					RadioMsgRelayCmd gsCmd;
-//					gsCmd.Mode = AP_PROT_MODE_LAND;
-//					// Set more things
-//
-//					VecMsgType vecMsg;
-//					vecMsg.push_back(PROT_MAPSELF_GS_CMD);
-//					ToCont(gsCmd, vecMsg);
-//					writeToMapSelf(vecMsg);
-//					break;
-//				}
 			}
 		}
 		VecMsg->clear();
@@ -142,24 +129,6 @@ void CRadioSim::Tick()
 		}
 	}
 
-//	VecMsg = readFromUAVs(false);
-//	if (!VecMsg->empty())
-//	{
-//		std::cout << "RADIO " << ModuleId << " from net: ";
-//		dobots::print(VecMsg->begin(), VecMsg->end());
-//
-//		// Should buffer msg and send after radio round is done
-//		int type = VecMsg->back();
-//		VecMsg->pop_back();
-//		switch (type)
-//		{
-//			case PROT_RADIO_MSG_RELAY_UAV:
-//				writeToMapUAVs(*VecMsg);
-//				break;
-//		}
-//		VecMsg->clear();
-//	}
-
 	VecMsg = readFromMsgPlanner(false);
 	if (!VecMsg->empty())
 	{
@@ -178,21 +147,6 @@ bool CRadioSim::ReadReceiveBuffer()
 	UavStruct uav;
 	while (!ReceiveBuffer.empty())
 	{
-//		for (int i=0; i<RADIO_NUM_RELAY_PER_MSG; ++i)
-//		{
-//			uav.UavId = ReceiveBuffer.front().data.data[i].UavId - 1;
-//			if ((uav.UavId > -1) && (uav.UavId != UavId) && (ReceiveBuffer.front().data.data[i].MessageType == RADIO_MSG_RELAY_POS))
-//			{
-//				uav.FromRadioMsg(ReceiveBuffer.front().data.data[i]);
-//				std::cout << "Radio " << ModuleId << " sending: " << ReceiveBuffer.front().data.data[i] << " === " << uav << std::endl;
-//
-//				//vecMsg.push_back(PROT_MAPUAV_DATAIN_UAV);
-//				//ToCont(uav, vecMsg);
-//				vecMsg.push_back(PROT_MAPUAV_DATAIN_RADIOMSGPOS);
-//				ToCont(ReceiveBuffer.front().data.data[i], vecMsg);
-//			}
-//		}
-
 		for (int i=0; i<RADIO_NUM_RELAY_PER_MSG; ++i)
 		{
 			switch (ReceiveBuffer.front().Data.Data[i].MessageType)
@@ -204,12 +158,10 @@ bool CRadioSim::ReadReceiveBuffer()
 					// Ignore invalid uav IDs and own messages
 					if ((uav.UavId > -1) && (uav.UavId != UavId))
 					{
-						uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i]);
+						uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
 						std::cout << "Radio " << ModuleId << " sending: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
 
-						//vecMsg.push_back(PROT_MAPUAV_DATAIN_UAV);
-						//ToCont(uav, vecMsg);
-						vecMsg.push_back(PROT_MAPUAV_DATAIN_RADIOMSGPOS);
+						vecMsg.push_back(PROT_RADIO_MSG_RELAY);
 						ToCont(ReceiveBuffer.front().Data.Data[i], vecMsg);
 					}
 					break;
@@ -222,17 +174,25 @@ bool CRadioSim::ReadReceiveBuffer()
 				case RADIO_MSG_RELAY_CMD:
 				{
 					int id = ReceiveBuffer.front().Data.Data[i].Cmd.UavId -1;
+					if (id < 0)
+						break;
 
 					// If message is meant for this uav, execute command
-					if (id == UavId || UavId == 14) // TODO: magic number
+					if (id == UavId || id == 14) // TODO: magic number
 					{
 
 					}
 					// If message is meant for other uav, relay command
-					if (id != UavId || UavId == 14) // TODO: magic number
+					if (id != UavId || id == 14) // TODO: magic number
 					{
-						//vecMsg.push_back()
+
 					}
+
+					VecMsgType vecMsgSelf;
+					ToCont(ReceiveBuffer.front().Data.Data[i].Cmd, vecMsgSelf);
+					vecMsgSelf.push_back(PROT_MAPSELF_GS_CMD);
+					writeToMapSelf(vecMsgSelf);
+
 					break;
 				}
 			}

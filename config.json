@@ -98,6 +98,21 @@
 		"TickTime": 1000,
 		"Debug": true
 	},
+	"gsGuiInterface":
+	{
+		"TickTime": 1000,
+		"Debug": true,
+		"Host": "127.0.0.1",
+		"Port": "13000",
+		"DataType": "0001"
+	},
+	"gsVisualizer":
+	{
+		"TickTime": 1000,
+		"Debug": true,
+		"OutputFilePosName": "output/flight_output_gs",
+		"OutputPosIntervalTime": 1000
+	},
 	"mapFire":
 	{
 		"TickTime": 1000,

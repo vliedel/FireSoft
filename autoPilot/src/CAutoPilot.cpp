@@ -284,8 +284,8 @@ void CAutoPilot::ReadUart()
 
 		// Write to state to mapSelf
 		UavGeomStruct geom;
-		geom.Pos.x() = data.Position.X;
-		geom.Pos.y() = data.Position.Y;
+		geom.Pos.x() = data.Position.X - config.OriginX;
+		geom.Pos.y() = data.Position.Y - config.OriginY;
 		geom.Pos.z() = data.Position.Z;
 		geom.GroundSpeed = data.GroundSpeed;
 		geom.VerticalSpeed = data.VerticalSpeed;
@@ -487,19 +487,19 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 			case WP_LINE:
 			{
 				msgWps.WayPoints[i].WpType = AP_PROT_WP_LINE;
-				msgWps.WayPoints[i].Line.From.X = wps.WayPoints[i].from.x();
-				msgWps.WayPoints[i].Line.From.Y = wps.WayPoints[i].from.y();
+				msgWps.WayPoints[i].Line.From.X = wps.WayPoints[i].from.x() + config.OriginX;
+				msgWps.WayPoints[i].Line.From.Y = wps.WayPoints[i].from.y() + config.OriginY;
 				msgWps.WayPoints[i].Line.From.Z = wps.WayPoints[i].from.z();
-				msgWps.WayPoints[i].Line.To.X = wps.WayPoints[i].to.x();
-				msgWps.WayPoints[i].Line.To.Y = wps.WayPoints[i].to.y();
+				msgWps.WayPoints[i].Line.To.X = wps.WayPoints[i].to.x() + config.OriginX;
+				msgWps.WayPoints[i].Line.To.Y = wps.WayPoints[i].to.y() + config.OriginY;
 				msgWps.WayPoints[i].Line.To.Z = wps.WayPoints[i].to.z();
 				break;
 			}
 			case WP_CIRCLE:
 			{
 				msgWps.WayPoints[i].WpType = AP_PROT_WP_CIRCLE;
-				msgWps.WayPoints[i].Circle.Center.X = wps.WayPoints[i].to.x();
-				msgWps.WayPoints[i].Circle.Center.Y = wps.WayPoints[i].to.y();
+				msgWps.WayPoints[i].Circle.Center.X = wps.WayPoints[i].to.x() + config.OriginX;
+				msgWps.WayPoints[i].Circle.Center.Y = wps.WayPoints[i].to.y() + config.OriginY;
 				msgWps.WayPoints[i].Circle.Center.Z = wps.WayPoints[i].to.z();
 				msgWps.WayPoints[i].Circle.Radius = wps.WayPoints[i].Radius;
 				break;
@@ -507,8 +507,8 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 			case WP_ARC:
 			{
 				msgWps.WayPoints[i].WpType = AP_PROT_WP_ARC;
-				msgWps.WayPoints[i].Arc.Center.X = wps.WayPoints[i].to.x();
-				msgWps.WayPoints[i].Arc.Center.Y = wps.WayPoints[i].to.y();
+				msgWps.WayPoints[i].Arc.Center.X = wps.WayPoints[i].to.x() + config.OriginX;
+				msgWps.WayPoints[i].Arc.Center.Y = wps.WayPoints[i].to.y() + config.OriginY;
 				msgWps.WayPoints[i].Arc.Center.Z = wps.WayPoints[i].to.z();
 				msgWps.WayPoints[i].Arc.Radius = wps.WayPoints[i].Radius;
 				msgWps.WayPoints[i].Arc.AngleStart = wps.WayPoints[i].AngleStart;

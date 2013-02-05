@@ -32,25 +32,25 @@ CRadio::~CRadio()
 
 void CRadio::Tick()
 {
-	std::vector<int>* pMsg = readToBuffer(false);
-	if (pMsg != 0)
-	{
-		//sendBuffer.push_back(*pMsg);
-		//std::vector<int> msg = *p;
-		std::vector<int>::iterator it;
-		printf("msg: ");
-		for (it = pMsg->begin(); it != pMsg->end(); ++it)
-		{
-			printf("%i ", *it);
-		}
-		printf("\n");
-	}
-
-	//if ()
-	std::vector<int> bla;
-	bla.push_back(1);
-	bla.push_back(2);
-	writeFromBuffer(bla);
+//	std::vector<int>* pMsg = readToBuffer(false);
+//	if (pMsg != 0)
+//	{
+//		//sendBuffer.push_back(*pMsg);
+//		//std::vector<int> msg = *p;
+//		std::vector<int>::iterator it;
+//		printf("msg: ");
+//		for (it = pMsg->begin(); it != pMsg->end(); ++it)
+//		{
+//			printf("%i ", *it);
+//		}
+//		printf("\n");
+//	}
+//
+//	//if ()
+//	std::vector<int> bla;
+//	bla.push_back(1);
+//	bla.push_back(2);
+//	writeFromBuffer(bla);
 
 }
 

@@ -144,22 +144,22 @@ class UavStruct
 		}
 
 		// TODO: conversions
-		void FromRadioMsg(RadioMsgRelay& msg)
+		void FromRadioMsg(RadioMsgRelayPos& msg)
 		{
-			if (msg.MessageType != RADIO_MSG_RELAY_POS)
-				return;
-			UavId = msg.Pos.UavId - 1;
-			State = (UAVState)msg.Pos.State;
-			Geom.Pos.x() = msg.Pos.X;
-			Geom.Pos.y() = msg.Pos.Y;
-			Geom.Pos.z() = msg.Pos.Z;
-			Geom.GroundSpeed = msg.Pos.GroundSpeed;
-			//Geom.VerticalSpeed = msg.Pos.DZ[0]; // wrong
+//			if (msg.MessageType != RADIO_MSG_RELAY_POS)
+//				return;
+			UavId = msg.UavId - 1;
+			State = (UAVState)msg.State;
+			Geom.Pos.x() = msg.X;
+			Geom.Pos.y() = msg.Y;
+			Geom.Pos.z() = msg.Z;
+			Geom.GroundSpeed = msg.GroundSpeed;
+			//Geom.VerticalSpeed = msg.DZ[0]; // wrong
 			Geom.VerticalSpeed = 0; // Assumption
 
-			Geom.Heading.angle() = msg.Pos.Heading;
-			Geom.Roll.angle() = msg.Pos.Roll;
-			//Geom.Pitch.angle() = msg.Pos.DZ[0]; // Wrong
+			Geom.Heading.angle() = msg.Heading;
+			Geom.Roll.angle() = msg.Roll;
+			//Geom.Pitch.angle() = msg.DZ[0]; // Wrong
 			Geom.Pitch.angle() = 0; // Assumption
 			Geom.RotationUpToDate = false;
 
@@ -167,9 +167,9 @@ class UavStruct
 			for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
 			{
 				WpNext[i].from = from;
-				WpNext[i].to.x() = from.x() + msg.Pos.DX[i];
-				WpNext[i].to.y() = from.y() + msg.Pos.DY[i];
-				//WpNext.to.z() = from.z() + msg.Pos.DZ[i];
+				WpNext[i].to.x() = from.x() + msg.DX[i];
+				WpNext[i].to.y() = from.y() + msg.DY[i];
+				//WpNext.to.z() = from.z() + msg.DZ[i];
 				WpNext[i].to.z() = from.z(); // Assumption
 				WpNext[i].wpMode = WP_LINE;
 				WpNext[i].ETA = 0; // Unknown
@@ -179,23 +179,23 @@ class UavStruct
 				//WpNext[i].AngleArc = 0; // Only lines
 				from = WpNext[i].to;
 			}
-			BatteryTimeLeft = msg.Pos.BatteryLeft;
+			BatteryTimeLeft = msg.BatteryLeft;
 			// TODO: retrieve APStatus from radio msg
-			//APStatus.AutoPilotState = msg.Pos.Status;
+			//APStatus.AutoPilotState = msg.Status;
 		}
 
 		// TODO: conversions
-		void ToRadioMsg(RadioMsgRelay& msg)
+		void ToRadioMsg(RadioMsgRelayPos& msg)
 		{
-			msg.MessageType = RADIO_MSG_RELAY_POS;
-			msg.Pos.UavId = UavId + 1;
-			msg.Pos.X = Geom.Pos.x();
-			msg.Pos.Y = Geom.Pos.y();
-			msg.Pos.Z = Geom.Pos.z();
-			msg.Pos.Heading = Geom.Heading.angle();
-			msg.Pos.GroundSpeed = Geom.GroundSpeed;
-			msg.Pos.State = State;
-			msg.Pos.Roll = Geom.Roll.angle();
+			//msg.MessageType = RADIO_MSG_RELAY_POS;
+			msg.UavId = UavId + 1;
+			msg.X = Geom.Pos.x();
+			msg.Y = Geom.Pos.y();
+			msg.Z = Geom.Pos.z();
+			msg.Heading = Geom.Heading.angle();
+			msg.GroundSpeed = Geom.GroundSpeed;
+			msg.State = State;
+			msg.Roll = Geom.Roll.angle();
 
 			// Assuming WpNext are lines...
 			Position from(Geom.Pos);
@@ -214,26 +214,26 @@ class UavStruct
 						WpNext[i].GetPath(posList, distLeft, 22*3, &to); // TODO: magic number
 						for (int j=0; i<UAVSTRUCT_NEXTWP_NUM; ++i, ++j)
 						{
-							msg.Pos.DX[i] = posList[j].x();
-							msg.Pos.DY[i] = posList[j].y();
+							msg.DX[i] = posList[j].x();
+							msg.DY[i] = posList[j].y();
 						}
 						break;
 					}
 					case WP_LINE:
 					case WP_ARC:
 						WpNext[i].GetEndPos(to);
-						msg.Pos.DX[i] = to.x() - from.x();
-						msg.Pos.DY[i] = to.y() - from.y();
+						msg.DX[i] = to.x() - from.x();
+						msg.DY[i] = to.y() - from.y();
 						break;
 					default:
-						msg.Pos.DX[i] = 0;
-						msg.Pos.DY[i] = 0;
+						msg.DX[i] = 0;
+						msg.DY[i] = 0;
 						break;
 				}
 				from = to;
 			}
-			msg.Pos.BatteryLeft = BatteryTimeLeft;
-			msg.Pos.Status = 0; // TODO: fill this from APStatus
+			msg.BatteryLeft = BatteryTimeLeft;
+			msg.Status = 0; // TODO: fill this from APStatus
 		}
 };
 
@@ -337,6 +337,84 @@ class LandingStruct
 	}
 };
 
+class GsCmdStruct
+{
+public:
+	int						UavId; // ID of the UAV who the command is for (14 for all UAVs)
+	int						MsgId; // ID of this message, so that UAVs know if they relayed this msg yet.
+
+	float					HeightMin;
+	float					HeightMax;
+
+	Position				AreaZero;	// In local coordinates
+	Position				AreaSize;	// In local coordinates
+	Rotation2DType			AreaRotation;	// In rad
+
+	LandingStruct			Landing;
+
+	// See EAutoPilotMode
+	// Home: go home and land (waiting for others)
+	// Land: land _now_ (don't accept this command is for all UAVs)
+	uint8_t					Mode;
+	bool					EnablePlanner;
+
+	GsCmdStruct(): AreaRotation(0) {}
+
+	void fromMsg(RadioMsgRelayCmd& msg)
+	{
+		// Id 0 is invalid id
+		UavId = msg.UavId - 1;
+		MsgId = msg.MsgId;
+		// Height is 0 to 255, translate to 50 to 305
+		HeightMin = msg.HeightMin + 50;
+		HeightMax = msg.HeightMax + 50;
+		// Area is 0 to 1023, translate to 0 to 5000
+		AreaZero.x() = msg.AreaMinX * 5000/1023;
+		AreaZero.y() = msg.AreaMinY * 5000/1023;
+		AreaSize.x() = msg.AreaDX * 5000/1023;
+		AreaSize.y() = msg.AreaDX * 5000/1023;
+		// Rotation is 0 to 1023, translate to 0 to 0.5*pi
+		AreaRotation.angle() = msg.AreaRotation * M_PI/2/1023;
+		// Landing pos is 0 to 4095, translate to 0 to 5000
+		Landing.Pos.x() = msg.LandX * 5000/4095;
+		Landing.Pos.y() = msg.LandY * 5000/4095;
+		// Land heading is 0 to 255, translate to 0 to 2*pi
+		Landing.Heading.angle() = msg.LandHeading * 2.0*M_PI/255;
+		Landing.LeftTurn = msg.LandLeftTurn;
+		Mode = msg.Mode;
+		EnablePlanner = msg.EnablePlanner;
+	}
+
+	void toMsg(RadioMsgRelayCmd& msg)
+	{
+		// Clamp the values to be sure!
+		msg.UavId = UavId + 1;
+		msg.MsgId = MsgId;
+		msg.HeightMin = std::min(std::max((int)(HeightMin - 50), 0), 255);
+		msg.HeightMax = std::min(std::max((int)(HeightMax - 50), 0), 255);
+		msg.AreaMinX = std::min(std::max((int)(AreaZero.x() * 1023/5000), 0), 1023);
+		msg.AreaMinY = std::min(std::max((int)(AreaZero.y() * 1023/5000), 0), 1023);
+		msg.AreaDX = std::min(std::max((int)(AreaSize.x() * 1023/5000), 0), 1023);
+		msg.AreaDY = std::min(std::max((int)(AreaSize.y() * 1023/5000), 0), 1023);
+		msg.AreaRotation = std::min(std::max((int)(AreaRotation.angle() * 1023*2/M_PI), 0), 1023);
+		msg.LandX = std::min(std::max((int)(Landing.Pos.x() * 4095/5000), 0), 4095);
+		msg.LandY = std::min(std::max((int)(Landing.Pos.y() * 4095/5000), 0), 4095);
+		msg.LandHeading = std::min(std::max((int)(Landing.Heading.angle() * 255/2/M_PI), 0), 255);
+		msg.LandLeftTurn = Landing.LeftTurn;
+		msg.Mode = Mode;
+		msg.EnablePlanner = EnablePlanner;
+	}
+
+
+	friend std::ostream& operator<<(std::ostream& os, const GsCmdStruct& struc)
+	{
+		os << "UavId=" << +struc.UavId << " MsgId=" << +struc.MsgId << " HeightMin=" << +struc.HeightMin << " HeightMax=" << +struc.HeightMax \
+				<< " AreaZero=[" << struc.AreaZero.transpose() << "] AreaDX=[" << struc.AreaSize.transpose() << "] AreaRotation=" << struc.AreaRotation.angle() \
+				<< " Landing=[" << struc.Landing << "] Mode=" << +struc.Mode << " EnablePlanner=" << struc.EnablePlanner;
+		return os;
+	}
+};
+
 class MapSelfStruct
 {
 	public:
@@ -351,18 +429,19 @@ class MapSelfStruct
 		MapSelfNeighboursStruct NeighBours;
 		RadioMsgRelayCmd		LastGsCmds[MAPSELF_GS_CMDS_HIST]; // Last cmd at index MAPSELF_GS_CMDS_HIST-1
 
-		float					HeightMin;
-		float					HeightMax;
-//		Position				Origin;		// Origin of local coordinate system in mercator coordinates
-		Position				AreaZero;	// In local coordinates
-		Position				AreaSize;	// In local coordinates
-		Rotation2DType			AreaRotation;	// In rad
-		LandingStruct			Landing;
-		uint8_t					RequestedAPModeByGS; // Requested by GS, see EAutoPilotMode
-		uint8_t					RequestedAPModeByWP; // Requested by WP, see EAutoPilotMode
-		bool					EnablePlanner;
+		GsCmdStruct				GsCmd;
 
-		MapSelfStruct(): AreaRotation(0) {}
+//		float					HeightMin;
+//		float					HeightMax;
+//		Position				AreaZero;	// In local coordinates
+//		Position				AreaSize;	// In local coordinates
+//		Rotation2DType			AreaRotation;	// In rad
+//		LandingStruct			Landing;
+//		uint8_t					RequestedAPModeByGS; // Requested by GS, see EAutoPilotMode
+		uint8_t					RequestedAPModeByWP; // Requested by WP, see EAutoPilotMode
+//		bool					EnablePlanner;
+
+		//MapSelfStruct(): AreaRotation(0) {}
 
 
 		//WayPointVectorType WayPoints; // Can't really do this, since you need to init the vector after the shared memory is made

@@ -30,6 +30,7 @@
 #include <deque>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include "AutoPilotProt.h"
 
 namespace rur {
 
@@ -42,6 +43,17 @@ struct GroundStationSimConfig
 
 	float OriginX; // Mercator coordinates
 	float OriginY; // Mercator coordinates
+	float AreaOriginX;
+	float AreaOriginY;
+	float AreaSizeX;
+	float AreaSizeY;
+	float AreaRotation;
+	float LandPointX;
+	float LandPointY;
+	float LandHeading;
+	bool LandLeftTurn;
+	float MinHeight;
+	float MaxHeight;
 
 	void load(const std::string &filename)
 	{
@@ -52,6 +64,17 @@ struct GroundStationSimConfig
 
 		OriginX = pt.get<float>("field.OriginX");
 		OriginY = pt.get<float>("field.OriginY");
+		AreaOriginX = pt.get<float>("field.AreaOriginX");
+		AreaOriginY = pt.get<float>("field.AreaOriginY");
+		AreaSizeX = pt.get<float>("field.AreaSizeX");
+		AreaSizeY = pt.get<float>("field.AreaSizeY");
+		AreaRotation = pt.get<float>("field.AreaRotation");
+		LandPointX = pt.get<float>("field.LandPointX");
+		LandPointY = pt.get<float>("field.LandPointY");
+		LandHeading = pt.get<float>("field.LandHeading");
+		LandLeftTurn = pt.get<bool>("field.LandLeftTurn");
+		MinHeight = pt.get<float>("UAV.MinHeight");
+		MaxHeight = pt.get<float>("UAV.MaxHeight");
 	}
 };
 
@@ -65,6 +88,7 @@ class CGroundStationSim : public groundStationSim
 		VecMsgType* VecMsg;
 		RadioMsgBuf SendBuffer;
 		RadioMsgBuf ReceiveBuffer;
+		RadioMsg CmdMsg;
 
 		// Reads msgs from the buffer, relays it to other modules, returns true if anything was read
 		void ReadReceiveBuffer();

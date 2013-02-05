@@ -54,7 +54,6 @@ struct MapSelfConfig
 	float LandPointY;
 	float LandHeading;
 	bool LandLeftTurn;
-
 	float MinHeight;
 	float MaxHeight;
 

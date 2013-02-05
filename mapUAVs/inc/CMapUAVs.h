@@ -82,6 +82,8 @@ class CMapUAVs : public mapUAVs
 		int* IntMsg;
 		std::vector<float>* VecMsg;
 
+		UavStruct Uav;
+
 		// Functions
 };
 

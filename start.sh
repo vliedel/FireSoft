@@ -6,6 +6,7 @@
 
 # Start the modules
 
+GS_ID=10
 NUM_AP=10
 if [ $1 ]
 then
@@ -34,8 +35,10 @@ fi
 # Start the central simulator
 sim/build/main 0 ${NUM_AP} ${NUM_RADIO} ${SIM_TIME} > output/output_sim &
 
-# Start the simulated ground station
-groundStationSim/build/main 0 > output/output_gs &
+# Start the simulated ground station with id GS_ID
+groundStationSim/build/main $GS_ID > output/output_gs &
+mapUAVs/build/main $GS_ID > output/output_mapuavs_${GS_ID} &
+gsGuiInterface/build/main $GS_ID > output/output_gsGuiInterface &
 
 # If there is hardware in the loop, don't start its modules on this pc
 i="0"
@@ -82,7 +85,9 @@ done
 
 
 # Modules that need to read shared memory need to wait a bit until shared memory is created
-sleep $[NUM * 10]
+sleep $[15 + NUM * 10]
+
+gsVisualizer/build/main $GS_ID > output/output_gsVis &
 
 i=$HIL
 while [ $i -lt $NUM ]

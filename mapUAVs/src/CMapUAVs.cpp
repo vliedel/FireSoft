@@ -110,14 +110,14 @@ void CMapUAVs::Tick()
 			int type = *it++;
 			switch (type)
 			{
-				case PROT_MAPUAV_DATAIN_UAV:
-				{
-					UavStruct uav;
-					it = FromCont(uav, it, VecMsg->end());
-					AddUAV(&uav);
-					break;
-				}
-				case PROT_MAPUAV_DATAIN_RADIOMSGPOS:
+//				case PROT_MAPUAV_DATAIN_UAV:
+//				{
+//					UavStruct uav;
+//					it = FromCont(uav, it, VecMsg->end());
+//					AddUAV(&uav);
+//					break;
+//				}
+				case PROT_RADIO_MSG_RELAY:
 				{
 					RadioMsgRelay msg;
 					it = FromCont(msg, it, VecMsg->end());
@@ -141,55 +141,76 @@ void CMapUAVs::Tick()
 	usleep(config.TickTime);
 }
 
-void CMapUAVs::AddUAV(std::vector<float>* vec)
-{
-	std::cout << "Don't use this anymore" << std::endl;
-	return;
+//void CMapUAVs::AddUAV(std::vector<float>* vec)
+//{
+//	std::cout << "Don't use this anymore" << std::endl;
+//	return;
+//
+//	boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
+//	printf("VecMsg size = %li. Contents: ", vec->size());
+//	dobots::print(vec->begin(), vec->end());
+//	UavStruct uav;
+//	if (vec->end() == FromCont(uav, vec->begin(), vec->end()))
+//		AddUAV(&uav);
+//	else
+//		printf("Invalid vector to create an UAVStruct!\n");
+//}
 
-	boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
-	printf("VecMsg size = %li. Contents: ", vec->size());
-	dobots::print(vec->begin(), vec->end());
-	UavStruct uav;
-	if (vec->end() == FromCont(uav, vec->begin(), vec->end()))
-		AddUAV(&uav);
-	else
-		printf("Invalid vector to create an UAVStruct!\n");
-}
-
-void CMapUAVs::AddUAV(UavStruct* uav)
-{
-	std::cout << "Don't use this anymore" << std::endl;
-	return;
-
-	boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
-	MapUavStruct uavOnMap;
-	uavOnMap.data = *uav;
-	uavOnMap.LastRadioReceiveTime = get_cur_1ms();
-	Map->erase(uav->UavId);
-	Map->insert(MapUavValueType(uav->UavId, uavOnMap));
-	//printf("Added/updated uav to shared mem\n");
-	//printf("Map size: %li\n", UAVMap->size());
-	//std::cout << *this << std::endl;
-}
+//void CMapUAVs::AddUAV(UavStruct* uav)
+//{
+//	std::cout << "Don't use this anymore" << std::endl;
+//	return;
+//
+//	boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
+//	MapUavStruct uavOnMap;
+//	uavOnMap.data = *uav;
+//	uavOnMap.LastRadioReceiveTime = get_cur_1ms();
+//	Map->erase(uav->UavId);
+//	Map->insert(MapUavValueType(uav->UavId, uavOnMap));
+//	//printf("Added/updated uav to shared mem\n");
+//	//printf("Map size: %li\n", UAVMap->size());
+//	//std::cout << *this << std::endl;
+//}
 
 void CMapUAVs::UpdateUav(RadioMsgRelay& msg)
 {
+//	int uavId;
+//	switch (msg.MessageType)
+//	{
+//		case RADIO_MSG_RELAY_POS:
+//		{
+//			Uav.FromRadioMsg(msg.Pos);
+//			uavId = Uav.UavId;
+//			break;
+//		}
+//		case RADIO_MSG_RELAY_FIRE:
+//		{
+//			// TODO: handle this..
+//			uavId = msg.Fires.Fire[0].UavId;
+//			break;
+//		}
+//		case RADIO_MSG_RELAY_CMD:
+//		{
+//			// TODO: what to do?
+//			break;
+//		}
+//	}
+
 	if (msg.MessageType != RADIO_MSG_RELAY_POS)
 		return;
-	UavStruct uav;
-	uav.FromRadioMsg(msg);
+	Uav.FromRadioMsg(msg.Pos);
 
 	boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
-	MapUavIterType it = Map->find(uav.UavId);
+	MapUavIterType it = Map->find(Uav.UavId);
 	if (it == Map->end())
 	{
 		MapUavStruct uavOnMap;
-		uavOnMap.data = uav;
+		uavOnMap.data = Uav;
 		uavOnMap.LastRadioMsgs[0] = msg; // LastRadioMsgs are initialized such that its filled with UavIds of 0 (invalid)
 		//uavOnMap.LastRadioMsgsIndex = 0;
 		uavOnMap.LastRadioReceiveTime = get_cur_1ms();
 		uavOnMap.LastRadioSentTime = 0;
-		Map->insert(MapUavValueType(uav.UavId, uavOnMap));
+		Map->insert(MapUavValueType(Uav.UavId, uavOnMap));
 		std::cout << "Added uav to shared mem" << std::endl;
 	}
 	else
@@ -213,7 +234,7 @@ void CMapUAVs::UpdateUav(RadioMsgRelay& msg)
 		it->second.LastRadioMsgsIndex = (it->second.LastRadioMsgsIndex+1) % MAPUAV_RADIOMSG_HIST;
 		it->second.LastRadioMsgs[it->second.LastRadioMsgsIndex] = msg;
 		it->second.LastRadioReceiveTime = get_cur_1ms();
-		it->second.data = uav;
+		it->second.data = Uav;
 		std::cout << "Updated uav in shared mem" << std::endl;
 	}
 }

@@ -88,19 +88,16 @@ void CMapSelf::Init(std::string module_id)
 		for (int i=0; i<MAPSELF_GS_CMDS_HIST; ++i)
 			Map->LastGsCmds[i].MsgId = 255; // TODO: magic number
 
-		Map->AreaZero.x() = config.AreaOriginX;
-		Map->AreaZero.y() = config.AreaOriginY;
-		Map->AreaSize.x() = config.AreaSizeX;
-		Map->AreaSize.y() = config.AreaSizeY;
-		Map->AreaRotation.angle() = config.AreaRotation;
-		Map->Landing.Pos.x() = config.LandPointX;
-		Map->Landing.Pos.y() = config.LandPointY;
-		Map->Landing.Heading.angle() = config.LandHeading;
-		Map->Landing.LeftTurn = config.LandLeftTurn;
-		Map->HeightMin = config.MinHeight;
-		Map->HeightMax = config.MaxHeight;
-		Map->RequestedAPModeByGS = AP_PROT_MODE_WP;
-		Map->EnablePlanner = true;
+		Map->GsCmd.HeightMin = config.MinHeight;
+		Map->GsCmd.HeightMax = config.MaxHeight;
+		Map->GsCmd.AreaZero << config.AreaOriginX, config.AreaOriginY, 0;
+		Map->GsCmd.AreaSize << config.AreaSizeX, config.AreaSizeY, 0;
+		Map->GsCmd.AreaRotation.angle() = config.AreaRotation;
+		Map->GsCmd.Landing.Pos << config.LandPointX, config.LandPointY, 0;
+		Map->GsCmd.Landing.Heading.angle() = config.LandHeading;
+		Map->GsCmd.Landing.LeftTurn = config.LandLeftTurn;
+		Map->GsCmd.Mode = AP_PROT_MODE_WP;
+		Map->GsCmd.EnablePlanner = true;
 	}
 }
 
@@ -233,57 +230,59 @@ void CMapSelf::Tick()
 		{
 			case PROT_MAPSELF_GS_CMD:
 			{
-				RadioMsgRelayCmd gsCmd;
-				if (VecMsg->end() == FromCont(gsCmd, VecMsg->begin(), VecMsg->end()))
+				RadioMsgRelayCmd gsCmdMsg;
+				if (VecMsg->end() == FromCont(gsCmdMsg, VecMsg->begin(), VecMsg->end()))
 				{
 					boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
 
 					// Shift history and add new msg at back
 					for (int i=0; i<MAPSELF_GS_CMDS_HIST-1; ++i)
 						Map->LastGsCmds[i] = Map->LastGsCmds[i+1];
-					Map->LastGsCmds[MAPSELF_GS_CMDS_HIST-1] = gsCmd;
+					Map->LastGsCmds[MAPSELF_GS_CMDS_HIST-1] = gsCmdMsg;
 
 					// Update current variables
 					// Translate to meters and radians
 					// TODO: MAGIC NUMBERS SO MANY
 
-					if (gsCmd.UavId == 15 || gsCmd.UavId == Map->UavData.UavId)
+					if (gsCmdMsg.UavId == 15 || gsCmdMsg.UavId-1 == Map->UavData.UavId)
 					{
-						// Height is 0 to 255, translate to 50 to 305
-						Map->HeightMin = gsCmd.HeightMin + 50;
-						Map->HeightMax = gsCmd.HeightMax + 50;
-						// Area has precision of 5 meter
-						Map->AreaZero.x() = gsCmd.AreaMinX * 5;
-						Map->AreaZero.y() = gsCmd.AreaMinY * 5;
-						Map->AreaSize.x() = gsCmd.AreaDX * 5;
-						Map->AreaSize.y() = gsCmd.AreaDY * 5;
-						// Rotation is 0 to 255, translate to 0 to 0.5*pi
-						Map->AreaRotation.angle() = 0.5*M_PI* gsCmd.AreaRotation / 255;
+						GsCmdStruct gsCmd;
+						gsCmd.fromMsg(gsCmdMsg);
+//						// Height is 0 to 255, translate to 50 to 305
+//						Map->HeightMin = gsCmd.HeightMin + 50;
+//						Map->HeightMax = gsCmd.HeightMax + 50;
+//						// Area has precision of 5 meter
+//						Map->AreaZero.x() = gsCmd.AreaMinX * 5;
+//						Map->AreaZero.y() = gsCmd.AreaMinY * 5;
+//						Map->AreaSize.x() = gsCmd.AreaDX * 5;
+//						Map->AreaSize.y() = gsCmd.AreaDY * 5;
+//						// Rotation is 0 to 1023, translate to 0 to 0.5*pi
+//						Map->AreaRotation.angle() = gsCmd.AreaRotation * 0.5*M_PI/1023;
 
-						// In meters
-						LandingStruct land;
-						land.Pos.x() = gsCmd.LandX;
-						land.Pos.y() = gsCmd.LandY;
-						// Heading is 0 to 255, translate to 0 to 2*pi
-						land.Heading.angle() = 2.0*M_PI* gsCmd.LandHeading /255;
-						land.LeftTurn = gsCmd.LandLeftTurn;
+//						// In meters
+//						LandingStruct land;
+//						land.Pos.x() = gsCmd.LandX;
+//						land.Pos.y() = gsCmd.LandY;
+//						// Heading is 0 to 255, translate to 0 to 2*pi
+//						land.Heading.angle() = gsCmd.LandHeading * 2.0*M_PI/255;
+//						land.LeftTurn = gsCmd.LandLeftTurn;
 
 						// If landing changed, update auto pilot
-						if (land.Pos.x() != Map->Landing.Pos.x() ||
-							land.Pos.y() != Map->Landing.Pos.y() ||
-							land.Heading.angle() != Map->Landing.Heading.angle() ||
-							land.LeftTurn != Map->Landing.LeftTurn
+						if (gsCmd.Landing.Pos.x() != Map->GsCmd.Landing.Pos.x() ||
+							gsCmd.Landing.Pos.y() != Map->GsCmd.Landing.Pos.y() ||
+							gsCmd.Landing.Heading.angle() != Map->GsCmd.Landing.Heading.angle() ||
+							gsCmd.Landing.LeftTurn != Map->GsCmd.Landing.LeftTurn
 							)
 						{
 							VecMsgType vecMsg;
 							vecMsg.push_back(PROT_AP_SET_LAND);
-							ToCont(land, vecMsg);
+							ToCont(gsCmd.Landing, vecMsg);
 							writeAutoPilot(vecMsg);
 						}
-						Map->Landing = land;
+						//Map->Landing = land;
 
 						// If AP mode changed, update auto pilot
-						if (Map->RequestedAPModeByGS != gsCmd.Mode)
+						if (Map->GsCmd.Mode != gsCmd.Mode)
 						{
 							VecMsgType vecMsg;
 							vecMsg.push_back(PROT_AP_SET_MODE);
@@ -294,9 +293,10 @@ void CMapSelf::Tick()
 								vecMsg.push_back(gsCmd.Mode);
 							writeAutoPilot(vecMsg);
 						}
-						Map->RequestedAPModeByGS = gsCmd.Mode;
+						//Map->RequestedAPModeByGS = gsCmd.Mode;
 
-						Map->EnablePlanner = gsCmd.EnablePlanner;
+						//Map->EnablePlanner = gsCmd.EnablePlanner;
+						Map->GsCmd = gsCmd;
 
 						// Check mode to update state
 						switch (gsCmd.Mode)
@@ -311,17 +311,17 @@ void CMapSelf::Tick()
 								Map->UavData.State = UAVSTATE_LANDING;
 								break;
 							case AP_PROT_MODE_STAY:
-								Map->EnablePlanner = false;
+								Map->GsCmd.EnablePlanner = false;
 								break;
 							case AP_PROT_MODE_WP:
 								//Map->UavData.State = UAVSTATE_FLYING;
-								Map->EnablePlanner = true;
+								Map->GsCmd.EnablePlanner = true;
 								break;
 						}
 					}
 				}
 				else
-					std::cout << "Invalid vector to create RadioMsgRelayCmd" << std::endl;
+					std::cout << "Error: invalid vector to create RadioMsgRelayCmd" << std::endl;
 
 				break;
 			}

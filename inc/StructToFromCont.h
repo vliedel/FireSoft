@@ -570,108 +570,108 @@ struct StC<SequenceContainer, SimUavStruct>
 };
 */
 
-template<typename InputForwardIter, typename OutputForwardIter>
-struct SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelayPos>
-{
-	static OutputForwardIter FromCont(SimRadioMsgRelayPos& struc, InputForwardIter first, InputForwardIter last)
-	{
-		struc.x = *first++;
-		struc.y = *first++;
-		struc.z = *first++;
-		struc.heading = *first++;
-		struc.speed = *first++;
-		struc.newZ = *first++;
-		struc.state = *first++;
-		struc.roll = *first++;
-		return first;
-	}
-};
-template<typename SequenceContainer>
-struct StC<SequenceContainer, SimRadioMsgRelayPos>
-{
-	static void ToCont(SimRadioMsgRelayPos& struc, SequenceContainer& cont)
-	{
-		cont.push_back(struc.x);
-		cont.push_back(struc.y);
-		cont.push_back(struc.z);
-		cont.push_back(struc.heading);
-		cont.push_back(struc.speed);
-		cont.push_back(struc.newZ);
-		cont.push_back(struc.state);
-		cont.push_back(struc.roll);
-	}
-};
-
-
-template<typename InputForwardIter, typename OutputForwardIter>
-struct SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>
-{
-	static OutputForwardIter FromCont(SimRadioMsgRelay& struc, InputForwardIter first, InputForwardIter last)
-	{
-		struc.MessageType = *first++;
-		struc.UavId = *first++;
-		if (struc.MessageType == RADIO_MSG_RELAY_POS)
-			first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelayPos>::FromCont(struc.pos, first, last);
-		return first;
-	}
-};
-template<typename SequenceContainer>
-struct StC<SequenceContainer, SimRadioMsgRelay>
-{
-	static void ToCont(SimRadioMsgRelay& struc, SequenceContainer& cont)
-	{
-		cont.push_back(struc.MessageType);
-		cont.push_back(struc.UavId);
-		if (struc.MessageType == RADIO_MSG_RELAY_POS)
-			StC<SequenceContainer, SimRadioMsgRelayPos>::ToCont(struc.pos, cont);
-	}
-};
-
-
-template<typename InputForwardIter, typename OutputForwardIter>
-struct SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelays>
-{
-	static OutputForwardIter FromCont(SimRadioMsgRelays& struc, InputForwardIter first, InputForwardIter last)
-	{
-		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>::FromCont(struc.data[0], first, last);
-		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>::FromCont(struc.data[1], first, last);
-		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>::FromCont(struc.data[2], first, last);
-		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>::FromCont(struc.data[3], first, last);
-		return first;
-	}
-};
-template<typename SequenceContainer>
-struct StC<SequenceContainer, SimRadioMsgRelays>
-{
-	static void ToCont(SimRadioMsgRelays& struc, SequenceContainer& cont)
-	{
-		StC<SequenceContainer, SimRadioMsgRelay>::ToCont(struc.data[0], cont);
-		StC<SequenceContainer, SimRadioMsgRelay>::ToCont(struc.data[1], cont);
-		StC<SequenceContainer, SimRadioMsgRelay>::ToCont(struc.data[2], cont);
-		StC<SequenceContainer, SimRadioMsgRelay>::ToCont(struc.data[3], cont);
-	}
-};
-
-
-template<typename InputForwardIter, typename OutputForwardIter>
-struct SfC<InputForwardIter, OutputForwardIter, SimRadioMsg>
-{
-	static OutputForwardIter FromCont(SimRadioMsg& struc, InputForwardIter first, InputForwardIter last)
-	{
-		struc.MessageType = *first++;
-		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelays>::FromCont(struc.data, first, last);
-		return first;
-	}
-};
-template<typename SequenceContainer>
-struct StC<SequenceContainer, SimRadioMsg>
-{
-	static void ToCont(SimRadioMsg& struc, SequenceContainer& cont)
-	{
-		cont.push_back(struc.MessageType);
-		StC<SequenceContainer, SimRadioMsgRelays>::ToCont(struc.data, cont);
-	}
-};
+//template<typename InputForwardIter, typename OutputForwardIter>
+//struct SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelayPos>
+//{
+//	static OutputForwardIter FromCont(SimRadioMsgRelayPos& struc, InputForwardIter first, InputForwardIter last)
+//	{
+//		struc.x = *first++;
+//		struc.y = *first++;
+//		struc.z = *first++;
+//		struc.heading = *first++;
+//		struc.speed = *first++;
+//		struc.newZ = *first++;
+//		struc.state = *first++;
+//		struc.roll = *first++;
+//		return first;
+//	}
+//};
+//template<typename SequenceContainer>
+//struct StC<SequenceContainer, SimRadioMsgRelayPos>
+//{
+//	static void ToCont(SimRadioMsgRelayPos& struc, SequenceContainer& cont)
+//	{
+//		cont.push_back(struc.x);
+//		cont.push_back(struc.y);
+//		cont.push_back(struc.z);
+//		cont.push_back(struc.heading);
+//		cont.push_back(struc.speed);
+//		cont.push_back(struc.newZ);
+//		cont.push_back(struc.state);
+//		cont.push_back(struc.roll);
+//	}
+//};
+//
+//
+//template<typename InputForwardIter, typename OutputForwardIter>
+//struct SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>
+//{
+//	static OutputForwardIter FromCont(SimRadioMsgRelay& struc, InputForwardIter first, InputForwardIter last)
+//	{
+//		struc.MessageType = *first++;
+//		struc.UavId = *first++;
+//		if (struc.MessageType == RADIO_MSG_RELAY_POS)
+//			first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelayPos>::FromCont(struc.pos, first, last);
+//		return first;
+//	}
+//};
+//template<typename SequenceContainer>
+//struct StC<SequenceContainer, SimRadioMsgRelay>
+//{
+//	static void ToCont(SimRadioMsgRelay& struc, SequenceContainer& cont)
+//	{
+//		cont.push_back(struc.MessageType);
+//		cont.push_back(struc.UavId);
+//		if (struc.MessageType == RADIO_MSG_RELAY_POS)
+//			StC<SequenceContainer, SimRadioMsgRelayPos>::ToCont(struc.pos, cont);
+//	}
+//};
+//
+//
+//template<typename InputForwardIter, typename OutputForwardIter>
+//struct SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelays>
+//{
+//	static OutputForwardIter FromCont(SimRadioMsgRelays& struc, InputForwardIter first, InputForwardIter last)
+//	{
+//		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>::FromCont(struc.data[0], first, last);
+//		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>::FromCont(struc.data[1], first, last);
+//		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>::FromCont(struc.data[2], first, last);
+//		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelay>::FromCont(struc.data[3], first, last);
+//		return first;
+//	}
+//};
+//template<typename SequenceContainer>
+//struct StC<SequenceContainer, SimRadioMsgRelays>
+//{
+//	static void ToCont(SimRadioMsgRelays& struc, SequenceContainer& cont)
+//	{
+//		StC<SequenceContainer, SimRadioMsgRelay>::ToCont(struc.data[0], cont);
+//		StC<SequenceContainer, SimRadioMsgRelay>::ToCont(struc.data[1], cont);
+//		StC<SequenceContainer, SimRadioMsgRelay>::ToCont(struc.data[2], cont);
+//		StC<SequenceContainer, SimRadioMsgRelay>::ToCont(struc.data[3], cont);
+//	}
+//};
+//
+//
+//template<typename InputForwardIter, typename OutputForwardIter>
+//struct SfC<InputForwardIter, OutputForwardIter, SimRadioMsg>
+//{
+//	static OutputForwardIter FromCont(SimRadioMsg& struc, InputForwardIter first, InputForwardIter last)
+//	{
+//		struc.MessageType = *first++;
+//		first = SfC<InputForwardIter, OutputForwardIter, SimRadioMsgRelays>::FromCont(struc.data, first, last);
+//		return first;
+//	}
+//};
+//template<typename SequenceContainer>
+//struct StC<SequenceContainer, SimRadioMsg>
+//{
+//	static void ToCont(SimRadioMsg& struc, SequenceContainer& cont)
+//	{
+//		cont.push_back(struc.MessageType);
+//		StC<SequenceContainer, SimRadioMsgRelays>::ToCont(struc.data, cont);
+//	}
+//};
 
 
 template<typename InputForwardIter, typename OutputForwardIter>

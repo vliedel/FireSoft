@@ -106,24 +106,24 @@ void CFitnessGenStatic::GenFitness()
 	Position p0, p1, p2, p3;
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf);
-		p0 = MapSelf->AreaZero;
+		p0 = MapSelf->GsCmd.AreaZero;
 		p0.x() += config.WallSigma;
 		p0.y() += config.WallSigma;
 
-		float dx = MapSelf->AreaSize.x() - 2*config.WallSigma;
-		float dy = MapSelf->AreaSize.y() - 2*config.WallSigma;
+		float dx = MapSelf->GsCmd.AreaSize.x() - 2*config.WallSigma;
+		float dy = MapSelf->GsCmd.AreaSize.y() - 2*config.WallSigma;
 
 		p1 = p0;
-		p1.x() += dx * cos(MapSelf->AreaRotation.angle());
-		p1.y() += dx * sin(MapSelf->AreaRotation.angle());
+		p1.x() += dx * cos(MapSelf->GsCmd.AreaRotation.angle());
+		p1.y() += dx * sin(MapSelf->GsCmd.AreaRotation.angle());
 
 		p2 = p1;
-		p2.x() += dy * cos(MapSelf->AreaRotation.angle() + 0.5*M_PI);
-		p2.y() += dy * sin(MapSelf->AreaRotation.angle() + 0.5*M_PI);
+		p2.x() += dy * cos(MapSelf->GsCmd.AreaRotation.angle() + 0.5*M_PI);
+		p2.y() += dy * sin(MapSelf->GsCmd.AreaRotation.angle() + 0.5*M_PI);
 
 		p3 = p0;
-		p3.x() += dy * cos(MapSelf->AreaRotation.angle() + 0.5*M_PI);
-		p3.y() += dy * sin(MapSelf->AreaRotation.angle() + 0.5*M_PI);
+		p3.x() += dy * cos(MapSelf->GsCmd.AreaRotation.angle() + 0.5*M_PI);
+		p3.y() += dy * sin(MapSelf->GsCmd.AreaRotation.angle() + 0.5*M_PI);
 
 //		p0 << config.WallSigma, 				config.WallSigma, 0;
 //		p1 << config.MaxX-config.WallSigma, 	config.WallSigma, 0;

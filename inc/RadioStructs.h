@@ -51,7 +51,6 @@ enum ERadioMsgRelayType {
 
 #pragma pack(1)
 
-
 struct RadioMsgRelayPos
 {
 	uint8_t UavId; // ID of the UAV where the msg originates from
@@ -319,14 +318,14 @@ struct RadioMsgRelayCmd
 	uint16_t HeightMin;
 	uint16_t HeightMax;
 
-	int AreaMinX;
-	int AreaMinY;
+	uint16_t AreaMinX;
+	uint16_t AreaMinY;
 	uint16_t AreaDX;
 	uint16_t AreaDY;
 	uint16_t AreaRotation;
 
-	int LandX;
-	int LandY;
+	uint16_t LandX;
+	uint16_t LandY;
 	uint16_t LandHeading;
 	bool LandLeftTurn;
 
@@ -338,10 +337,10 @@ struct RadioMsgRelayCmd
 
 	friend std::ostream& operator<<(std::ostream& os, const RadioMsgRelayCmd& struc)
 	{
-		os << "UavId=" << +struc.UavId << " MsgId=" << +struc.MsgId << " HeightMin=" << struc.HeightMin << " HeightMax=" << struc.HeightMax \
-				<< " AreaMinX=" << struc.AreaMinX << " AreaMinY=" << struc.AreaMinY \
-				<< " AreaDX=" << struc.AreaDX << " AreaDY=" << struc.AreaDY << " AreaRotation=" << struc.AreaRotation \
-				<< " LandX=" << struc.LandX << " LandY=" << struc.LandY << " LandHeading=" << struc.LandHeading \
+		os << "UavId=" << +struc.UavId << " MsgId=" << +struc.MsgId << " HeightMin=" << +struc.HeightMin << " HeightMax=" << +struc.HeightMax \
+				<< " AreaMinX=" << +struc.AreaMinX << " AreaMinY=" << +struc.AreaMinY \
+				<< " AreaDX=" << +struc.AreaDX << " AreaDY=" << +struc.AreaDY << " AreaRotation=" << +struc.AreaRotation \
+				<< " LandX=" << +struc.LandX << " LandY=" << +struc.LandY << " LandHeading=" << +struc.LandHeading \
 				<< " LandLeftTurn=" << struc.LandLeftTurn << " Mode=" << +struc.Mode << " EnablePlanner=" << struc.EnablePlanner;
 		return os;
 	}

@@ -26,25 +26,36 @@ struct Param {
 
 // Typedef for array of integers
 typedef sequence<long> long_seq;
+typedef sequence<float> float_seq;
 
 // We want to be able to give our class a name
 interface radio {
 
-  // Input from radio processor
-  void ToBuffer(in long_seq msg);
-  // Length of radio message (needed by some middlewares)
-  //void ToBufferArrayLength(in long msg_l);
-
-  // Output is one value each time
-  void FromBuffer(out long_seq msg);
-  // Length of radio message (needed by some middlewares)
-  //void FromBufferArrayLength(out long msg_l);
+  // -- All modules have a command and status link --
 
   // Module takes certain predefined commands
   void Command(in long cmd);
   
   // Outgoing status updates or replies
   void Status(out long val);
+  
+  
+  // -- Radio interfaces --
+
+  // Let msg planner know when it can send msgs  
+  void ToMsgPlanner(out long cmd);
+  
+  // Msgs to be sent
+  void FromMsgPlanner(in float_seq msg);
+
+  // Received msgs update the uav map
+  void ToMapUAVs(out float_seq msg);
+  
+  // UAV map lets know when it updated the map
+  void FromMapUAVs(in long cmd);
+  
+  // Commands from ground station are stored in map self
+  void ToMapSelf(out float_seq msg);
 
 };
 

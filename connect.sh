@@ -3,6 +3,7 @@
 # Connect simout to simulator
 yarp connect /simout /sim0/command
 
+GS_ID=10
 NUM_AP=10
 if [ $1 ]
 then
@@ -23,8 +24,13 @@ else
 fi
 
 # Connect ground station to simulator
-yarp connect /sim0/groundstation /groundstationsim0/sim
-yarp connect /groundstationsim0/tosim /sim0/fromgroundstation
+yarp connect /sim0/groundstation /groundstationsim${GS_ID}/sim
+yarp connect /groundstationsim${GS_ID}/tosim /sim0/fromgroundstation
+
+# Connect modules within ground station
+yarp connect /groundstationsim${GS_ID}/tomapuavs /mapuavs${GS_ID}/fromradio
+yarp connect /groundstationsim${GS_ID}/toguiinterface /gsguiinterface${GS_ID}/fromradio
+yarp connect /gsguiinterface${GS_ID}/fromradio /groundstationsim${GS_ID}/fromguiinterface
 
 # Connect simulator to UAVs
 i="0"

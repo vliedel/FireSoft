@@ -101,7 +101,8 @@ void CMsgPlanner::SelectMsgs()
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf);
 
-		MapSelf->UavData.ToRadioMsg(SelectedMsgs[0]);
+		SelectedMsgs[0].MessageType = RADIO_MSG_RELAY_POS;
+		MapSelf->UavData.ToRadioMsg(SelectedMsgs[0].Pos);
 	}
 
 	{

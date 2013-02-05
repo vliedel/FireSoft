@@ -12,6 +12,8 @@ all:
 	cd fitnessGenCoverage && make
 	cd fitnessGenStatic && make
 	cd groundStationSim && make
+	cd gsGuiInterface && make
+	cd gsVisualizer && make
 #	cd map && make
 	cd mapFire && make
 	cd mapFitness && make
@@ -36,6 +38,8 @@ debug:
 	cd fitnessGenCoverage && make debug
 	cd fitnessGenStatic && make debug
 	cd groundStationSim && make debug
+	cd gsGuiInterface && make debug
+	cd gsVisualizer && make debug
 #	cd map && make debug
 	cd mapFire && make debug
 	cd mapFitness && make debug
@@ -59,6 +63,8 @@ gumstix:
 	cd fitnessGenCoverage && make gumstix
 	cd fitnessGenStatic && make gumstix
 	cd groundStationSim && make gumstix
+	cd gsGuiInterface && make gumstix
+	cd gsVisualizer && make gumstix
 #	cd map && make gumstix
 	cd mapFire && make gumstix
 	cd mapFitness && make gumstix

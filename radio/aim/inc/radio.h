@@ -39,6 +39,8 @@ struct Param {
 
 typedef std::vector<int> long_seq;
 
+typedef std::vector<float> float_seq;
+
 // The generated class. Do not modify or add class members
 // Either derive from this class and implement Tick() or
 // use a separate helper class to store state information.
@@ -49,14 +51,6 @@ private:
   Network yarp;
   std::string module_id;
   
-  // private storage for portToBufferValues;
-  std::vector<int> *portToBufferValues;
-  // the port portToBuffer itself
-  BufferedPort<Bottle> *portToBuffer;
-  
-  // the port portFromBuffer itself
-  BufferedPort<Bottle> *portFromBuffer;
-  
   // private storage for portCommandValue
   int portCommandValue;
   // the port portCommand itself
@@ -65,6 +59,25 @@ private:
   // the port portStatus itself
   BufferedPort<Bottle> *portStatus;
   
+  // the port portToMsgPlanner itself
+  BufferedPort<Bottle> *portToMsgPlanner;
+  
+  // private storage for portFromMsgPlannerValues;
+  std::vector<float> *portFromMsgPlannerValues;
+  // the port portFromMsgPlanner itself
+  BufferedPort<Bottle> *portFromMsgPlanner;
+  
+  // the port portToMapUAVs itself
+  BufferedPort<Bottle> *portToMapUAVs;
+  
+  // private storage for portFromMapUAVsValue
+  int portFromMapUAVsValue;
+  // the port portFromMapUAVs itself
+  BufferedPort<Bottle> *portFromMapUAVs;
+  
+  // the port portToMapSelf itself
+  BufferedPort<Bottle> *portToMapSelf;
+  
   // User-defined structs (automatically allocated later)
   Param *cliParam;
 
@@ -72,27 +85,39 @@ public:
   // The constructor needs to be called, also when you derive from this class
   radio() {
     cliParam = new Param();
-    portToBufferValues = new std::vector<int>();
-    portToBuffer = new BufferedPort<Bottle>();
-    portToBuffer->setStrict();
-    portToBuffer->writeStrict();
-    portFromBuffer = new BufferedPort<Bottle>();
-    portFromBuffer->setStrict();
-    portFromBuffer->writeStrict();
     portCommand = new BufferedPort<Bottle>();
     portCommand->setStrict();
     portCommand->writeStrict();
     portStatus = new BufferedPort<Bottle>();
     portStatus->setStrict();
     portStatus->writeStrict();
+    portToMsgPlanner = new BufferedPort<Bottle>();
+    portToMsgPlanner->setStrict();
+    portToMsgPlanner->writeStrict();
+    portFromMsgPlannerValues = new std::vector<float>();
+    portFromMsgPlanner = new BufferedPort<Bottle>();
+    portFromMsgPlanner->setStrict();
+    portFromMsgPlanner->writeStrict();
+    portToMapUAVs = new BufferedPort<Bottle>();
+    portToMapUAVs->setStrict();
+    portToMapUAVs->writeStrict();
+    portFromMapUAVs = new BufferedPort<Bottle>();
+    portFromMapUAVs->setStrict();
+    portFromMapUAVs->writeStrict();
+    portToMapSelf = new BufferedPort<Bottle>();
+    portToMapSelf->setStrict();
+    portToMapSelf->writeStrict();
   }
   
   ~radio() {
-    delete portToBufferValues;
-    delete portToBuffer;
-    delete portFromBuffer;
     delete portCommand;
     delete portStatus;
+    delete portToMsgPlanner;
+    delete portFromMsgPlannerValues;
+    delete portFromMsgPlanner;
+    delete portToMapUAVs;
+    delete portFromMapUAVs;
+    delete portToMapSelf;
     delete cliParam;
   }
   
@@ -107,16 +132,6 @@ public:
     
     {
       std::stringstream portName; portName.str(); portName.clear();
-      portName << "/radio" << module_id << "/tobuffer";
-      portToBuffer->open(portName.str().c_str());
-    }
-    {
-      std::stringstream portName; portName.str(); portName.clear();
-      portName << "/radio" << module_id << "/frombuffer";
-      portFromBuffer->open(portName.str().c_str());
-    }
-    {
-      std::stringstream portName; portName.str(); portName.clear();
       portName << "/radio" << module_id << "/command";
       portCommand->open(portName.str().c_str());
     }
@@ -125,15 +140,43 @@ public:
       portName << "/radio" << module_id << "/status";
       portStatus->open(portName.str().c_str());
     }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/radio" << module_id << "/tomsgplanner";
+      portToMsgPlanner->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/radio" << module_id << "/frommsgplanner";
+      portFromMsgPlanner->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/radio" << module_id << "/tomapuavs";
+      portToMapUAVs->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/radio" << module_id << "/frommapuavs";
+      portFromMapUAVs->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/radio" << module_id << "/tomapself";
+      portToMapSelf->open(portName.str().c_str());
+    }
   }
   
   // Before destruction you will need to call this function first
   // it closes the YARP ports
   void Close() {
-    portToBuffer->close();
-    portFromBuffer->close();
     portCommand->close();
     portStatus->close();
+    portToMsgPlanner->close();
+    portFromMsgPlanner->close();
+    portToMapUAVs->close();
+    portFromMapUAVs->close();
+    portToMapSelf->close();
   }
   
   // Function to get Param struct (to subsequently set CLI parameters)
@@ -142,26 +185,6 @@ public:
 protected:
   // All subsequent functions should be called from "within" this module
   // From either the Tick() routine itself, or Tick() in a derived class
-  
-  // Remark: caller is responsible for evoking vector.clear()
-  inline std::vector<int> *readToBuffer(bool blocking=true) {
-    Bottle *b = portToBuffer->read(blocking);
-    if (b != NULL) { 
-      for (int i = 0; i < b->size(); ++i) {
-        portToBufferValues->push_back(b->get(i).asInt());
-      }
-    }
-    return portToBufferValues;
-  }
-  
-  inline void writeFromBuffer(const long_seq &msg) {
-    Bottle &msgPrepare = portFromBuffer->prepare();
-    msgPrepare.clear();
-    for (int i = 0; i < msg.size(); ++i) {
-      msgPrepare.addInt(msg[i]);
-    }
-    portFromBuffer->write(true);
-  }
   
   inline int *readCommand(bool blocking=true) {
     Bottle *b = portCommand->read(blocking);
@@ -177,6 +200,51 @@ protected:
     valPrepare.clear();
     valPrepare.addInt(val);
     portStatus->write(true);
+  }
+  
+  inline void writeToMsgPlanner(const int cmd) {
+    Bottle &cmdPrepare = portToMsgPlanner->prepare();
+    cmdPrepare.clear();
+    cmdPrepare.addInt(cmd);
+    portToMsgPlanner->write(true);
+  }
+  
+  // Remark: caller is responsible for evoking vector.clear()
+  inline std::vector<float> *readFromMsgPlanner(bool blocking=true) {
+    Bottle *b = portFromMsgPlanner->read(blocking);
+    if (b != NULL) { 
+      for (int i = 0; i < b->size(); ++i) {
+        portFromMsgPlannerValues->push_back(b->get(i).asDouble());
+      }
+    }
+    return portFromMsgPlannerValues;
+  }
+  
+  inline void writeToMapUAVs(const float_seq &msg) {
+    Bottle &msgPrepare = portToMapUAVs->prepare();
+    msgPrepare.clear();
+    for (int i = 0; i < msg.size(); ++i) {
+      msgPrepare.addDouble(msg[i]);
+    }
+    portToMapUAVs->write(true);
+  }
+  
+  inline int *readFromMapUAVs(bool blocking=true) {
+    Bottle *b = portFromMapUAVs->read(blocking);
+    if (b != NULL) { 
+      portFromMapUAVsValue = b->get(0).asInt();
+      return &portFromMapUAVsValue;
+    }
+    return NULL;
+  }
+  
+  inline void writeToMapSelf(const float_seq &msg) {
+    Bottle &msgPrepare = portToMapSelf->prepare();
+    msgPrepare.clear();
+    for (int i = 0; i < msg.size(); ++i) {
+      msgPrepare.addDouble(msg[i]);
+    }
+    portToMapSelf->write(true);
   }
   
 };

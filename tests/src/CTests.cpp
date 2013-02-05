@@ -360,6 +360,7 @@ void CTests::Init(std::string module_id)
 	Check<SimUavStruct>(simUavStruct, vec, vec2, "SimUavStruct");
 */
 
+/*
 	vec.clear();
 	for (int i=0; i<1+4*(2+8); ++i)
 		vec.push_back(i);
@@ -369,7 +370,7 @@ void CTests::Init(std::string module_id)
 	vec[1+30] = 0;
 	SimRadioMsg simRadioMsg;
 	Check<SimRadioMsg>(simRadioMsg, vec, vec2, "SimRadioMsg");
-
+*/
 
 	vec.clear();
 	for (int i=0; i<1+(1+16)+(1+2*(11)); ++i)

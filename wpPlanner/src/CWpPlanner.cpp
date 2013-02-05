@@ -174,13 +174,16 @@ void CWpPlanner::Plan()
 		state = MapSelf->UavData.State;
 		oldState = MapSelf->PreviousState;
 		batteryTimeLeft = MapSelf->UavData.BatteryTimeLeft;
-		landing = MapSelf->Landing;
-		minHeight = MapSelf->HeightMin;
-		maxHeight = MapSelf->HeightMax;
-		enablePlanner = MapSelf->EnablePlanner;
+		landing = MapSelf->GsCmd.Landing;
+		minHeight = MapSelf->GsCmd.HeightMin;
+		maxHeight = MapSelf->GsCmd.HeightMax;
+		enablePlanner = MapSelf->GsCmd.EnablePlanner;
 	}
 	if (!enablePlanner)
+	{
+		std::cout << get_cur_1ms() << " wp planner is disabled" << std::endl;
 		return;
+	}
 
 	UAVState newState = state;
 	UAVState newOldState = oldState;

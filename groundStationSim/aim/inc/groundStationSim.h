@@ -67,6 +67,17 @@ private:
   // the port portToSim itself
   BufferedPort<Bottle> *portToSim;
   
+  // the port portToMapUavs itself
+  BufferedPort<Bottle> *portToMapUavs;
+  
+  // the port portToGuiInterface itself
+  BufferedPort<Bottle> *portToGuiInterface;
+  
+  // private storage for portFromGuiInterfaceValues;
+  std::vector<float> *portFromGuiInterfaceValues;
+  // the port portFromGuiInterface itself
+  BufferedPort<Bottle> *portFromGuiInterface;
+  
   // User-defined structs (automatically allocated later)
   Param *cliParam;
 
@@ -87,6 +98,16 @@ public:
     portToSim = new BufferedPort<Bottle>();
     portToSim->setStrict();
     portToSim->writeStrict();
+    portToMapUavs = new BufferedPort<Bottle>();
+    portToMapUavs->setStrict();
+    portToMapUavs->writeStrict();
+    portToGuiInterface = new BufferedPort<Bottle>();
+    portToGuiInterface->setStrict();
+    portToGuiInterface->writeStrict();
+    portFromGuiInterfaceValues = new std::vector<float>();
+    portFromGuiInterface = new BufferedPort<Bottle>();
+    portFromGuiInterface->setStrict();
+    portFromGuiInterface->writeStrict();
   }
   
   ~groundStationSim() {
@@ -95,6 +116,10 @@ public:
     delete portSimValues;
     delete portSim;
     delete portToSim;
+    delete portToMapUavs;
+    delete portToGuiInterface;
+    delete portFromGuiInterfaceValues;
+    delete portFromGuiInterface;
     delete cliParam;
   }
   
@@ -127,6 +152,21 @@ public:
       portName << "/groundstationsim" << module_id << "/tosim";
       portToSim->open(portName.str().c_str());
     }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/groundstationsim" << module_id << "/tomapuavs";
+      portToMapUavs->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/groundstationsim" << module_id << "/toguiinterface";
+      portToGuiInterface->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/groundstationsim" << module_id << "/fromguiinterface";
+      portFromGuiInterface->open(portName.str().c_str());
+    }
   }
   
   // Before destruction you will need to call this function first
@@ -136,6 +176,9 @@ public:
     portStatus->close();
     portSim->close();
     portToSim->close();
+    portToMapUavs->close();
+    portToGuiInterface->close();
+    portFromGuiInterface->close();
   }
   
   // Function to get Param struct (to subsequently set CLI parameters)
@@ -188,6 +231,35 @@ protected:
       seqPrepare.addDouble(seq[i]);
     }
     portToSim->write(true);
+  }
+  
+  inline void writeToMapUavs(const float_seq &seq) {
+    Bottle &seqPrepare = portToMapUavs->prepare();
+    seqPrepare.clear();
+    for (int i = 0; i < seq.size(); ++i) {
+      seqPrepare.addDouble(seq[i]);
+    }
+    portToMapUavs->write(true);
+  }
+  
+  inline void writeToGuiInterface(const float_seq &seq) {
+    Bottle &seqPrepare = portToGuiInterface->prepare();
+    seqPrepare.clear();
+    for (int i = 0; i < seq.size(); ++i) {
+      seqPrepare.addDouble(seq[i]);
+    }
+    portToGuiInterface->write(true);
+  }
+  
+  // Remark: caller is responsible for evoking vector.clear()
+  inline std::vector<float> *readFromGuiInterface(bool blocking=true) {
+    Bottle *b = portFromGuiInterface->read(blocking);
+    if (b != NULL) { 
+      for (int i = 0; i < b->size(); ++i) {
+        portFromGuiInterfaceValues->push_back(b->get(i).asDouble());
+      }
+    }
+    return portFromGuiInterfaceValues;
   }
   
 };
