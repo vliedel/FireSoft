@@ -151,6 +151,32 @@ void CGroundStationSim::Tick()
 		}
 	}
 
+	VecMsg = readFromGuiInterface(false);
+	if (!VecMsg->empty())
+	{
+		std::cout << "RADIO " << ModuleId << " from GuiInterface: ";
+		dobots::print(VecMsg->begin(), VecMsg->end());
+		// Should have more protocol here?
+
+		VecMsgType::iterator it = VecMsg->begin();
+		while (it != VecMsg->end())
+		{
+			int type = *it++;
+			//std::cout << "Type=" << type << std::endl;
+			switch (type)
+			{
+				case RADIO_MSG_RELAY_CMD:
+				{
+					RadioMsgRelayCmd cmdMsg;
+					it = FromCont(cmdMsg, it, VecMsg->end());
+					CmdMsg.Data.Data[1].Cmd = cmdMsg;
+					break;
+				}
+			}
+
+		}
+		VecMsg->clear();
+	}
 	usleep(config.TickTime);
 }
 

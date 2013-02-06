@@ -30,7 +30,7 @@ yarp connect /groundstationsim${GS_ID}/tosim /sim0/fromgroundstation
 # Connect modules within ground station
 yarp connect /groundstationsim${GS_ID}/tomapuavs /mapuavs${GS_ID}/fromradio
 yarp connect /groundstationsim${GS_ID}/toguiinterface /gsguiinterface${GS_ID}/fromradio
-yarp connect /gsguiinterface${GS_ID}/fromradio /groundstationsim${GS_ID}/fromguiinterface
+yarp connect /gsguiinterface${GS_ID}/toradio /groundstationsim${GS_ID}/fromguiinterface
 
 # Connect simulator to UAVs
 i="0"

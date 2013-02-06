@@ -583,84 +583,84 @@ struct RadioMsg
 #pragma pack()
 
 
-// Structs for the simulation
+//// Structs for the simulation
+//
+//struct SimRadioMsgRelayPos
+//{
+//	//SimRadioMsgRelayPos(): x(0), y(0), z(0), heading(0), speed(0), newZ(0), state(0), roll(0) {}
+//	float x;
+//	float y;
+//	float z;
+//	float heading;
+//	float speed;
+//	float newZ;
+//	int state;
+//	float roll;
+//
+//	friend std::ostream& operator<<(std::ostream& os, const SimRadioMsgRelayPos& struc)
+//	{
+//		os << "x=" << struc.x << " y=" << struc.y << " z=" << struc.z << " heading=" << struc.heading;
+//		os << " speed=" << struc.speed << " newZ=" << struc.newZ << " state=" << struc.state << " roll=" << struc.roll;
+//		return os;
+//	}
+//};
+//
+//struct SimRadioMsgRelayFire
+//{
+//
+//	float x;
+//	float y;
+//	float varX;
+//	float varY;
+//	float rot;
+//	float pCam;
+//	float pTPA;
+//	float pMicro;
+//	float z;
+//};
 
-struct SimRadioMsgRelayPos
-{
-	//SimRadioMsgRelayPos(): x(0), y(0), z(0), heading(0), speed(0), newZ(0), state(0), roll(0) {}
-	float x;
-	float y;
-	float z;
-	float heading;
-	float speed;
-	float newZ;
-	int state;
-	float roll;
-
-	friend std::ostream& operator<<(std::ostream& os, const SimRadioMsgRelayPos& struc)
-	{
-		os << "x=" << struc.x << " y=" << struc.y << " z=" << struc.z << " heading=" << struc.heading;
-		os << " speed=" << struc.speed << " newZ=" << struc.newZ << " state=" << struc.state << " roll=" << struc.roll;
-		return os;
-	}
-};
-
-struct SimRadioMsgRelayFire
-{
-
-	float x;
-	float y;
-	float varX;
-	float varY;
-	float rot;
-	float pCam;
-	float pTPA;
-	float pMicro;
-	float z;
-};
 
 
-
-struct SimRadioMsgRelay
-{
-	SimRadioMsgRelay(): MessageType(0), UavId(0) {}
-	bool MessageType;
-	int UavId;
-	union {
-		SimRadioMsgRelayPos pos;
-		SimRadioMsgRelayFire fire;
-	};
-
-	friend std::ostream& operator<<(std::ostream& os, const SimRadioMsgRelay& struc)
-	{
-		os << "MessageType=" << struc.MessageType << " UavId=" << struc.UavId << " ";
-		if (struc.MessageType == RADIO_MSG_RELAY_POS)
-			os << struc.pos;
-		return os;
-	}
-};
-
-struct SimRadioMsgRelays
-{
-	SimRadioMsgRelay data[RADIO_NUM_RELAY_PER_MSG];
-
-	friend std::ostream& operator<<(std::ostream& os, const SimRadioMsgRelays& struc)
-	{
-		os << "[" << struc.data[0] << "] [" << struc.data[1] << "] [" << struc.data[2] << "] [" << struc.data[3] << "]";
-		return os;
-	}
-};
-
-struct SimRadioMsg
-{
-	int MessageType;
-	SimRadioMsgRelays data;
-
-	friend std::ostream& operator<<(std::ostream& os, const SimRadioMsg& struc)
-	{
-		os << "MessageType=" << struc.MessageType << " " << struc.data;
-		return os;
-	}
-};
+//struct SimRadioMsgRelay
+//{
+//	SimRadioMsgRelay(): MessageType(0), UavId(0) {}
+//	bool MessageType;
+//	int UavId;
+//	union {
+//		SimRadioMsgRelayPos pos;
+//		SimRadioMsgRelayFire fire;
+//	};
+//
+//	friend std::ostream& operator<<(std::ostream& os, const SimRadioMsgRelay& struc)
+//	{
+//		os << "MessageType=" << struc.MessageType << " UavId=" << struc.UavId << " ";
+//		if (struc.MessageType == RADIO_MSG_RELAY_POS)
+//			os << struc.pos;
+//		return os;
+//	}
+//};
+//
+//struct SimRadioMsgRelays
+//{
+//	SimRadioMsgRelay data[RADIO_NUM_RELAY_PER_MSG];
+//
+//	friend std::ostream& operator<<(std::ostream& os, const SimRadioMsgRelays& struc)
+//	{
+//		os << "[" << struc.data[0] << "] [" << struc.data[1] << "] [" << struc.data[2] << "] [" << struc.data[3] << "]";
+//		return os;
+//	}
+//};
+//
+//struct SimRadioMsg
+//{
+//	int MessageType;
+//	SimRadioMsgRelays data;
+//
+//	friend std::ostream& operator<<(std::ostream& os, const SimRadioMsg& struc)
+//	{
+//		os << "MessageType=" << struc.MessageType << " " << struc.data;
+//		return os;
+//	}
+//};
 
 #endif // RADIOSTRUCTS_H_

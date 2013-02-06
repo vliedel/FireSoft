@@ -143,23 +143,22 @@ class UavStruct
 			return os;
 		}
 
-		// TODO: conversions
 		void FromRadioMsg(RadioMsgRelayPos& msg)
 		{
-//			if (msg.MessageType != RADIO_MSG_RELAY_POS)
-//				return;
 			UavId = msg.UavId - 1;
-			State = (UAVState)msg.State;
-			Geom.Pos.x() = msg.X;
-			Geom.Pos.y() = msg.Y;
-			Geom.Pos.z() = msg.Z;
-			Geom.GroundSpeed = msg.GroundSpeed;
-			//Geom.VerticalSpeed = msg.DZ[0]; // wrong
+			// X and Y are 0 to 2047, convert to 0 to 5000
+			Geom.Pos.x() = msg.X * 5000/2047;
+			Geom.Pos.y() = msg.Y * 5000/2047;
+			// Z is 0 to 127, convert to 0 to 300
+			Geom.Pos.z() = msg.Z * 300/127;
+			// Heading is 0 to 63, convert to 0 to 2*pi
+			Geom.Heading.angle() = msg.Heading * 2*M_PI/63;
+			// GroundSpeed is 0 to 15, convert to 0 to 33
+			Geom.GroundSpeed = msg.GroundSpeed * 33/15;
 			Geom.VerticalSpeed = 0; // Assumption
-
-			Geom.Heading.angle() = msg.Heading;
-			Geom.Roll.angle() = msg.Roll;
-			//Geom.Pitch.angle() = msg.DZ[0]; // Wrong
+			State = (UAVState)msg.State;
+			// Roll is -15 to 15, convert to -0.5*pi to 0.5pi
+			Geom.Roll.angle() = msg.Roll * M_PI/2/15;
 			Geom.Pitch.angle() = 0; // Assumption
 			Geom.RotationUpToDate = false;
 
@@ -167,8 +166,9 @@ class UavStruct
 			for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
 			{
 				WpNext[i].from = from;
-				WpNext[i].to.x() = from.x() + msg.DX[i];
-				WpNext[i].to.y() = from.y() + msg.DY[i];
+				// X and Y are -63 to 63, convert to -100 to 100
+				WpNext[i].to.x() = from.x() + msg.DX[i] * 100/63;
+				WpNext[i].to.y() = from.y() + msg.DY[i] * 100/63;
 				//WpNext.to.z() = from.z() + msg.DZ[i];
 				WpNext[i].to.z() = from.z(); // Assumption
 				WpNext[i].wpMode = WP_LINE;
@@ -179,23 +179,27 @@ class UavStruct
 				//WpNext[i].AngleArc = 0; // Only lines
 				from = WpNext[i].to;
 			}
-			BatteryTimeLeft = msg.BatteryLeft;
+			// BatteryLeft is 0 to 255, convert to 0 to 45*60
+			BatteryTimeLeft = msg.BatteryLeft *45*60/255;
 			// TODO: retrieve APStatus from radio msg
 			//APStatus.AutoPilotState = msg.Status;
 		}
 
-		// TODO: conversions
 		void ToRadioMsg(RadioMsgRelayPos& msg)
 		{
-			//msg.MessageType = RADIO_MSG_RELAY_POS;
 			msg.UavId = UavId + 1;
-			msg.X = Geom.Pos.x();
-			msg.Y = Geom.Pos.y();
-			msg.Z = Geom.Pos.z();
-			msg.Heading = Geom.Heading.angle();
-			msg.GroundSpeed = Geom.GroundSpeed;
+			// X and Y are 0 to 5000, convert to 0 to 2047
+			msg.X = Geom.Pos.x() * 2047/5000;
+			msg.Y = Geom.Pos.y() * 2047/5000;
+			// Z is 0 to 300, convert to 0 to 127
+			msg.Z = Geom.Pos.z() * 127/300;
+			// Heading is 0 to 2*pi, convert to 0 to 63
+			msg.Heading = Geom.Heading.angle() * 63/2/M_PI;
+			// GroundSpeed is 0 to 33, convert to 0 to 15
+			msg.GroundSpeed = Geom.GroundSpeed * 15/33;
 			msg.State = State;
-			msg.Roll = Geom.Roll.angle();
+			// Roll is -0.5*pi to 0.5pi, convert to -15 to 15
+			msg.Roll = Geom.Roll.angle() * 15*2/M_PI;
 
 			// Assuming WpNext are lines...
 			Position from(Geom.Pos);
@@ -214,16 +218,18 @@ class UavStruct
 						WpNext[i].GetPath(posList, distLeft, 22*3, &to); // TODO: magic number
 						for (int j=0; i<UAVSTRUCT_NEXTWP_NUM; ++i, ++j)
 						{
-							msg.DX[i] = posList[j].x();
-							msg.DY[i] = posList[j].y();
+							// X and Y are -100 to 100, convert to -63 to 63
+							msg.DX[i] = posList[j].x() * 63/100;
+							msg.DY[i] = posList[j].y() * 63/100;
 						}
 						break;
 					}
 					case WP_LINE:
 					case WP_ARC:
 						WpNext[i].GetEndPos(to);
-						msg.DX[i] = to.x() - from.x();
-						msg.DY[i] = to.y() - from.y();
+						// X and Y are -100 to 100, convert to -63 to 63
+						msg.DX[i] = (to.x() - from.x()) * 63/100;
+						msg.DY[i] = (to.y() - from.y()) * 63/100;
 						break;
 					default:
 						msg.DX[i] = 0;
@@ -232,7 +238,8 @@ class UavStruct
 				}
 				from = to;
 			}
-			msg.BatteryLeft = BatteryTimeLeft;
+			// BatteryLeft is 0 to 45*60, convert to 0 to 255
+			msg.BatteryLeft = BatteryTimeLeft * 255/45/60;
 			msg.Status = 0; // TODO: fill this from APStatus
 		}
 };

@@ -102,7 +102,7 @@
 	{
 		"TickTime": 1000,
 		"Debug": true,
-		"Host": "127.0.0.1",
+		"Host": "10.10.1.109",
 		"Port": "13000",
 		"DataType": "0001"
 	},

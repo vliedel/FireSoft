@@ -54,7 +54,52 @@ void CGsGuiInterface::Init(std::string module_id)
 	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
 	Socket = new boost::asio::ip::tcp::socket(io_service);
 	Socket->connect(*iterator);
+	std::cout << "Connected" << std::endl;
+
+	ReadState = READSTATE_SIZE;
+	BytesToRead = SIZE_SIZE;
+	Size[SIZE_SIZE] = 0; // This char array is passed to atoi() so it needs an end
+//	Header[HEADER_SIZE] = 0; // To make it a nice string
+
+//	for (int i=0; i<26; ++i)
+//		ReadBuf[i] = i+97;
+//	boost::asio::write(*Socket, boost::asio::buffer(ReadBuf, 26));
+
+
+//	io_service.run();
+
+//	Socket->async_read_some(boost::asio::buffer(ReadBuf, READBUF_SIZE),
+//			boost::bind(&CGsGuiInterface::HandleRead, this,
+//					boost::asio::placeholders::error,
+//					boost::asio::placeholders::bytes_transferred));
+//
+//	std::cout << "async_read_some was called" << std::endl;
+
+//	char reply[1024];
+//	//std::string strRead;
+//	size_t reply_length = boost::asio::read(*Socket, boost::asio::buffer(reply, 1024));
+//	std::cout << "Reply is: ";
+//	//std::cout << strRead;
+//	std::cout.write(reply, reply_length);
+//	std::cout << std::endl;
 }
+
+//void CGsGuiInterface::HandleRead(const boost::system::error_code& error, size_t bytesRead)
+//{
+//	std::cout << "HandleRead" << std::endl;
+//	if (!error)
+//	{
+//		std::cout << "Read: " << bytesRead << "b ";
+//		std::cout.write(ReadBuf, bytesRead);
+//		std::cout << std::endl;
+//		boost::asio::write(*Socket, boost::asio::buffer(ReadBuf, bytesRead));
+//	}
+//	else
+//	{
+//		std::cout << "Error: reading socket" << std::endl;
+//		//delete this;
+//	}
+//}
 
 void CGsGuiInterface::Tick()
 {
@@ -64,6 +109,107 @@ void CGsGuiInterface::Tick()
 
 	}
 
+	// Read from GUI
+	size_t availableRead = Socket->available();
+	switch (ReadState)
+	{
+		case READSTATE_SIZE:
+		{
+			if (availableRead >= BytesToRead)
+			{
+				size_t bytesRead = Socket->read_some(boost::asio::buffer(Size, BytesToRead));
+				BytesToRead -= bytesRead;
+				if (BytesToRead == 0)
+				{
+					std::cout << "Size = " << Size << std::endl;
+					JsonSize = atoi(Size) - HEADER_SIZE;
+					std::cout << "Json size: " << JsonSize << std::endl;
+					BytesToRead = HEADER_SIZE;
+					ReadState = READSTATE_HEADER;
+				}
+			}
+			break;
+		}
+		case READSTATE_HEADER:
+		{
+			if (availableRead >= BytesToRead)
+			{
+				size_t bytesRead = Socket->read_some(boost::asio::buffer(Header, BytesToRead));
+				BytesToRead -= bytesRead;
+				if (BytesToRead == 0)
+				{
+					std::cout << "Header = ";
+					std::cout.write(Header, HEADER_SIZE);
+					std::cout << std::endl;
+					if (!strcmp(Header, "0001"))
+						std::cout << "Error wrong msg type" << std::endl;
+					BytesToRead = JsonSize;
+					ReadState = READSTATE_JSON;
+				}
+			}
+			break;
+		}
+		case READSTATE_JSON:
+		{
+			if (availableRead >= BytesToRead)
+			{
+				size_t bytesRead = Socket->read_some(boost::asio::buffer(Json, BytesToRead));
+				BytesToRead -= bytesRead;
+				if (BytesToRead == 0)
+				{
+					std::cout << "Json:" << std::endl;
+					std::cout.write(Json, JsonSize);
+					std::cout << std::endl;
+					BytesToRead = SIZE_SIZE;
+					ReadState = READSTATE_SIZE;
+
+
+					boost::property_tree::ptree pt;
+					std::stringstream ss;
+					ss.write(Json, JsonSize);
+					read_json(ss, pt);
+
+					GsCmdStruct gsCmd;
+					if (pt.get<std::string>("message_type") != "cmd")
+					{
+						std::cout << "Error: wrong json type" << std::endl;
+						return;
+					}
+					std::string timeStamp = pt.get<std::string>("timestamp");
+					int version = pt.get<int>("version");
+					std::cout << "cmd_type=cmd" << " timestamp=" << timeStamp << " version=" << version << std::endl;
+
+					gsCmd.UavId = pt.get<int>("uav_id");
+					gsCmd.MsgId = pt.get<int>("message_id");
+					gsCmd.HeightMin = pt.get<float>("min_height");
+					gsCmd.HeightMax = pt.get<float>("max_height");
+					gsCmd.AreaZero.x() = pt.get<float>("area_min_x");
+					gsCmd.AreaZero.y() = pt.get<float>("area_min_y");
+					gsCmd.AreaSize.x() = pt.get<float>("area_dx");
+					gsCmd.AreaSize.y() = pt.get<float>("area_dy");
+					gsCmd.AreaRotation.angle() = pt.get<float>("area_rotation");
+					gsCmd.Landing.Pos.x() = pt.get<float>("land_x");
+					gsCmd.Landing.Pos.y() = pt.get<float>("land_y");
+					gsCmd.Landing.Heading.angle() = pt.get<float>("land_heading");
+					gsCmd.Landing.LeftTurn = pt.get<bool>("turn");
+					gsCmd.Mode = pt.get<int>("auto_pilot_mode");
+					gsCmd.EnablePlanner = pt.get<bool>("enable_planner");
+
+					RadioMsgRelayCmd cmdMsg;
+					gsCmd.toMsg(cmdMsg);
+					std::cout << "gsCmd:" << gsCmd << " = " << cmdMsg;
+
+					VecMsgType vecMsg;
+					vecMsg.push_back(RADIO_MSG_RELAY_CMD);
+					ToCont(cmdMsg, vecMsg);
+					writeToRadio(vecMsg);
+				}
+			}
+			break;
+		}
+	}
+
+	// Read radio
 	VecMsg = readFromRadio(false);
 	if (!VecMsg->empty())
 	{
@@ -172,7 +318,7 @@ void CGsGuiInterface::Tick()
 
 			if (ssJson.str().size() > 0)
 			{
-				ssOutput << std::setw(9) << std::setfill('0') << ssJson.str().size() + config.DataType.size();
+				ssOutput << std::setw(SIZE_SIZE) << std::setfill('0') << ssJson.str().size() + HEADER_SIZE;
 				ssOutput << config.DataType << ssJson.str();
 				boost::asio::write(*Socket, boost::asio::buffer(ssOutput.str(), ssOutput.str().size()));
 			}

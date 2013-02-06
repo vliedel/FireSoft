@@ -31,7 +31,18 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/asio.hpp>
 
+#define SIZE_SIZE 9
+#define HEADER_SIZE 4
+
+#define JSON_SIZE_MAX 1024
+
 namespace rur {
+
+enum EReadState {
+	READSTATE_SIZE=0,
+	READSTATE_HEADER,
+	READSTATE_JSON
+};
 
 struct GsGuiInterfaceConfig
 {
@@ -59,6 +70,7 @@ class CGsGuiInterface : public gsGuiInterface
 		boost::property_tree::ptree PropertyTreePos;
 		boost::property_tree::ptree PropertyTreeFire;
 		boost::asio::ip::tcp::socket* Socket;
+		//boost::asio::io_service& IoService;
 		//boost::asio::ip::tcp::iostream* socket;
 
 		VecMsgType* VecMsg;
@@ -66,6 +78,16 @@ class CGsGuiInterface : public gsGuiInterface
 		UavStruct Uav;
 		RadioMsgRelayFire FireMsg;
 
+
+		char Header[HEADER_SIZE];
+		char Size[SIZE_SIZE+1];
+		char Json[JSON_SIZE_MAX];
+		uint8_t ReadState;
+		size_t BytesToRead;
+		size_t JsonSize;
+
+		// Functions
+//		void HandleRead(const boost::system::error_code& error, size_t bytesRead);
 
 
 	public:
