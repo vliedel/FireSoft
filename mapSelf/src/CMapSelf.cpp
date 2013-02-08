@@ -86,7 +86,7 @@ void CMapSelf::Init(std::string module_id)
 		Map->UavData.BatteryTimeLeft = config.BatteryTime;
 		// Init ground station command messages with invalid ids
 		for (int i=0; i<MAPSELF_GS_CMDS_HIST; ++i)
-			Map->LastGsCmds[i].UavId = 0; // Invalid msg
+			Map->LastGsCmds[i].Msg.UavId = 0; // Invalid msg
 		Map->LastGsCmdsIndex = 0;
 
 		Map->GsCmd.HeightMin = config.MinHeight;
@@ -247,8 +247,8 @@ void CMapSelf::Tick()
 					for (int i=0; i<MAPSELF_GS_CMDS_HIST; ++i)
 					{
 						// TODO: incomplete check?
-						if ((Map->LastGsCmds[i].UavId == gsCmdMsg.UavId)
-								&& (Map->LastGsCmds[i].MsgId == gsCmdMsg.MsgId))
+						if ((Map->LastGsCmds[i].Msg.UavId == gsCmdMsg.UavId)
+								&& (Map->LastGsCmds[i].Msg.MsgId == gsCmdMsg.MsgId))
 						{
 							seen = true;
 							break;
@@ -314,7 +314,8 @@ void CMapSelf::Tick()
 
 					// Add message to history
 					Map->LastGsCmdsIndex = (Map->LastGsCmdsIndex+1) % MAPSELF_GS_CMDS_HIST;
-					Map->LastGsCmds[Map->LastGsCmdsIndex] = gsCmdMsg;
+					Map->LastGsCmds[Map->LastGsCmdsIndex].Msg = gsCmdMsg;
+					Map->LastGsCmds[Map->LastGsCmdsIndex].TimesSent = 0;
 				}
 				else
 					std::cout << "Error: invalid vector to create RadioMsgRelayCmd" << std::endl;

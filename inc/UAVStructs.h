@@ -417,6 +417,13 @@ public:
 	}
 };
 
+class GsCmdHistStruct
+{
+	public:
+		RadioMsgRelayCmd Msg;
+		int TimesSent;
+};
+
 class MapSelfStruct
 {
 	public:
@@ -426,7 +433,7 @@ class MapSelfStruct
 		//WayPointVectorType WayPoints; // Can't really do this, since you need to init the vector after the shared memory is made
 		WayPointsStruct 		WayPoints;
 		MapSelfNeighboursStruct NeighBours;
-		RadioMsgRelayCmd		LastGsCmds[MAPSELF_GS_CMDS_HIST]; // Little history, so we know which we already received
+		GsCmdHistStruct			LastGsCmds[MAPSELF_GS_CMDS_HIST]; // Little history, so we know which we already received
 		int						LastGsCmdsIndex; // Index of latest message in array LastGsCmds
 		GsCmdStruct				GsCmd;
 		uint8_t					RequestedAPModeByWP; // Requested by WP, see EAutoPilotMode
@@ -437,7 +444,7 @@ class MapSelfStruct
 					<< " WayPoints=[" << struc.WayPoints << "]" << " NeighBours=[" << struc.NeighBours << "]"
 					<< " LastGsCmds=[";
 					for (int i=0; i<MAPSELF_GS_CMDS_HIST; ++i)
-						os << struc.LastGsCmds << " ";
+						os << "[" << struc.LastGsCmds[i].Msg << "] TimesSent=" << struc.LastGsCmds[i].TimesSent << " ";
 					os << "]" << " GsCmd=" << struc.GsCmd << " RequestedAPModeByWP=" << struc.RequestedAPModeByWP;
 
 			return os;

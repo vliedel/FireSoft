@@ -326,29 +326,45 @@ void CSim::Tick()
 		for (itUav=Uavs.begin(); itUav != Uavs.end(); ++itUav)
 		{
 			itUav->UavData.NeighBours.clear();
-			if (!itUav->AutoPilotSim)
-			{
-				// UAV has unknown position, let's just say it's connected to everything
-				UavIterType itUav2;
-				for (itUav2=Uavs.begin(); itUav2 != Uavs.end(); ++itUav2)
-					if (itUav != itUav2)
-						itUav->UavData.NeighBours.push_back(itUav2->UavData.UavData.UavId);
-				continue;
-			}
-			Position diff;
+//			if (!itUav->AutoPilotSim)
+//			{
+//				// UAV has unknown position, let's just say it's connected to everything
+//				UavIterType itUav2;
+//				for (itUav2=Uavs.begin(); itUav2 != Uavs.end(); ++itUav2)
+//					if (itUav != itUav2)
+//						itUav->UavData.NeighBours.push_back(itUav2->UavData.UavData.UavId);
+//				continue;
+//			}
+			Position p1(itUav->UavData.UavData.Geom.Pos);
+			if (itUav->UavData.UavData.UavId == UAVS_NUM)
+				p1 << config.GroundStationX, config.GroundStationY, 0;
+			Position p2, diff;
 			UavIterType itUav2;
 			for (itUav2=Uavs.begin(); itUav2 != Uavs.end(); ++itUav2)
 			{
-				diff = itUav->UavData.UavData.Geom.Pos - itUav2->UavData.UavData.Geom.Pos;
-				//std::cout << "dist uav " << it->UavData.UavData.UavId << " to uav " << it2->UavData.UavData.UavId << " = sqr(" << diff.dot(diff) << ")" << std::endl;
-				if ((itUav != itUav2) && (diff.dot(diff) <= config.RadioRange*config.RadioRange))
+				// Uav can't listen to it's own msgs
+				if (itUav == itUav2)
+					continue;
+
+				// Position unknown of one of the UAVs: assume connected
+				if ((!itUav->AutoPilotSim && itUav->UavData.UavData.UavId != UAVS_NUM)
+					|| (!itUav2->AutoPilotSim && itUav2->UavData.UavData.UavId != UAVS_NUM))
 				{
 					itUav->UavData.NeighBours.push_back(itUav2->UavData.UavData.UavId);
 				}
-				// UAV2 has unknown position, assume it's connected
-				else if (!itUav2->AutoPilotSim)
-					itUav->UavData.NeighBours.push_back(itUav2->UavData.UavData.UavId);
-
+				// Check distance
+				else
+				{
+					if (itUav2->UavData.UavData.UavId == UAVS_NUM)
+						p2 << config.GroundStationX, config.GroundStationY, 0;
+					else
+						p2 = itUav2->UavData.UavData.Geom.Pos;
+					diff = p1 - p2;
+					if (diff.dot(diff) <= config.RadioRange*config.RadioRange)
+					{
+						itUav->UavData.NeighBours.push_back(itUav2->UavData.UavData.UavId);
+					}
+				}
 			}
 			//std::cout << "uav " << it->UavData.UavData.UavId << " neighbours: ";
 			//dobots::print(it->UavData.NeighBours.ConnectedNeighbours, it->UavData.NeighBours.ConnectedNeighbours + it->UavData.NeighBours.ConnectedNeighboursNum);
@@ -359,8 +375,14 @@ void CSim::Tick()
 		FileOut << get_cur_1ms() << " ";
 		for (itUav=Uavs.begin(); itUav != Uavs.end(); ++itUav)
 		{
-			if (!itUav->AutoPilotSim)
+			if (itUav->UavData.UavData.UavId == UAVS_NUM)
+			{
+				itUav->UavData.UavData.Geom.Pos << config.GroundStationX, config.GroundStationY, 0;
+				itUav->UavData.WayPoints[0].to << config.GroundStationX, config.GroundStationY, 0;
+			}
+			else if (!itUav->AutoPilotSim)
 				continue;
+
 			FileOut << itUav->UavData.UavData.UavId << " ";
 			FileOut << itUav->UavData.UavData.Geom.Pos.x() << " ";
 			FileOut << itUav->UavData.UavData.Geom.Pos.y() << " ";

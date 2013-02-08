@@ -37,6 +37,7 @@ struct MsgPlannerConfig
 {
 	long TickTime; // us
 	bool Debug;
+	int RelayNumCmdMsg; // Number of times to relay a command message
 
 	void load(const std::string &filename)
 	{
@@ -44,6 +45,7 @@ struct MsgPlannerConfig
 		read_json(filename, pt);
 		TickTime = pt.get<long>("msgPlanner.TickTime");
 		Debug = pt.get<bool>("msgPlanner.Debug");
+		RelayNumCmdMsg = pt.get<int>("msgPlanner.RelayNumCmdMsg");
 	}
 };
 
@@ -72,10 +74,14 @@ class CMsgPlanner : public msgPlanner
 		std::string ModuleId;
 
 		//UavStruct SelectedMsgs[RADIO_NUM_RELAY_PER_MSG];
-		RadioMsgRelay SelectedMsgs[RADIO_NUM_RELAY_PER_MSG];
+		//RadioMsgRelay SelectedMsgs[RADIO_NUM_RELAY_PER_MSG];
+		RadioMsg SelectedRadioMsg;
 
 		int* IntMsg;
 		//std::vector<int>* VecMsg;
+
+		bool SendOwnPos;
+		RadioMsgRelayCmd GsCmds[MAPSELF_GS_CMDS_HIST];
 
 		// Functions
 		//void OpenShMem();

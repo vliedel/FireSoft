@@ -12,7 +12,9 @@
 		"LandPointY": 350.0,
 		"LandHeading": 1.57,
 		"LandLeftTurn": true,
-		"LandLength":100.0
+		"LandLength":100.0,
+		"GroundStationX": 100.0,
+		"GroundStationY": 100.0
 	},
 	"UAV":
 	{
@@ -23,7 +25,7 @@
 		"BatteryTime": 2700.0,
 		"BatteryLowTime": 120.0,
 		"BatteryCriticalTime": 60.0,
-		"RadioRange": 1000.0,
+		"RadioRange": 3000.0,
 		"MinHeight": 100,
 		"MaxHeight": 200
 	},
@@ -140,7 +142,8 @@
 	"msgPlanner":
 	{
 		"TickTime": 1000,
-		"Debug": true
+		"Debug": true,
+		"RelayNumCmdMsg": 2
 	},
 	"radio":
 	{

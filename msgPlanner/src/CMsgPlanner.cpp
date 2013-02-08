@@ -67,6 +67,16 @@ void CMsgPlanner::Init(std::string module_id)
 		delete ShMemSelf;
 		throw;
 	}
+	SendOwnPos = true;
+
+	// Init with invalid msgs
+	SelectedRadioMsg.MessageType = RADIO_MSG_2POS;
+	RadioMsgRelay invalidMsg;
+	invalidMsg.MessageType = RADIO_MSG_RELAY_POS;
+	invalidMsg.Pos.UavId = 0;
+	for (int i=0; i<RADIO_NUM_RELAY_PER_MSG; ++i)
+		SelectedRadioMsg.Data.Data[i+1] = invalidMsg;
+
 }
 
 void CMsgPlanner::Tick()
@@ -101,8 +111,41 @@ void CMsgPlanner::SelectMsgs()
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf);
 
-		SelectedMsgs[0].MessageType = RADIO_MSG_RELAY_POS;
-		MapSelf->UavData.ToRadioMsg(SelectedMsgs[0].Pos);
+		if (!SendOwnPos)
+		{
+			bool relayCmdMsg = false;
+			// Only loop half of the history
+			// TODO: magic number
+			for (int j=0, i=MapSelf->LastGsCmdsIndex; j<MAPSELF_GS_CMDS_HIST/2; ++j, i=(i+1)%MAPSELF_GS_CMDS_HIST)
+			{
+				// Check if the msg has to be relayed (id is valid and not ours, msg hasn't been relayed too often yet)
+				if ((MapSelf->LastGsCmds[i].Msg.UavId != 0)
+						&& (MapSelf->LastGsCmds[i].Msg.UavId != MapSelf->UavData.UavId + 1)
+						&& (MapSelf->LastGsCmds[i].TimesSent < config.RelayNumCmdMsg))
+				{
+					// Relay the cmd msg
+					//SelectedMsgs[0].MessageType = RADIO_MSG_RELAY_CMD;
+					//SelectedMsgs[0].Cmd = MapSelf->LastGsCmds[i].Msg;
+					SelectedRadioMsg.Data.Data[0].MessageType = RADIO_MSG_RELAY_CMD;
+					SelectedRadioMsg.Data.Data[0].Cmd = MapSelf->LastGsCmds[i].Msg;
+					MapSelf->LastGsCmds[i].TimesSent++;
+					relayCmdMsg = true;
+					break;
+				}
+
+			}
+			if (!relayCmdMsg)
+				SendOwnPos = true;
+		}
+
+		if (SendOwnPos)
+		{
+			//SelectedMsgs[0].MessageType = RADIO_MSG_RELAY_POS;
+			SelectedRadioMsg.Data.Data[0].MessageType = RADIO_MSG_RELAY_POS;
+			//MapSelf->UavData.ToRadioMsg(SelectedMsgs[0].Pos);
+			MapSelf->UavData.ToRadioMsg(SelectedRadioMsg.Data.Data[0].Pos);
+			SendOwnPos = false;
+		}
 	}
 
 	{
@@ -151,10 +194,12 @@ void CMsgPlanner::SelectMsgs()
 		for (int i=0; i<RADIO_NUM_RELAY_PER_MSG-1; ++i)
 		{
 			if (lastSentTimes[i] == LONG_MAX)
-				SelectedMsgs[i+1] = invalidMsg;
+				SelectedRadioMsg.Data.Data[i+1] = invalidMsg;
+				//SelectedMsgs[i+1] = invalidMsg;
 			else
 			{
-				SelectedMsgs[i+1] = iters[i]->second.LastRadioMsgs[iters[i]->second.LastRadioMsgsIndex];
+				SelectedRadioMsg.Data.Data[i+1] = iters[i]->second.LastRadioMsgs[iters[i]->second.LastRadioMsgsIndex];
+				//SelectedMsgs[i+1] = iters[i]->second.LastRadioMsgs[iters[i]->second.LastRadioMsgsIndex];
 				iters[i]->second.LastRadioSentTime = get_cur_1ms();
 			}
 		}
@@ -164,22 +209,25 @@ void CMsgPlanner::SelectMsgs()
 
 void CMsgPlanner::SendMsgs()
 {
-	RadioMsg bmsg;
-	if (SelectedMsgs[0].MessageType == RADIO_MSG_RELAY_POS)
+	if (SelectedRadioMsg.Data.Data[0].MessageType == RADIO_MSG_RELAY_POS)
 	{
-		if (SelectedMsgs[1].MessageType == RADIO_MSG_RELAY_POS)
-			bmsg.MessageType = RADIO_MSG_2POS;
+		if (SelectedRadioMsg.Data.Data[1].MessageType == RADIO_MSG_RELAY_POS)
+			SelectedRadioMsg.MessageType = RADIO_MSG_2POS;
 		else
-			bmsg.MessageType = RADIO_MSG_POS_2FIRE;
+			SelectedRadioMsg.MessageType = RADIO_MSG_POS_2FIRE;
 	}
-	for (int i=0; i<RADIO_NUM_RELAY_PER_MSG; ++i)
+	if (SelectedRadioMsg.Data.Data[0].MessageType == RADIO_MSG_RELAY_CMD)
 	{
-		bmsg.Data.Data[i] = SelectedMsgs[i];
-		//ToCont(SelectedMsgs[i], vec);
-		//vec = SelectedMsgs[i].ToVec();
+		if (SelectedRadioMsg.Data.Data[0].MessageType != RADIO_MSG_RELAY_POS)
+			std::cout << "Error: can't combine cmd msg and fire msg!" << std::endl;
+		RadioMsgRelay tmp = SelectedRadioMsg.Data.Data[1];
+		SelectedRadioMsg.Data.Data[1] = SelectedRadioMsg.Data.Data[0];
+		SelectedRadioMsg.Data.Data[0] = tmp;
+		SelectedRadioMsg.MessageType = RADIO_MSG_POS_CMD;
 	}
+
 	VecMsgType vecMsg;
 	//vecMsg.push_back(PROT_SIMSTAT_BROADCAST_MSG);
-	ToCont(bmsg, vecMsg);
+	ToCont(SelectedRadioMsg, vecMsg);
 	writeToRadio(vecMsg);
 }

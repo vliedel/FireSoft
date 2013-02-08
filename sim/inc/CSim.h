@@ -41,7 +41,8 @@ struct SimConfig
 	float RadioRoundTime;
 	float RadioRange;
 	std::string OutputFileName;
-
+	float GroundStationX;
+	float GroundStationY;
 
 
 	void load(const std::string &filename)
@@ -54,6 +55,8 @@ struct SimConfig
 		RadioRoundTime = pt.get<float>("sim.RadioRoundTime");
 		RadioRange = pt.get<float>("UAV.RadioRange");
 		OutputFileName = pt.get<std::string>("sim.OutputFileName");
+		GroundStationX = pt.get<float>("field.GroundStationX");
+		GroundStationY = pt.get<float>("field.GroundStationY");
 	}
 };
 
