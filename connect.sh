@@ -72,16 +72,19 @@ do
 	if [ $NUM_AP -lt $NUM_RADIO ]; then
 		if [ $i -lt $[$NUM_RADIO - $NUM_AP] ]; then
 			# Connect real auto pilot
-			yarp connect /autopilot${i}/mapself /mapself${i}/autopilot
+			yarp connect /autopilot${i}/tomapself /mapself${i}/fromautopilot
+			yarp connect /mapself${i}/toautopilot /autopilot${i}/frommapself
 			yarp connect /wpplanner${i}/toautopilot /autopilot${i}/fromwaypointplanner
 		else
 			# Connect sim auto pilot
-			yarp connect /autopilotsim${i}/mapself /mapself${i}/autopilot
+			yarp connect /autopilotsim${i}/tomapself /mapself${i}/fromautopilot
+			yarp connect /mapself${i}/toautopilot /autopilotsim${i}/frommapself
 			yarp connect /wpplanner${i}/toautopilot /autopilotsim${i}/fromwaypointplanner
 		fi
 	else
 		# Connect sim auto pilot
-		yarp connect /autopilotsim${i}/mapself /mapself${i}/autopilot
+		yarp connect /autopilotsim${i}/tomapself /mapself${i}/fromautopilot
+		yarp connect /mapself${i}/toautopilot /autopilotsim${i}/frommapself
 		yarp connect /wpplanner${i}/toautopilot /autopilotsim${i}/fromwaypointplanner
 	fi
 	

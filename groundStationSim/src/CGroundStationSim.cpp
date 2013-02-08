@@ -41,7 +41,7 @@ void CGroundStationSim::Init(std::string module_id)
 	RadioRoundState = RADIO_STATE_ROUND_IDLE;
 
 	GsCmdStruct gsCmd;
-	gsCmd.UavId = 15;
+	gsCmd.UavId = 10; // 10 for all uavs
 	gsCmd.MsgId = 0;
 	gsCmd.HeightMin = config.MinHeight;
 	gsCmd.HeightMax = config.MaxHeight;
@@ -62,23 +62,6 @@ void CGroundStationSim::Init(std::string module_id)
 
 	CmdMsg.Data.Data[1].MessageType = RADIO_MSG_RELAY_CMD;
 	gsCmd.toMsg(CmdMsg.Data.Data[1].Cmd);
-//	CmdMsg.Data.Data[1].Cmd.UavId = 15;
-//	CmdMsg.Data.Data[1].Cmd.MsgId = 0;
-//	CmdMsg.Data.Data[1].Cmd.HeightMin = config.MinHeight - 50;
-//	CmdMsg.Data.Data[1].Cmd.HeightMax = config.MaxHeight - 50;
-//	CmdMsg.Data.Data[1].Cmd.AreaMinX = config.AreaOriginX / 5;
-//	CmdMsg.Data.Data[1].Cmd.AreaMinY = config.AreaOriginY / 5;
-//	CmdMsg.Data.Data[1].Cmd.AreaDX = config.AreaSizeX / 5;
-//	CmdMsg.Data.Data[1].Cmd.AreaDY = config.AreaSizeY / 5;
-//	// Rotation is 0 to 0.5*pi translate to 0 to 1023
-//	CmdMsg.Data.Data[1].Cmd.AreaRotation = config.AreaRotation * 1023*2/M_PI;
-//	CmdMsg.Data.Data[1].Cmd.LandX = config.LandPointX;
-//	CmdMsg.Data.Data[1].Cmd.LandY = config.LandPointY;
-//	// Heading is 0 to 2*pi, translate to 0 to 255
-//	CmdMsg.Data.Data[1].Cmd.LandHeading = config.LandHeading * 255/2/M_PI;
-//	CmdMsg.Data.Data[1].Cmd.LandLeftTurn = config.LandLeftTurn;
-//	CmdMsg.Data.Data[1].Cmd.Mode = AP_PROT_MODE_WP;
-//	CmdMsg.Data.Data[1].Cmd.EnablePlanner = true;
 }
 
 void CGroundStationSim::Tick()

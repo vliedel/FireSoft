@@ -59,10 +59,13 @@ private:
   // the port portStatus itself
   BufferedPort<Bottle> *portStatus;
   
-  // private storage for portMapSelfValues;
-  std::vector<float> *portMapSelfValues;
-  // the port portMapSelf itself
-  BufferedPort<Bottle> *portMapSelf;
+  // the port portToMapSelf itself
+  BufferedPort<Bottle> *portToMapSelf;
+  
+  // private storage for portFromMapSelfValues;
+  std::vector<float> *portFromMapSelfValues;
+  // the port portFromMapSelf itself
+  BufferedPort<Bottle> *portFromMapSelf;
   
   // private storage for portFromWayPointPlannerValues;
   std::vector<float> *portFromWayPointPlannerValues;
@@ -82,10 +85,13 @@ public:
     portStatus = new BufferedPort<Bottle>();
     portStatus->setStrict();
     portStatus->writeStrict();
-    portMapSelfValues = new std::vector<float>();
-    portMapSelf = new BufferedPort<Bottle>();
-    portMapSelf->setStrict();
-    portMapSelf->writeStrict();
+    portToMapSelf = new BufferedPort<Bottle>();
+    portToMapSelf->setStrict();
+    portToMapSelf->writeStrict();
+    portFromMapSelfValues = new std::vector<float>();
+    portFromMapSelf = new BufferedPort<Bottle>();
+    portFromMapSelf->setStrict();
+    portFromMapSelf->writeStrict();
     portFromWayPointPlannerValues = new std::vector<float>();
     portFromWayPointPlanner = new BufferedPort<Bottle>();
     portFromWayPointPlanner->setStrict();
@@ -95,8 +101,9 @@ public:
   ~autoPilot() {
     delete portCommand;
     delete portStatus;
-    delete portMapSelfValues;
-    delete portMapSelf;
+    delete portToMapSelf;
+    delete portFromMapSelfValues;
+    delete portFromMapSelf;
     delete portFromWayPointPlannerValues;
     delete portFromWayPointPlanner;
     delete cliParam;
@@ -123,8 +130,13 @@ public:
     }
     {
       std::stringstream portName; portName.str(); portName.clear();
-      portName << "/autopilot" << module_id << "/mapself";
-      portMapSelf->open(portName.str().c_str());
+      portName << "/autopilot" << module_id << "/tomapself";
+      portToMapSelf->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/autopilot" << module_id << "/frommapself";
+      portFromMapSelf->open(portName.str().c_str());
     }
     {
       std::stringstream portName; portName.str(); portName.clear();
@@ -138,7 +150,8 @@ public:
   void Close() {
     portCommand->close();
     portStatus->close();
-    portMapSelf->close();
+    portToMapSelf->close();
+    portFromMapSelf->close();
     portFromWayPointPlanner->close();
   }
   
@@ -165,24 +178,24 @@ protected:
     portStatus->write(true);
   }
   
-  // Remark: caller is responsible for evoking vector.clear()
-  inline std::vector<float> *readMapSelf(bool blocking=true) {
-    Bottle *b = portMapSelf->read(blocking);
-    if (b != NULL) { 
-      for (int i = 0; i < b->size(); ++i) {
-        portMapSelfValues->push_back(b->get(i).asDouble());
-      }
-    }
-    return portMapSelfValues;
-  }
-  
-  inline void writeMapSelf(const float_seq &seq) {
-    Bottle &seqPrepare = portMapSelf->prepare();
+  inline void writeToMapSelf(const float_seq &seq) {
+    Bottle &seqPrepare = portToMapSelf->prepare();
     seqPrepare.clear();
     for (int i = 0; i < seq.size(); ++i) {
       seqPrepare.addDouble(seq[i]);
     }
-    portMapSelf->write(true);
+    portToMapSelf->write(true);
+  }
+  
+  // Remark: caller is responsible for evoking vector.clear()
+  inline std::vector<float> *readFromMapSelf(bool blocking=true) {
+    Bottle *b = portFromMapSelf->read(blocking);
+    if (b != NULL) { 
+      for (int i = 0; i < b->size(); ++i) {
+        portFromMapSelfValues->push_back(b->get(i).asDouble());
+      }
+    }
+    return portFromMapSelfValues;
   }
   
   // Remark: caller is responsible for evoking vector.clear()

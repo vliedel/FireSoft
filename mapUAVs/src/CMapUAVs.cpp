@@ -207,9 +207,9 @@ void CMapUAVs::UpdateUav(RadioMsgRelay& msg)
 		MapUavStruct uavOnMap;
 		uavOnMap.data = Uav;
 		uavOnMap.LastRadioMsgs[0] = msg; // LastRadioMsgs are initialized such that its filled with UavIds of 0 (invalid)
-		//uavOnMap.LastRadioMsgsIndex = 0;
+		uavOnMap.LastRadioMsgsIndex = 0;
 		uavOnMap.LastRadioReceiveTime = get_cur_1ms();
-		uavOnMap.LastRadioSentTime = 0;
+		uavOnMap.LastRadioSentTime = get_cur_1ms() - 1000*3600; // One hour ago should do the trick..
 		Map->insert(MapUavValueType(Uav.UavId, uavOnMap));
 		std::cout << "Added uav to shared mem" << std::endl;
 	}
@@ -218,7 +218,7 @@ void CMapUAVs::UpdateUav(RadioMsgRelay& msg)
 		//bool found = false;
 		for (int i=0; i<MAPUAV_RADIOMSG_HIST; ++i)
 		{
-			// TODO: this check is incomplete!
+			// TODO: this check is incomplete, but sufficient?
 			if ((it->second.LastRadioMsgs[i].Pos.UavId != 0)
 					&& (it->second.LastRadioMsgs[i].Pos.X == msg.Pos.X)
 					&& (it->second.LastRadioMsgs[i].Pos.Y == msg.Pos.Y)

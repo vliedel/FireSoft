@@ -211,7 +211,7 @@ void CAutoPilotSim::Tick()
 //					std::vector<float> vecMsg;
 //					ToCont(home, vecMsg);
 //					vecMsg.push_back(PROT_MAPSELF_DATAIN_HOME);
-//					writeMapSelf(vecMsg);
+//					writeToMapSelf(vecMsg);
 					break;
 				}
 				case PROT_SIMCMD_SET_GEOM:
@@ -239,7 +239,7 @@ void CAutoPilotSim::Tick()
 					VecMsgType vecMsg;
 					vecMsg.push_back(State);
 					vecMsg.push_back(PROT_MAPSELF_DATAIN_STATE);
-					writeMapSelf(vecMsg);
+					writeToMapSelf(vecMsg);
 					break;
 				}
 				case PROT_SIMCMD_SET_WIND:
@@ -279,15 +279,24 @@ void CAutoPilotSim::Tick()
 					switch (mode)
 					{
 					case AP_PROT_MODE_LAND:
-						State = UAVSTATE_LANDING;
+						if (State != UAVSTATE_LANDED)
+							State = UAVSTATE_LANDING;
 						break;
 					case AP_PROT_MODE_HOME:
-						State = UAVSTATE_GOING_HOME;
+						if (State != UAVSTATE_LANDED && State != UAVSTATE_LANDING)
+							State = UAVSTATE_GOING_HOME;
 						break;
 					case AP_PROT_MODE_STAY:
-						State = UAVSTATE_STAYING;
+						if (State != UAVSTATE_LANDED && State != UAVSTATE_LANDING)
+							State = UAVSTATE_STAYING;
 						break;
 					}
+
+					VecMsgType vecMsg;
+					vecMsg.push_back(State);
+					vecMsg.push_back(PROT_MAPSELF_DATAIN_STATE);
+					writeToMapSelf(vecMsg);
+
 					break;
 				}
 				case PROT_AP_SET_WAYPOINTS:
@@ -302,7 +311,7 @@ void CAutoPilotSim::Tick()
 	}
 
 	// From MapSelf
-	VecMsg = readFromWayPointPlanner(false);
+	VecMsg = readFromMapSelf(false);
 	if (!VecMsg->empty())
 	{
 //		std::cout << get_cur_1ms() << " AP " << UavId << " from MapSelf: ";
@@ -321,15 +330,24 @@ void CAutoPilotSim::Tick()
 					switch (mode)
 					{
 						case AP_PROT_MODE_LAND:
-							State = UAVSTATE_LANDING;
+							if (State != UAVSTATE_LANDED)
+								State = UAVSTATE_LANDING;
 							break;
 						case AP_PROT_MODE_HOME:
-							State = UAVSTATE_GOING_HOME;
+							if (State != UAVSTATE_LANDED && State != UAVSTATE_LANDING)
+								State = UAVSTATE_GOING_HOME;
 							break;
 						case AP_PROT_MODE_STAY:
-							State = UAVSTATE_STAYING;
+							if (State != UAVSTATE_LANDED && State != UAVSTATE_LANDING)
+								State = UAVSTATE_STAYING;
 							break;
 					}
+
+					VecMsgType vecMsg;
+					vecMsg.push_back(State);
+					vecMsg.push_back(PROT_MAPSELF_DATAIN_STATE);
+					writeToMapSelf(vecMsg);
+
 					break;
 				}
 				case PROT_AP_SET_LAND:
@@ -337,11 +355,6 @@ void CAutoPilotSim::Tick()
 					it = FromCont(Landing, it, VecMsg->end());
 					break;
 				}
-//				case PROT_AP_SET_LAND:
-//				{
-//					it = FromCont(Landing, it, VecMsg->end());
-//					break;
-//				}
 			}
 		}
 		VecMsg->clear();
@@ -356,19 +369,7 @@ void CAutoPilotSim::TimeStep(float dt)
 	VecMsgType vecMsg;
 	if (State == UAVSTATE_LANDED)
 		return;
-//	if (State == UAVSTATE_LANDING)
-//	{
-//		// Let's land SUPER quickly :P
-//		Geom.Pos << config.HomeX, config.HomeY, 0;
-//		State = UAVSTATE_LANDED;
-//		vecMsg.clear();
-//		vecMsg.push_back(State);
-//		vecMsg.push_back(PROT_MAPSELF_DATAIN_STATE);
-//		writeMapSelf(vecMsg);
-//	}
 
-//	Geom.Pos.x() += Geom.Speed.x() * dt;
-//	Geom.Pos.y() += Geom.Speed.y() * dt;
 	Geom.Pos.x() += Geom.GroundSpeed * dt * cos(Geom.Heading.angle());
 	Geom.Pos.y() += Geom.GroundSpeed * dt * sin(Geom.Heading.angle());
 
@@ -404,7 +405,7 @@ void CAutoPilotSim::TimeStep(float dt)
 	{
 		// Let's land
 		std::cout << "Landing" << std::endl;
-		Heading = atan2(Geom.Pos.y(), Geom.Pos.x()) + M_PI;
+		Heading = atan2(Geom.Pos.y()-Landing.Pos.y(), Geom.Pos.x()-Landing.Pos.x()) + M_PI;
 		if (Heading > M_PI)
 			Heading -= 2*M_PI;
 		carrot << Landing.Pos.x(), Landing.Pos.y(), 0;
@@ -425,7 +426,7 @@ void CAutoPilotSim::TimeStep(float dt)
 			vecMsg.clear();
 			vecMsg.push_back(State);
 			vecMsg.push_back(PROT_MAPSELF_DATAIN_STATE);
-			writeMapSelf(vecMsg);
+			writeToMapSelf(vecMsg);
 		}
 	}
 
@@ -433,7 +434,7 @@ void CAutoPilotSim::TimeStep(float dt)
 	vecMsg.clear();
 	ToCont(WayPoints, vecMsg);
 	vecMsg.push_back(PROT_MAPSELF_DATAIN_WAYPOINTS);
-	writeMapSelf(vecMsg);
+	writeToMapSelf(vecMsg);
 
 	std::cout << get_cur_1ms();
 	if (!WayPoints.empty())
@@ -526,12 +527,12 @@ void CAutoPilotSim::TimeStep(float dt)
 	vecMsg.clear();
 	ToCont(Geom, vecMsg);
 	vecMsg.push_back(PROT_MAPSELF_DATAIN_GEOM);
-	writeMapSelf(vecMsg);
+	writeToMapSelf(vecMsg);
 
 	vecMsg.clear();
 	vecMsg.push_back(BatteryTimeLeft);
 	vecMsg.push_back(PROT_MAPSELF_DATAIN_BATTERY);
-	writeMapSelf(vecMsg);
+	writeToMapSelf(vecMsg);
 
 
 	// Write state to simulator

@@ -120,8 +120,8 @@ class APStatusStruct
 
 		friend std::ostream& operator<<(std::ostream& os, const APStatusStruct& struc)
 		{
-			os << "FlyState=" << struc.FlyState << " GPSState=" << struc.GPSState << " ServoState=" << struc.ServoState;
-			os << "AutoPilotState=" << struc.AutoPilotState << " SensorState=" << struc.SensorState;
+			os << "FlyState=" << struc.FlyState << " GPSState=" << struc.GPSState << " ServoState=" << struc.ServoState
+					<< "AutoPilotState=" << struc.AutoPilotState << " SensorState=" << struc.SensorState;
 			return os;
 		}
 };
@@ -135,7 +135,6 @@ class UavStruct
 		WayPoint		WpNext[UAVSTRUCT_NEXTWP_NUM];
 		float			BatteryTimeLeft;
 		APStatusStruct	APStatus;
-		//WayPoint WpFar;
 
 		friend std::ostream& operator<<(std::ostream& os, const UavStruct& struc)
 		{
@@ -187,19 +186,20 @@ class UavStruct
 
 		void ToRadioMsg(RadioMsgRelayPos& msg)
 		{
+			// Clamp values to be sure!
 			msg.UavId = UavId + 1;
 			// X and Y are 0 to 5000, convert to 0 to 2047
-			msg.X = Geom.Pos.x() * 2047/5000;
-			msg.Y = Geom.Pos.y() * 2047/5000;
+			msg.X = std::min(std::max((int)(Geom.Pos.x() * 2047/5000),0),2047);
+			msg.Y = std::min(std::max((int)(Geom.Pos.y() * 2047/5000),0),2047);
 			// Z is 0 to 300, convert to 0 to 127
-			msg.Z = Geom.Pos.z() * 127/300;
+			msg.Z = std::min(std::max((int)(Geom.Pos.z() * 127/300),0),127);
 			// Heading is 0 to 2*pi, convert to 0 to 63
-			msg.Heading = Geom.Heading.angle() * 63/2/M_PI;
+			msg.Heading = std::min(std::max((int)(Geom.Heading.angle() * 63/2/M_PI),0),63);
 			// GroundSpeed is 0 to 33, convert to 0 to 15
-			msg.GroundSpeed = Geom.GroundSpeed * 15/33;
+			msg.GroundSpeed = std::min(std::max((int)(Geom.GroundSpeed * 15/33),0),15);
 			msg.State = State;
 			// Roll is -0.5*pi to 0.5pi, convert to -15 to 15
-			msg.Roll = Geom.Roll.angle() * 15*2/M_PI;
+			msg.Roll = std::min(std::max((int)(Geom.Roll.angle() * 15*2/M_PI),-15),15);
 
 			// Assuming WpNext are lines...
 			Position from(Geom.Pos);
@@ -219,8 +219,8 @@ class UavStruct
 						for (int j=0; i<UAVSTRUCT_NEXTWP_NUM; ++i, ++j)
 						{
 							// X and Y are -100 to 100, convert to -63 to 63
-							msg.DX[i] = posList[j].x() * 63/100;
-							msg.DY[i] = posList[j].y() * 63/100;
+							msg.DX[i] = std::min(std::max((int)(posList[j].x() * 63/100),-63),63);
+							msg.DY[i] = std::min(std::max((int)(posList[j].y() * 63/100),-63),63);
 						}
 						break;
 					}
@@ -228,8 +228,8 @@ class UavStruct
 					case WP_ARC:
 						WpNext[i].GetEndPos(to);
 						// X and Y are -100 to 100, convert to -63 to 63
-						msg.DX[i] = (to.x() - from.x()) * 63/100;
-						msg.DY[i] = (to.y() - from.y()) * 63/100;
+						msg.DX[i] = std::min(std::max((int)((to.x() - from.x()) * 63/100),-63),63);
+						msg.DY[i] = std::min(std::max((int)((to.y() - from.y()) * 63/100),-63),63);
 						break;
 					default:
 						msg.DX[i] = 0;
@@ -239,7 +239,7 @@ class UavStruct
 				from = to;
 			}
 			// BatteryLeft is 0 to 45*60, convert to 0 to 255
-			msg.BatteryLeft = BatteryTimeLeft * 255/45/60;
+			msg.BatteryLeft = std::min(std::max((int)(BatteryTimeLeft * 255/45/60),0),255);
 			msg.Status = 0; // TODO: fill this from APStatus
 		}
 };
@@ -254,20 +254,15 @@ class MapUavStruct
 		bool Connected;
 
 		RadioMsgRelay LastRadioMsgs[MAPUAV_RADIOMSG_HIST]; // Little history so we can ignore radio msgs we already received
-		int LastRadioMsgsIndex;
-
-//		WayPoint WayPointNext;
-//		WayPoint WayPointFar;
-//		int WaPointFarETA;
+		int LastRadioMsgsIndex; // Index of latest message in array LastRadioMsgs
 
 		friend std::ostream& operator<<(std::ostream& os, const MapUavStruct& struc)
 		{
-			os << struc.data << " LastRadioReceiveTime=" << struc.LastRadioReceiveTime << " LastRadioSentTime=" << struc.LastRadioSentTime << " Connected=" << struc.Connected;
+			os << struc.data << " LastRadioReceiveTime=" << struc.LastRadioReceiveTime << " LastRadioSentTime="
+					<< struc.LastRadioSentTime << " Connected=" << struc.Connected << " LastRadioMsgs=[";
 			for (int i=0; i<MAPUAV_RADIOMSG_HIST; ++i)
 				os << " [" << struc.LastRadioMsgs[i] << "]";
-			os << " LastRadioMsgsIndex=" << struc.LastRadioMsgsIndex;
-//			os << " WayPointNext=[" << struc.WayPointNext << "]";
-//			os << " WayPointFar=[" << struc.WayPointFar << "] WaPointFarETA=" << struc.WaPointFarETA;
+			os << "] LastRadioMsgsIndex=" << struc.LastRadioMsgsIndex;
 			return os;
 		}
 };
@@ -347,7 +342,7 @@ class LandingStruct
 class GsCmdStruct
 {
 public:
-	int						UavId; // ID of the UAV who the command is for (14 for all UAVs)
+	int						UavId; // ID of the UAV who the command is for (10 for all UAVs)
 	int						MsgId; // ID of this message, so that UAVs know if they relayed this msg yet.
 
 	float					HeightMin;
@@ -379,7 +374,7 @@ public:
 		AreaZero.x() = msg.AreaMinX * 5000/1023;
 		AreaZero.y() = msg.AreaMinY * 5000/1023;
 		AreaSize.x() = msg.AreaDX * 5000/1023;
-		AreaSize.y() = msg.AreaDX * 5000/1023;
+		AreaSize.y() = msg.AreaDY * 5000/1023;
 		// Rotation is 0 to 1023, translate to 0 to 0.5*pi
 		AreaRotation.angle() = msg.AreaRotation * M_PI/2/1023;
 		// Landing pos is 0 to 4095, translate to 0 to 5000
@@ -415,8 +410,8 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, const GsCmdStruct& struc)
 	{
-		os << "UavId=" << +struc.UavId << " MsgId=" << +struc.MsgId << " HeightMin=" << +struc.HeightMin << " HeightMax=" << +struc.HeightMax \
-				<< " AreaZero=[" << struc.AreaZero.transpose() << "] AreaDX=[" << struc.AreaSize.transpose() << "] AreaRotation=" << struc.AreaRotation.angle() \
+		os << "UavId=" << +struc.UavId << " MsgId=" << +struc.MsgId << " HeightMin=" << +struc.HeightMin << " HeightMax=" << +struc.HeightMax
+				<< " AreaZero=[" << struc.AreaZero.transpose() << "] AreaDX=[" << struc.AreaSize.transpose() << "] AreaRotation=" << struc.AreaRotation.angle()
 				<< " Landing=[" << struc.Landing << "] Mode=" << +struc.Mode << " EnablePlanner=" << struc.EnablePlanner;
 		return os;
 	}
@@ -427,36 +422,24 @@ class MapSelfStruct
 	public:
 		UavStruct 				UavData;
 		UAVState				PreviousState;
-//		float 					BatteryTimeLeft;
-
-		Position				Home; // TODO: don't use anymore
-
-//		MapSelfAPStatusStruct	APStatus;
+//		Position				Home;
+		//WayPointVectorType WayPoints; // Can't really do this, since you need to init the vector after the shared memory is made
 		WayPointsStruct 		WayPoints;
 		MapSelfNeighboursStruct NeighBours;
-		RadioMsgRelayCmd		LastGsCmds[MAPSELF_GS_CMDS_HIST]; // Last cmd at index MAPSELF_GS_CMDS_HIST-1
-
+		RadioMsgRelayCmd		LastGsCmds[MAPSELF_GS_CMDS_HIST]; // Little history, so we know which we already received
+		int						LastGsCmdsIndex; // Index of latest message in array LastGsCmds
 		GsCmdStruct				GsCmd;
-
-//		float					HeightMin;
-//		float					HeightMax;
-//		Position				AreaZero;	// In local coordinates
-//		Position				AreaSize;	// In local coordinates
-//		Rotation2DType			AreaRotation;	// In rad
-//		LandingStruct			Landing;
-//		uint8_t					RequestedAPModeByGS; // Requested by GS, see EAutoPilotMode
 		uint8_t					RequestedAPModeByWP; // Requested by WP, see EAutoPilotMode
-//		bool					EnablePlanner;
-
-		//MapSelfStruct(): AreaRotation(0) {}
-
-
-		//WayPointVectorType WayPoints; // Can't really do this, since you need to init the vector after the shared memory is made
 
 		friend std::ostream& operator<<(std::ostream& os, const MapSelfStruct& struc)
 		{
-			os << struc.UavData << " Previous state=" << struc.PreviousState \
-					<< " Home=" << struc.Home.transpose() << " Connected neighbours=[" << struc.NeighBours << "]";
+			os << struc.UavData << " Previous state=" << struc.PreviousState
+					<< " WayPoints=[" << struc.WayPoints << "]" << " NeighBours=[" << struc.NeighBours << "]"
+					<< " LastGsCmds=[";
+					for (int i=0; i<MAPSELF_GS_CMDS_HIST; ++i)
+						os << struc.LastGsCmds << " ";
+					os << "]" << " GsCmd=" << struc.GsCmd << " RequestedAPModeByWP=" << struc.RequestedAPModeByWP;
+
 			return os;
 		}
 };
@@ -476,8 +459,8 @@ class SimUavStruct
 
 		friend std::ostream& operator<<(std::ostream& os, const SimUavStruct& struc)
 		{
-			os << struc.UavData << " WaitForReplyAP=" << struc.WaitForReplyAutoPilot << " WaitForReplyRadio=" << struc.WaitForReplyRadio;
-			os << " TakeOffTime=" << struc.TakeOffTime << " RadioWorks=" << struc.RadioWorks;
+			os << struc.UavData << " WaitForReplyAP=" << struc.WaitForReplyAutoPilot << " WaitForReplyRadio=" << struc.WaitForReplyRadio
+					<< " TakeOffTime=" << struc.TakeOffTime << " RadioWorks=" << struc.RadioWorks;
 			return os;
 		}
 };

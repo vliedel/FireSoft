@@ -31,22 +31,13 @@ using namespace rur;
 
 CGsGuiInterface::~CGsGuiInterface()
 {
-
+	delete Socket;
 }
 
 void CGsGuiInterface::Init(std::string module_id)
 {
 	gsGuiInterface::Init(module_id);
 	config.load("config.json");
-
-	boost::property_tree::ptree pt;
-	read_json("config.json", pt);
-
-
-	std::stringstream ss;
-	write_json(ss, pt);
-	std::cout << ss.str();
-	std::cout << ss.str().size() << std::endl;
 
 	boost::asio::io_service io_service;
 	boost::asio::ip::tcp::resolver resolver(io_service);
@@ -61,45 +52,7 @@ void CGsGuiInterface::Init(std::string module_id)
 	Size[SIZE_SIZE] = 0; // This char array is passed to atoi() so it needs an end
 //	Header[HEADER_SIZE] = 0; // To make it a nice string
 
-//	for (int i=0; i<26; ++i)
-//		ReadBuf[i] = i+97;
-//	boost::asio::write(*Socket, boost::asio::buffer(ReadBuf, 26));
-
-
-//	io_service.run();
-
-//	Socket->async_read_some(boost::asio::buffer(ReadBuf, READBUF_SIZE),
-//			boost::bind(&CGsGuiInterface::HandleRead, this,
-//					boost::asio::placeholders::error,
-//					boost::asio::placeholders::bytes_transferred));
-//
-//	std::cout << "async_read_some was called" << std::endl;
-
-//	char reply[1024];
-//	//std::string strRead;
-//	size_t reply_length = boost::asio::read(*Socket, boost::asio::buffer(reply, 1024));
-//	std::cout << "Reply is: ";
-//	//std::cout << strRead;
-//	std::cout.write(reply, reply_length);
-//	std::cout << std::endl;
 }
-
-//void CGsGuiInterface::HandleRead(const boost::system::error_code& error, size_t bytesRead)
-//{
-//	std::cout << "HandleRead" << std::endl;
-//	if (!error)
-//	{
-//		std::cout << "Read: " << bytesRead << "b ";
-//		std::cout.write(ReadBuf, bytesRead);
-//		std::cout << std::endl;
-//		boost::asio::write(*Socket, boost::asio::buffer(ReadBuf, bytesRead));
-//	}
-//	else
-//	{
-//		std::cout << "Error: reading socket" << std::endl;
-//		//delete this;
-//	}
-//}
 
 void CGsGuiInterface::Tick()
 {
@@ -183,13 +136,13 @@ void CGsGuiInterface::Tick()
 					gsCmd.MsgId = pt.get<int>("message_id");
 					gsCmd.HeightMin = pt.get<float>("min_height");
 					gsCmd.HeightMax = pt.get<float>("max_height");
-					gsCmd.AreaZero.x() = pt.get<float>("area_min_x");
-					gsCmd.AreaZero.y() = pt.get<float>("area_min_y");
+					gsCmd.AreaZero.x() = pt.get<float>("area_min_x") - config.OriginX; // Mercator to local coordinates
+					gsCmd.AreaZero.y() = pt.get<float>("area_min_y") - config.OriginY; // Mercator to local coordinates
 					gsCmd.AreaSize.x() = pt.get<float>("area_dx");
 					gsCmd.AreaSize.y() = pt.get<float>("area_dy");
 					gsCmd.AreaRotation.angle() = pt.get<float>("area_rotation");
-					gsCmd.Landing.Pos.x() = pt.get<float>("land_x");
-					gsCmd.Landing.Pos.y() = pt.get<float>("land_y");
+					gsCmd.Landing.Pos.x() = pt.get<float>("land_x") - config.OriginX; // Mercator to local coordinates
+					gsCmd.Landing.Pos.y() = pt.get<float>("land_y") - config.OriginY; // Mercator to local coordinates
 					gsCmd.Landing.Heading.angle() = pt.get<float>("land_heading");
 					gsCmd.Landing.LeftTurn = pt.get<bool>("turn");
 					gsCmd.Mode = pt.get<int>("auto_pilot_mode");
@@ -229,6 +182,11 @@ void CGsGuiInterface::Tick()
 		VecMsgType::iterator it = VecMsg->begin();
 		while (it != VecMsg->end())
 		{
+			// Clear string streams
+			ssJson.str().clear();
+			ssTime.str().clear();
+			ssOutput.str().clear();
+
 			// Get current time
 			clock_gettime(CLOCK_REALTIME, &tp);
 			ptm = gmtime(&tp.tv_sec);
@@ -236,11 +194,6 @@ void CGsGuiInterface::Tick()
 			// 2008-09-03T20:56:35.450686Z
 			size_t tsl = strftime(bufTime, 64, "%Y-%m-%dT%H:%M:%S", ptm);
 			ssTime << bufTime << "." << tp.tv_nsec/1000 << "Z";
-
-			// Clear string streams
-			ssJson.str().clear();
-			ssTime.str().clear();
-			ssOutput.str().clear();
 
 			int type = *it++;
 			//std::cout << "Type=" << type << std::endl;
@@ -255,8 +208,8 @@ void CGsGuiInterface::Tick()
 					PropertyTreePos.put("version", 1);
 					PropertyTreePos.put("timestamp", ssTime.str());
 					PropertyTreePos.put("uav_id", Uav.UavId);
-					PropertyTreePos.put("uav_x", Uav.Geom.Pos.x());
-					PropertyTreePos.put("uav_y", Uav.Geom.Pos.y());
+					PropertyTreePos.put("uav_x", Uav.Geom.Pos.x() + config.OriginX); // Local to mercator coordinates
+					PropertyTreePos.put("uav_y", Uav.Geom.Pos.y() + config.OriginY); // Local to mercator coordinates
 					PropertyTreePos.put("uav_z", Uav.Geom.Pos.z());
 					PropertyTreePos.put("heading", Uav.Geom.Heading.angle());
 					PropertyTreePos.put("ground_speed", Uav.Geom.GroundSpeed);
@@ -275,14 +228,14 @@ void CGsGuiInterface::Tick()
 
 					PropertyTreePos.put("sensed_radius", 0); // TODO: must be something hard coded or calculated
 					PropertyTreePos.put("roll_angle", Uav.Geom.Roll.angle());
-					PropertyTreePos.put("dx1", Uav.WpNext[0].to.x());
-					PropertyTreePos.put("dy1", Uav.WpNext[0].to.y());
+					PropertyTreePos.put("dx1", Uav.WpNext[0].to.x() + config.OriginX); // Local to mercator coordinates
+					PropertyTreePos.put("dy1", Uav.WpNext[0].to.y() + config.OriginY); // Local to mercator coordinates
 					PropertyTreePos.put("dz1", Uav.WpNext[0].to.z());
-					PropertyTreePos.put("dx2", Uav.WpNext[1].to.x());
-					PropertyTreePos.put("dy2", Uav.WpNext[1].to.y());
+					PropertyTreePos.put("dx2", Uav.WpNext[1].to.x() + config.OriginX); // Local to mercator coordinates
+					PropertyTreePos.put("dy2", Uav.WpNext[1].to.y() + config.OriginY); // Local to mercator coordinates
 					PropertyTreePos.put("dz2", Uav.WpNext[1].to.z());
-					PropertyTreePos.put("dx3", Uav.WpNext[2].to.x());
-					PropertyTreePos.put("dy3", Uav.WpNext[2].to.y());
+					PropertyTreePos.put("dx3", Uav.WpNext[2].to.x() + config.OriginX); // Local to mercator coordinates
+					PropertyTreePos.put("dy3", Uav.WpNext[2].to.y() + config.OriginY); // Local to mercator coordinates
 					PropertyTreePos.put("dz3", Uav.WpNext[2].to.z());
 					PropertyTreePos.put("battery_left", Uav.BatteryTimeLeft);
 
@@ -304,8 +257,8 @@ void CGsGuiInterface::Tick()
 					PropertyTreeFire.put("p_f_c", FireMsg.PCam);
 					PropertyTreeFire.put("p_f_t", FireMsg.PTPA);
 					PropertyTreeFire.put("p_f_g", FireMsg.PGas);
-					PropertyTreeFire.put("g_x", FireMsg.X);
-					PropertyTreeFire.put("g_y", FireMsg.Y);
+					PropertyTreeFire.put("g_x", FireMsg.X + config.OriginX); // Local to mercator coordinates
+					PropertyTreeFire.put("g_y", FireMsg.Y + config.OriginY); // Local to mercator coordinates
 					PropertyTreeFire.put("g_var_x", FireMsg.VarX);
 					PropertyTreeFire.put("g_var_y", FireMsg.VarY);
 					PropertyTreeFire.put("g_var_rot", FireMsg.Rot);

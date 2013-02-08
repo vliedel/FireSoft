@@ -60,30 +60,12 @@ void CAutoPilot::Init(std::string module_id)
 
 	LastSetTimeLanding = get_cur_1ms();
 	// Convert to mercator coordinates
-	LastSetLanding.LandPoint.X = config.LandPointX + config.OriginX;
-	LastSetLanding.LandPoint.Y = config.LandPointY + config.OriginY;
+	LastSetLanding.LandPoint.X = config.LandPointX + config.OriginX; // Local to mercator coordinates
+	LastSetLanding.LandPoint.Y = config.LandPointY + config.OriginY; // Local to mercator coordinates
 	LastSetLanding.LandPoint.Z = 0;
 	LastSetLanding.LandHeading = config.LandHeading;
 	LastSetLanding.LandLeftTurn = config.LandLeftTurn;
 
-	// Set the field at init
-//	SendHeader(AP_PROT_SET_FIELD, sizeof(AutoPilotMsgField));
-//	AutoPilotMsgField msgField;
-//	msgField.Origin.GpsLat = 51.998902;
-//	msgField.Origin.GpsLong = 4.373504;
-//	msgField.Origin.GpsZ = 0;
-//	msgField.XBound.GpsLat = 51.999183;
-//	msgField.XBound.GpsLong = 4.378738;
-//	msgField.XBound.GpsZ = 0;
-//	msgField.YBound.GpsLat = 51.999837;
-//	msgField.YBound.GpsLong = 4.374415;
-//	msgField.YBound.GpsZ = 0;
-//	msgField.Home.GpsLat = 51.998902;
-//	msgField.Home.GpsLong = 4.373504;
-//	msgField.Home.GpsZ = 0;
-//	Serial->write((char*)&msgField, sizeof(AutoPilotMsgField));
-
-//	SendData((char*)&(config.FieldGPS), sizeof(AutoPilotMsgField));
 }
 
 void CAutoPilot::Tick()
@@ -165,7 +147,7 @@ void CAutoPilot::Tick()
 	}
 
 	// Read from map self
-	VecMsg = readMapSelf(false);
+	VecMsg = readFromMapSelf(false);
 	if (!VecMsg->empty())
 	{
 		std::cout << "AP " << UavId << " from MapSelf: ";
@@ -189,8 +171,8 @@ void CAutoPilot::Tick()
 				{
 					LandingStruct land;
 					it = FromCont(land, it, VecMsg->end());
-					LastSetLanding.LandPoint.X = land.Pos.x() + config.OriginX;
-					LastSetLanding.LandPoint.Y = land.Pos.y() + config.OriginY;
+					LastSetLanding.LandPoint.X = land.Pos.x() + config.OriginX; // Local to mercator coordinates
+					LastSetLanding.LandPoint.Y = land.Pos.y() + config.OriginY; // Local to mercator coordinates
 					LastSetLanding.LandPoint.Z = land.Pos.z();
 					LastSetLanding.LandHeading = land.Heading.angle();
 					LastSetLanding.LandLeftTurn = land.LeftTurn;
@@ -284,8 +266,8 @@ void CAutoPilot::ReadUart()
 
 		// Write to state to mapSelf
 		UavGeomStruct geom;
-		geom.Pos.x() = data.Position.X - config.OriginX;
-		geom.Pos.y() = data.Position.Y - config.OriginY;
+		geom.Pos.x() = data.Position.X - config.OriginX; // Mercator to local coordinates
+		geom.Pos.y() = data.Position.Y - config.OriginY; // Mercator to local coordinates
 		geom.Pos.z() = data.Position.Z;
 		geom.GroundSpeed = data.GroundSpeed;
 		geom.VerticalSpeed = data.VerticalSpeed;
@@ -297,7 +279,7 @@ void CAutoPilot::ReadUart()
 		vecMsg.clear();
 		ToCont(geom, vecMsg);
 		vecMsg.push_back(PROT_MAPSELF_DATAIN_GEOM);
-		writeMapSelf(vecMsg);
+		writeToMapSelf(vecMsg);
 
 		APStatusStruct apStatus;
 		apStatus.FlyState = data.FlyState;
@@ -309,7 +291,7 @@ void CAutoPilot::ReadUart()
 		vecMsg.clear();
 		ToCont(apStatus, vecMsg);
 		vecMsg.push_back(PROT_MAPSELF_DATAIN_AP_STATUS);
-		writeMapSelf(vecMsg);
+		writeToMapSelf(vecMsg);
 
 		// Set the correct state
 		vecMsg.clear();
@@ -337,13 +319,13 @@ void CAutoPilot::ReadUart()
 		if (!vecMsg.empty())
 		{
 			vecMsg.push_back(PROT_MAPSELF_DATAIN_STATE);
-			writeMapSelf(vecMsg);
+			writeToMapSelf(vecMsg);
 		}
 
 		vecMsg.clear();
 		vecMsg.push_back(data.BatteryLeft/1000); // BatteryLeft is in ms?
 		vecMsg.push_back(PROT_MAPSELF_DATAIN_BATTERY);
-		writeMapSelf(vecMsg);
+		writeToMapSelf(vecMsg);
 
 		break;
 	}
@@ -358,7 +340,7 @@ void CAutoPilot::ReadUart()
 //		VecMsgType vecMsg;
 //		ToCont(wps, vecMsg);
 //		vecMsg.push_back(PROT_MAPSELF_DATAIN_WAYPOINTS);
-//		writeMapSelf(vecMsg);
+//		writeToMapSelf(vecMsg);
 
 		break;
 	}
@@ -487,19 +469,19 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 			case WP_LINE:
 			{
 				msgWps.WayPoints[i].WpType = AP_PROT_WP_LINE;
-				msgWps.WayPoints[i].Line.From.X = wps.WayPoints[i].from.x() + config.OriginX;
-				msgWps.WayPoints[i].Line.From.Y = wps.WayPoints[i].from.y() + config.OriginY;
+				msgWps.WayPoints[i].Line.From.X = wps.WayPoints[i].from.x() + config.OriginX; // Local to mercator coordinates
+				msgWps.WayPoints[i].Line.From.Y = wps.WayPoints[i].from.y() + config.OriginY; // Local to mercator coordinates
 				msgWps.WayPoints[i].Line.From.Z = wps.WayPoints[i].from.z();
-				msgWps.WayPoints[i].Line.To.X = wps.WayPoints[i].to.x() + config.OriginX;
-				msgWps.WayPoints[i].Line.To.Y = wps.WayPoints[i].to.y() + config.OriginY;
+				msgWps.WayPoints[i].Line.To.X = wps.WayPoints[i].to.x() + config.OriginX; // Local to mercator coordinates
+				msgWps.WayPoints[i].Line.To.Y = wps.WayPoints[i].to.y() + config.OriginY; // Local to mercator coordinates
 				msgWps.WayPoints[i].Line.To.Z = wps.WayPoints[i].to.z();
 				break;
 			}
 			case WP_CIRCLE:
 			{
 				msgWps.WayPoints[i].WpType = AP_PROT_WP_CIRCLE;
-				msgWps.WayPoints[i].Circle.Center.X = wps.WayPoints[i].to.x() + config.OriginX;
-				msgWps.WayPoints[i].Circle.Center.Y = wps.WayPoints[i].to.y() + config.OriginY;
+				msgWps.WayPoints[i].Circle.Center.X = wps.WayPoints[i].to.x() + config.OriginX; // Local to mercator coordinates
+				msgWps.WayPoints[i].Circle.Center.Y = wps.WayPoints[i].to.y() + config.OriginY; // Local to mercator coordinates
 				msgWps.WayPoints[i].Circle.Center.Z = wps.WayPoints[i].to.z();
 				msgWps.WayPoints[i].Circle.Radius = wps.WayPoints[i].Radius;
 				break;
@@ -507,8 +489,8 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 			case WP_ARC:
 			{
 				msgWps.WayPoints[i].WpType = AP_PROT_WP_ARC;
-				msgWps.WayPoints[i].Arc.Center.X = wps.WayPoints[i].to.x() + config.OriginX;
-				msgWps.WayPoints[i].Arc.Center.Y = wps.WayPoints[i].to.y() + config.OriginY;
+				msgWps.WayPoints[i].Arc.Center.X = wps.WayPoints[i].to.x() + config.OriginX; // Local to mercator coordinates
+				msgWps.WayPoints[i].Arc.Center.Y = wps.WayPoints[i].to.y() + config.OriginY; // Local to mercator coordinates
 				msgWps.WayPoints[i].Arc.Center.Z = wps.WayPoints[i].to.z();
 				msgWps.WayPoints[i].Arc.Radius = wps.WayPoints[i].Radius;
 				msgWps.WayPoints[i].Arc.AngleStart = wps.WayPoints[i].AngleStart;
@@ -523,5 +505,5 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 	VecMsgType vecMsg;
 	ToCont(wps, vecMsg);
 	vecMsg.push_back(PROT_MAPSELF_DATAIN_WAYPOINTS);
-	writeMapSelf(vecMsg);
+	writeToMapSelf(vecMsg);
 }

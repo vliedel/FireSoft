@@ -135,7 +135,7 @@ struct RadioMsgRelayPos
 /*
 struct RadioMsgRelayPos
 {
-	uint8_t UavId; // ID of the UAV where the msg originates from
+	uint8_t UavId; // ID of the UAV where the msg originates from (1 to 10, 0 for invalid)
 
 	int X;
 	int Y;
@@ -233,7 +233,7 @@ struct RadioMsgRelayPos
 
 struct RadioMsgRelayFire
 {
-	uint8_t UavId; // ID of the UAV where the msg originates from
+	uint8_t UavId; // ID of the UAV where the msg originates from (1 to 10, 0 for invalid)
 
 	int X;
 	int Y;
@@ -312,7 +312,7 @@ struct RadioMsgRelayFires
 
 struct RadioMsgRelayCmd
 {
-	uint8_t UavId; // ID of the UAV who the command is for (15 for all UAVs)
+	uint8_t UavId; // ID of the UAV who the command is for (1 to 11, 0 for invalid, 11 for all UAVs)
 	uint8_t MsgId; // ID of this message, so that UAVs know if they relayed this msg yet.
 
 	uint16_t HeightMin;

@@ -40,9 +40,6 @@ struct GroundStationSimConfig
 {
 	long TickTime;
 	bool Debug;
-
-	float OriginX; // Mercator coordinates
-	float OriginY; // Mercator coordinates
 	float AreaOriginX;
 	float AreaOriginY;
 	float AreaSizeX;
@@ -61,9 +58,6 @@ struct GroundStationSimConfig
 		read_json(filename, pt);
 		TickTime = pt.get<long>("groundStationSim.TickTime");
 		Debug = pt.get<bool>("groundStationSim.Debug");
-
-		OriginX = pt.get<float>("field.OriginX");
-		OriginY = pt.get<float>("field.OriginY");
 		AreaOriginX = pt.get<float>("field.AreaOriginX");
 		AreaOriginY = pt.get<float>("field.AreaOriginY");
 		AreaSizeX = pt.get<float>("field.AreaSizeX");

@@ -42,7 +42,8 @@ interface mapSelf {
   
   // -- mapSelf interfaces --
   
-  void AutoPilot(inout float_seq seq);
+  void ToAutoPilot(out float_seq seq);
+  void FromAutoPilot(in float_seq seq);
   
   void FromRadio(in float_seq seq);
 

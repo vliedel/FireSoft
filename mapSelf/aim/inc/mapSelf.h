@@ -59,10 +59,13 @@ private:
   // the port portStatus itself
   BufferedPort<Bottle> *portStatus;
   
-  // private storage for portAutoPilotValues;
-  std::vector<float> *portAutoPilotValues;
-  // the port portAutoPilot itself
-  BufferedPort<Bottle> *portAutoPilot;
+  // the port portToAutoPilot itself
+  BufferedPort<Bottle> *portToAutoPilot;
+  
+  // private storage for portFromAutoPilotValues;
+  std::vector<float> *portFromAutoPilotValues;
+  // the port portFromAutoPilot itself
+  BufferedPort<Bottle> *portFromAutoPilot;
   
   // private storage for portFromRadioValues;
   std::vector<float> *portFromRadioValues;
@@ -82,10 +85,13 @@ public:
     portStatus = new BufferedPort<Bottle>();
     portStatus->setStrict();
     portStatus->writeStrict();
-    portAutoPilotValues = new std::vector<float>();
-    portAutoPilot = new BufferedPort<Bottle>();
-    portAutoPilot->setStrict();
-    portAutoPilot->writeStrict();
+    portToAutoPilot = new BufferedPort<Bottle>();
+    portToAutoPilot->setStrict();
+    portToAutoPilot->writeStrict();
+    portFromAutoPilotValues = new std::vector<float>();
+    portFromAutoPilot = new BufferedPort<Bottle>();
+    portFromAutoPilot->setStrict();
+    portFromAutoPilot->writeStrict();
     portFromRadioValues = new std::vector<float>();
     portFromRadio = new BufferedPort<Bottle>();
     portFromRadio->setStrict();
@@ -95,8 +101,9 @@ public:
   ~mapSelf() {
     delete portCommand;
     delete portStatus;
-    delete portAutoPilotValues;
-    delete portAutoPilot;
+    delete portToAutoPilot;
+    delete portFromAutoPilotValues;
+    delete portFromAutoPilot;
     delete portFromRadioValues;
     delete portFromRadio;
     delete cliParam;
@@ -123,8 +130,13 @@ public:
     }
     {
       std::stringstream portName; portName.str(); portName.clear();
-      portName << "/mapself" << module_id << "/autopilot";
-      portAutoPilot->open(portName.str().c_str());
+      portName << "/mapself" << module_id << "/toautopilot";
+      portToAutoPilot->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/mapself" << module_id << "/fromautopilot";
+      portFromAutoPilot->open(portName.str().c_str());
     }
     {
       std::stringstream portName; portName.str(); portName.clear();
@@ -138,7 +150,8 @@ public:
   void Close() {
     portCommand->close();
     portStatus->close();
-    portAutoPilot->close();
+    portToAutoPilot->close();
+    portFromAutoPilot->close();
     portFromRadio->close();
   }
   
@@ -165,24 +178,24 @@ protected:
     portStatus->write(true);
   }
   
-  // Remark: caller is responsible for evoking vector.clear()
-  inline std::vector<float> *readAutoPilot(bool blocking=true) {
-    Bottle *b = portAutoPilot->read(blocking);
-    if (b != NULL) { 
-      for (int i = 0; i < b->size(); ++i) {
-        portAutoPilotValues->push_back(b->get(i).asDouble());
-      }
-    }
-    return portAutoPilotValues;
-  }
-  
-  inline void writeAutoPilot(const float_seq &seq) {
-    Bottle &seqPrepare = portAutoPilot->prepare();
+  inline void writeToAutoPilot(const float_seq &seq) {
+    Bottle &seqPrepare = portToAutoPilot->prepare();
     seqPrepare.clear();
     for (int i = 0; i < seq.size(); ++i) {
       seqPrepare.addDouble(seq[i]);
     }
-    portAutoPilot->write(true);
+    portToAutoPilot->write(true);
+  }
+  
+  // Remark: caller is responsible for evoking vector.clear()
+  inline std::vector<float> *readFromAutoPilot(bool blocking=true) {
+    Bottle *b = portFromAutoPilot->read(blocking);
+    if (b != NULL) { 
+      for (int i = 0; i < b->size(); ++i) {
+        portFromAutoPilotValues->push_back(b->get(i).asDouble());
+      }
+    }
+    return portFromAutoPilotValues;
   }
   
   // Remark: caller is responsible for evoking vector.clear()

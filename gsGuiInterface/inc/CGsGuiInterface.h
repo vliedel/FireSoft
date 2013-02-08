@@ -51,6 +51,8 @@ struct GsGuiInterfaceConfig
 	std::string Host;
 	std::string Port;
 	std::string DataType;
+	float OriginX; // Mercator coordinates
+	float OriginY; // Mercator coordinates
 
 	void load(const std::string &filename)
 	{
@@ -61,6 +63,8 @@ struct GsGuiInterfaceConfig
 		Host = pt.get<std::string>("gsGuiInterface.Host");
 		Port = pt.get<std::string>("gsGuiInterface.Port");
 		DataType = pt.get<std::string>("gsGuiInterface.DataType");
+		OriginX = pt.get<float>("field.OriginX");
+		OriginY = pt.get<float>("field.OriginY");
 	}
 };
 

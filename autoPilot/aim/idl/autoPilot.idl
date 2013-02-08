@@ -42,7 +42,8 @@ interface autoPilot {
   
   // -- autoPilot interfaces --
 
-  void MapSelf(inout float_seq seq);
+  void ToMapSelf(out float_seq seq);
+  void FromMapSelf(in float_seq seq);
   
   void FromWayPointPlanner(in float_seq seq);
   

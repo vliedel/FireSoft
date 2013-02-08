@@ -86,7 +86,8 @@ void CMapSelf::Init(std::string module_id)
 		Map->UavData.BatteryTimeLeft = config.BatteryTime;
 		// Init ground station command messages with invalid ids
 		for (int i=0; i<MAPSELF_GS_CMDS_HIST; ++i)
-			Map->LastGsCmds[i].MsgId = 255; // TODO: magic number
+			Map->LastGsCmds[i].UavId = 0; // Invalid msg
+		Map->LastGsCmdsIndex = 0;
 
 		Map->GsCmd.HeightMin = config.MinHeight;
 		Map->GsCmd.HeightMax = config.MaxHeight;
@@ -115,7 +116,7 @@ void CMapSelf::Tick()
 //		boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex, boost::interprocess::try_to_lock);
 //		if (lock)
 //		{
-	VecMsg = readAutoPilot(false);
+	VecMsg = readFromAutoPilot(false);
 	if (!VecMsg->empty())
 	{
 		std::cout << get_cur_1ms() << " MAPSELF " << ModuleId << " from AP: ";
@@ -235,37 +236,32 @@ void CMapSelf::Tick()
 				{
 					boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
 
-					// Shift history and add new msg at back
-					for (int i=0; i<MAPSELF_GS_CMDS_HIST-1; ++i)
-						Map->LastGsCmds[i] = Map->LastGsCmds[i+1];
-					Map->LastGsCmds[MAPSELF_GS_CMDS_HIST-1] = gsCmdMsg;
+					std::cout << "gsCmdMsg=" << gsCmdMsg << std::endl;
 
-					// Update current variables
-					// Translate to meters and radians
-					// TODO: MAGIC NUMBERS SO MANY
+					// Check if the msg is a valid msg
+					if (gsCmdMsg.UavId == 0)
+						break;
 
-					if (gsCmdMsg.UavId == 15 || gsCmdMsg.UavId-1 == Map->UavData.UavId)
+					// Check if the msg has been seen already
+					bool seen=false;
+					for (int i=0; i<MAPSELF_GS_CMDS_HIST; ++i)
+					{
+						// TODO: incomplete check?
+						if ((Map->LastGsCmds[i].UavId == gsCmdMsg.UavId)
+								&& (Map->LastGsCmds[i].MsgId == gsCmdMsg.MsgId))
+						{
+							seen = true;
+							break;
+						}
+					}
+					if (seen)
+						break;
+
+					// Update current variables if the msg is for us
+					if (gsCmdMsg.UavId == 11 || gsCmdMsg.UavId == Map->UavData.UavId + 1)
 					{
 						GsCmdStruct gsCmd;
 						gsCmd.fromMsg(gsCmdMsg);
-//						// Height is 0 to 255, translate to 50 to 305
-//						Map->HeightMin = gsCmd.HeightMin + 50;
-//						Map->HeightMax = gsCmd.HeightMax + 50;
-//						// Area has precision of 5 meter
-//						Map->AreaZero.x() = gsCmd.AreaMinX * 5;
-//						Map->AreaZero.y() = gsCmd.AreaMinY * 5;
-//						Map->AreaSize.x() = gsCmd.AreaDX * 5;
-//						Map->AreaSize.y() = gsCmd.AreaDY * 5;
-//						// Rotation is 0 to 1023, translate to 0 to 0.5*pi
-//						Map->AreaRotation.angle() = gsCmd.AreaRotation * 0.5*M_PI/1023;
-
-//						// In meters
-//						LandingStruct land;
-//						land.Pos.x() = gsCmd.LandX;
-//						land.Pos.y() = gsCmd.LandY;
-//						// Heading is 0 to 255, translate to 0 to 2*pi
-//						land.Heading.angle() = gsCmd.LandHeading * 2.0*M_PI/255;
-//						land.LeftTurn = gsCmd.LandLeftTurn;
 
 						// If landing changed, update auto pilot
 						if (gsCmd.Landing.Pos.x() != Map->GsCmd.Landing.Pos.x() ||
@@ -277,9 +273,8 @@ void CMapSelf::Tick()
 							VecMsgType vecMsg;
 							vecMsg.push_back(PROT_AP_SET_LAND);
 							ToCont(gsCmd.Landing, vecMsg);
-							writeAutoPilot(vecMsg);
+							writeToAutoPilot(vecMsg);
 						}
-						//Map->Landing = land;
 
 						// If AP mode changed, update auto pilot
 						if (Map->GsCmd.Mode != gsCmd.Mode)
@@ -291,11 +286,8 @@ void CMapSelf::Tick()
 								vecMsg.push_back(Map->RequestedAPModeByWP);
 							else
 								vecMsg.push_back(gsCmd.Mode);
-							writeAutoPilot(vecMsg);
+							writeToAutoPilot(vecMsg);
 						}
-						//Map->RequestedAPModeByGS = gsCmd.Mode;
-
-						//Map->EnablePlanner = gsCmd.EnablePlanner;
 						Map->GsCmd = gsCmd;
 
 						// Check mode to update state
@@ -319,6 +311,10 @@ void CMapSelf::Tick()
 								break;
 						}
 					}
+
+					// Add message to history
+					Map->LastGsCmdsIndex = (Map->LastGsCmdsIndex+1) % MAPSELF_GS_CMDS_HIST;
+					Map->LastGsCmds[Map->LastGsCmdsIndex] = gsCmdMsg;
 				}
 				else
 					std::cout << "Error: invalid vector to create RadioMsgRelayCmd" << std::endl;

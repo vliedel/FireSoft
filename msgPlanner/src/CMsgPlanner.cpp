@@ -109,7 +109,6 @@ void CMsgPlanner::SelectMsgs()
 		boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
 
 		// Find the uavs that have been last sent, and send their last state
-		// TODO: This isn't very smart yet, cause we might not have updated their state for a long time and thus already sent the msg..
 		long lastSentTimes[RADIO_NUM_RELAY_PER_MSG-1] = {LONG_MAX};
 		MapUavIterType iters[RADIO_NUM_RELAY_PER_MSG-1];
 		for (int k=0; k<RADIO_NUM_RELAY_PER_MSG-1; ++k)
@@ -140,39 +139,20 @@ void CMsgPlanner::SelectMsgs()
 					lastSentTimes[j] = it->second.LastRadioSentTime;
 					iters[j] = it;
 					dobots::print(lastSentTimes, lastSentTimes+RADIO_NUM_RELAY_PER_MSG-1);
-
-//					std::cout << "ids=[";
-//					for (int k=0; k<RADIO_NUM_RELAY_PER_MSG-1; ++k)
-//					{
-//						if (iters[k] != MapUavs->end())
-//							std::cout << " " << iters[k]->second.data.UavId;
-//					}
-//					std::cout << "]" << std::endl;
-
 					break;
 				}
 			}
 		}
 
 		// Fill up selected msgs
-		RadioMsgRelay rmsg;
-		rmsg.MessageType = RADIO_MSG_RELAY_POS;
-		rmsg.Pos.UavId = 0;
+		RadioMsgRelay invalidMsg;
+		invalidMsg.MessageType = RADIO_MSG_RELAY_POS;
+		invalidMsg.Pos.UavId = 0;
 		for (int i=0; i<RADIO_NUM_RELAY_PER_MSG-1; ++i)
 		{
 			if (lastSentTimes[i] == LONG_MAX)
-			{
-				SelectedMsgs[i+1] = rmsg;
-				//break;
-			}
-			//			std::cout << "Last messages of uav " << iters[i]->second.data.UavId;
-			//			for (int j=0; j<MAPUAV_RADIOMSG_HIST; --j)
-			//			{
-			//
-			//			}
-
+				SelectedMsgs[i+1] = invalidMsg;
 			else
-
 			{
 				SelectedMsgs[i+1] = iters[i]->second.LastRadioMsgs[iters[i]->second.LastRadioMsgsIndex];
 				iters[i]->second.LastRadioSentTime = get_cur_1ms();
