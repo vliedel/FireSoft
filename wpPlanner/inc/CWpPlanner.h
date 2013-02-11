@@ -158,6 +158,7 @@ class CWpPlanner : public wpPlanner
 		float GetVal(const Position& pos, std::vector<FitnessGaussian2D>& coverage);
 		float GetColVal(int& uavId, const Position& pos);
 		bool OutOfBounds(Position& pos);
+		void GetLandWp(WayPoint& wp, const LandingStruct& landing, float height);
 		void WriteFitnessToFile();
 };
 

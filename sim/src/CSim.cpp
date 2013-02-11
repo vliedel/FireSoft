@@ -485,6 +485,9 @@ void CSim::CmdStart()
 		vecMsg.clear();
 
 		it->UavData.UavData.Geom.Init();
+		it->UavData.UavData.Geom.Pos.x() = config.GroundStationX;
+		it->UavData.UavData.Geom.Pos.y() = config.GroundStationY;
+
 		vecMsg.push_back(PROT_SIMCMD_SET_GEOM);
 		//geom.Pos << (id+0)*50, (id+0)*50, (id+0)*10;
 		ToCont(it->UavData.UavData.Geom, vecMsg);

@@ -42,6 +42,7 @@ struct FitnessGenStaticConfig
 //	float MaxX, MaxY; // Size of the field
 	float WallAmplitude; // Value of wall at 3 sigma
 	float WallSigma;
+	float LandingAmplitude;
 
 	void load(const std::string &filename)
 	{
@@ -54,6 +55,7 @@ struct FitnessGenStaticConfig
 //		MaxY = pt.get<float>("field.MaxY");
 		WallAmplitude = pt.get<float>("fitnessGenStatic.WallAmplitude");
 		WallSigma = pt.get<float>("fitnessGenStatic.WallSigma");
+		LandingAmplitude = pt.get<float>("fitness.LandingAmplitude");
 	}
 };
 

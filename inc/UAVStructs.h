@@ -326,15 +326,18 @@ class MapSelfNeighboursStruct
 class LandingStruct
 {
 	public:
-		Position				Pos;	// In local coordinates
-		Rotation2DType			Heading;	// In rad
-		bool					LeftTurn;
+		Position				Pos;		// In local coordinates
+		Rotation2DType			Heading;	// In rad, heading of the UAV when flying the straight path
+		bool					LeftTurn;	// Plane turns left (in spiral) before landing
+		float					Length;		// Length of straigth path from spiral to landing point ** set in config! **
+		float					Radius;		// Radius of the spiral
 
 		LandingStruct(): Heading(0) {}
 
 	friend std::ostream& operator<<(std::ostream& os, const LandingStruct& struc)
 	{
-		os << "Position=[" << struc.Pos.transpose() << "] Heading=" << struc.Heading.angle() << " LeftTurn=" << struc.LeftTurn;
+		os << "Position=[" << struc.Pos.transpose() << "] Heading=" << struc.Heading.angle() << " LeftTurn=" << struc.LeftTurn
+				<< " Length=" << struc.Length << " Radius=" << struc.Radius;
 		return os;
 	}
 };
@@ -373,16 +376,21 @@ public:
 		// Area is 0 to 1023, translate to 0 to 5000
 		AreaZero.x() = msg.AreaMinX * 5000/1023;
 		AreaZero.y() = msg.AreaMinY * 5000/1023;
+		AreaZero.z() = 0;
 		AreaSize.x() = msg.AreaDX * 5000/1023;
 		AreaSize.y() = msg.AreaDY * 5000/1023;
+		AreaSize.z() = 0;
 		// Rotation is 0 to 1023, translate to 0 to 0.5*pi
 		AreaRotation.angle() = msg.AreaRotation * M_PI/2/1023;
 		// Landing pos is 0 to 4095, translate to 0 to 5000
 		Landing.Pos.x() = msg.LandX * 5000/4095;
 		Landing.Pos.y() = msg.LandY * 5000/4095;
+		Landing.Pos.z() = 0;
 		// Land heading is 0 to 255, translate to 0 to 2*pi
 		Landing.Heading.angle() = msg.LandHeading * 2.0*M_PI/255;
 		Landing.LeftTurn = msg.LandLeftTurn;
+		Landing.Length = 0; // This is set in config, not in radio msg!
+		Landing.Radius = 0; // This is set in config, not in radio msg!
 		Mode = msg.Mode;
 		EnablePlanner = msg.EnablePlanner;
 	}

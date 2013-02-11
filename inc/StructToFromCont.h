@@ -495,6 +495,8 @@ struct SfC<InputForwardIter, OutputForwardIter, LandingStruct>
 		first = SfC<InputForwardIter, OutputForwardIter, Position>::FromCont(struc.Pos, first, last);
 		first = SfC<InputForwardIter, OutputForwardIter, Rotation2DType>::FromCont(struc.Heading, first, last);
 		struc.LeftTurn = *first++;
+		struc.Length = *first++;
+		struc.Radius = *first++;
 		return first;
 	}
 };
@@ -506,6 +508,8 @@ struct StC<SequenceContainer, LandingStruct>
 		StC<SequenceContainer, Position>::ToCont(struc.Pos, cont);
 		StC<SequenceContainer, Rotation2DType>::ToCont(struc.Heading, cont);
 		cont.push_back(struc.LeftTurn);
+		cont.push_back(struc.Length);
+		cont.push_back(struc.Radius);
 	}
 };
 

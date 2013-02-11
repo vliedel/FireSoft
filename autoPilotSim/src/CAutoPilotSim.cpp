@@ -60,7 +60,6 @@ void CAutoPilotSim::ReInit(int moduleId)
 	WindHeading = 0;
 	WindSpeed = 0;
 	WayPoints.clear();
-//	BatteryTimeLeft = 45*60;
 	BatteryTimeLeft = config.BatteryTime;
 	//State = UAVSTATE_FLYING;
 	State = UAVSTATE_LANDED;
@@ -69,109 +68,9 @@ void CAutoPilotSim::ReInit(int moduleId)
 	Landing.Pos.y() = config.LandPointY;
 	Landing.Heading.angle() = config.LandHeading;
 	Landing.LeftTurn = config.LandLeftTurn;
-
-
-//	// Let's set some random waypoints (these can be overwritten later)
-//	WayPoint wp;
-//	srand(UavId+2); // seed of 0 and 1 are special cases
-//
-//	float x=0;
-//	float y=0;
-//	float r;
-//
-//	wp.wpMode = WP_LINE;
-//	wp.from << x, y, 0;
-//	x+=300;
-//	y+=300;
-//	wp.to << x,y,0;
-//	AddWayPoint(wp);
-//	std::cout << wp.from.transpose() << " -- " << wp.to.transpose() << " -- ";
-//
-//	wp.wpMode = WP_CIRCLE; // going from NE to N
-//	r=90;
-//	wp.AngleStart = 1.75*M_PI;
-//	wp.AngleArc = 0.25*M_PI;
-//	wp.Radius = r;
-//	x+=-r*cos(1.75*M_PI);
-//	y+=-r*sin(1.75*M_PI);
-//	wp.to << x, y, 0;
-//	x+=r*cos(1.75*M_PI + 0.25*M_PI);
-//	y+=r*sin(1.75*M_PI + 0.25*M_PI);
-//	AddWayPoint(wp);
-//
-//	wp.wpMode = WP_LINE; // going N
-//	wp.from << x,y,0;
-//	x+=0;
-//	y+=100;
-//	wp.to << x,y,0;
-//	AddWayPoint(wp);
-//	std::cout << wp.from.transpose() << " -- " << wp.to.transpose() << " -- ";
-//
-//	wp.wpMode = WP_CIRCLE; // going from N to E
-//	r=120;
-//	wp.AngleStart = 1.0*M_PI;
-//	wp.AngleArc = -0.5*M_PI;
-//	wp.Radius = r;
-//	x+=-r*cos(1.0*M_PI);
-//	y+=-r*sin(1.0*M_PI);
-//	wp.to << x, y, 0;
-//	x+=r*cos(1.0*M_PI + -0.5*M_PI);
-//	y+=r*sin(1.0*M_PI + -0.5*M_PI);
-//	AddWayPoint(wp);
-//
-//	wp.wpMode = WP_LINE; // going E
-//	wp.from << x,y,0;
-//	x+=200;
-//	y+=0;
-//	wp.to << x,y,0;
-//	AddWayPoint(wp);
-//	std::cout << wp.from.transpose() << " -- " << wp.to.transpose() << " -- ";
-//
-//	wp.wpMode = WP_CIRCLE; // going from E to SW
-//	r=200;
-//	wp.AngleStart = 0.5*M_PI;
-//	wp.AngleArc = -0.75*M_PI;
-//	wp.Radius = r;
-//	x+=-r*cos(0.5*M_PI);
-//	y+=-r*sin(0.5*M_PI);
-//	wp.to << x, y, 0;
-//	x+=r*cos(0.5*M_PI + -0.75*M_PI);
-//	y+=r*sin(0.5*M_PI + -0.75*M_PI);
-//	AddWayPoint(wp);
-//
-//	wp.wpMode = WP_LINE; // going SW
-//	wp.from << x,y,0;
-//	x+=-200;
-//	y+=-200;
-//	wp.to << x,y,0;
-//	AddWayPoint(wp);
-//	std::cout << wp.from.transpose() << " -- " << wp.to.transpose() << " -- ";
-//	std::cout << std::endl;
-
-//	for (int i=1; i<MAPSELF_MAX_WAYPOINTS; ++i)
-//	{
-//		wp.from << WayPoints[i-1].to;
-//		wp.to << rand()%1000, rand()%1000, rand()%200;
-//		std::cout << "uavId " << UavId << " Added waypoint " << wp << std::endl;
-//		AddWayPoint(wp);
-//	}
-
-//	// Give uav 0 special waypoints (circle around the field)
-//	WayPoints.clear();
-//	if (UavId == 0)
-//	{
-//		for (int i=0; i<MAPSELF_MAX_WAYPOINTS/4; ++i)
-//		{
-//			wp.to << 400, 0, 0;
-//			AddWayPoint(wp);
-//			wp.to << 400, 400, 0;
-//			AddWayPoint(wp);
-//			wp.to << 0, 400, 0;
-//			AddWayPoint(wp);
-//			wp.to << 0, 0, 0;
-//			AddWayPoint(wp);
-//		}
-//	}
+	Landing.Length = config.LandLength;
+	Landing.Radius = config.LandRadius;
+	LandStraight = false;
 
 }
 
@@ -206,12 +105,6 @@ void CAutoPilotSim::Tick()
 					//vecMsg.clear();
 					//vecMsg.push_back(PROT_SIMSTAT_ACK);
 					//writeSimState(vecMsg);
-//					Position home;
-//					home << config.HomeX, config.HomeY, 0;
-//					std::vector<float> vecMsg;
-//					ToCont(home, vecMsg);
-//					vecMsg.push_back(PROT_MAPSELF_DATAIN_HOME);
-//					writeToMapSelf(vecMsg);
 					break;
 				}
 				case PROT_SIMCMD_SET_GEOM:
@@ -353,6 +246,8 @@ void CAutoPilotSim::Tick()
 				case PROT_AP_SET_LAND:
 				{
 					it = FromCont(Landing, it, VecMsg->end());
+					Landing.Length = config.LandLength;
+					Landing.Radius = config.LandRadius;
 					break;
 				}
 			}
@@ -403,32 +298,70 @@ void CAutoPilotSim::TimeStep(float dt)
 
 	if (State == UAVSTATE_LANDING)
 	{
-		// Let's land
-		std::cout << "Landing" << std::endl;
-		Heading = atan2(Geom.Pos.y()-Landing.Pos.y(), Geom.Pos.x()-Landing.Pos.x()) + M_PI;
-		if (Heading > M_PI)
-			Heading -= 2*M_PI;
-		carrot << Landing.Pos.x(), Landing.Pos.y(), 0;
-		WayPoint wp;
-		wp.to = carrot;
-		wp.from = Geom.Pos;
-		wp.wpMode = WP_LINE;
-		WayPoints.clear();
-		WayPoints.push_back(wp);
-
-		float dx = Geom.Pos.x() - Landing.Pos.x();
-		float dy = Geom.Pos.y() - Landing.Pos.y();
-		if (sqrt(dx*dx+dy*dy) < 10)
+		// If current heading is almost the required heading, then go straight to landing spot
+		float landHeading = Landing.Heading.angle();
+		if (landHeading > M_PI)
+			landHeading -= 2*M_PI;
+		if (LandStraight ||
+				((landHeading-2*M_PI/50 < Geom.Heading.angle()) && (Geom.Heading.angle() < landHeading+2*M_PI/50)
+				&& (Geom.Pos.z() < 55)))
 		{
-			std::cout << "Landed" << std::endl;
-			Geom.Pos.z() = 0;
-			State = UAVSTATE_LANDED;
-			vecMsg.clear();
-			vecMsg.push_back(State);
-			vecMsg.push_back(PROT_MAPSELF_DATAIN_STATE);
-			writeToMapSelf(vecMsg);
+			// Let's land
+			LandStraight = true;
+			std::cout << "Landing " << Landing.Heading.angle() << std::endl;
+//			Heading = atan2(Geom.Pos.y()-Landing.Pos.y(), Geom.Pos.x()-Landing.Pos.x()) + M_PI;
+//			if (Heading > M_PI)
+//				Heading -= 2*M_PI;
+			carrot << Landing.Pos.x(), Landing.Pos.y(), 0;
+			WayPoint wp;
+			wp.to = carrot;
+			wp.from = Geom.Pos;
+			wp.wpMode = WP_LINE;
+			WayPoints.clear();
+			WayPoints.push_back(wp);
+
+			float dx = Geom.Pos.x() - Landing.Pos.x();
+			float dy = Geom.Pos.y() - Landing.Pos.y();
+			if (sqrt(dx*dx+dy*dy) < 10)
+			{
+				std::cout << "Landed" << std::endl;
+				Geom.Pos.z() = 0;
+				State = UAVSTATE_LANDED;
+				vecMsg.clear();
+				vecMsg.push_back(State);
+				vecMsg.push_back(PROT_MAPSELF_DATAIN_STATE);
+				writeToMapSelf(vecMsg);
+			}
+		}
+
+		else
+		{
+			std::cout << "spiral downwards" << std::endl;
+			WayPoint wp;
+			wp.to = Landing.Pos;
+			wp.to.z() = 50;
+			wp.to.x() += Landing.Length * cos(Landing.Heading.angle()+M_PI);
+			wp.to.y() += Landing.Length * sin(Landing.Heading.angle()+M_PI);
+			if (Landing.LeftTurn)
+			{
+				wp.to.x() += Landing.Radius * cos(Landing.Heading.angle()+0.5*M_PI);
+				wp.to.y() += Landing.Radius * sin(Landing.Heading.angle()+0.5*M_PI);
+				wp.AngleArc = 1.0;
+			}
+			else
+			{
+				wp.to.x() += Landing.Radius * cos(Landing.Heading.angle()-0.5*M_PI);
+				wp.to.y() += Landing.Radius * sin(Landing.Heading.angle()-0.5*M_PI);
+				wp.AngleArc = -1.0;
+			}
+			wp.wpMode = WP_CIRCLE;
+			wp.Radius = Landing.Radius;
+			WayPoints.clear();
+			WayPoints.push_back(wp);
 		}
 	}
+	else
+		LandStraight = false;
 
 	// Set waypoints at mapself
 	vecMsg.clear();
@@ -496,11 +429,6 @@ void CAutoPilotSim::TimeStep(float dt)
 	// climb_speed is limited to +/- 3 m/s;
 	if (!WayPoints.empty())
 	{
-//		Geom.Speed.z() = (WayPoints[0].to.z() - Geom.Pos.z()) * 0.1;
-//		if (Geom.Speed.z() > VERT_SPEED_MAX)
-//			Geom.Speed.z() = VERT_SPEED_MAX;
-//		if (Geom.Speed.z() < -VERT_SPEED_MAX)
-//			Geom.Speed.z() = -VERT_SPEED_MAX;
 		Geom.VerticalSpeed = (WayPoints[0].to.z() - Geom.Pos.z()) * 0.1;
 		if (Geom.VerticalSpeed > config.MaxVertSpeed)
 			Geom.VerticalSpeed = config.MaxVertSpeed;
@@ -508,14 +436,10 @@ void CAutoPilotSim::TimeStep(float dt)
 			Geom.VerticalSpeed = -config.MaxVertSpeed;
 	}
 	else
-//		Geom.Speed.z() = 0;
 		Geom.VerticalSpeed = 0;
-//	Geom.Pos.z() += Geom.Speed.z() * dt;
 	Geom.Pos.z() += Geom.VerticalSpeed * dt;
-	//Geom.Rot.FromTwoVectors(Eigen::Vector3f::UnitX(), Geom.Speed);
 	Geom.Heading.angle() = Heading;
 	Geom.Roll = RollAngle;
-//	Geom.Pitch = atan2(Geom.Speed.z(), GroundSpeed);
 	Geom.Pitch = atan2(Geom.VerticalSpeed, GroundSpeed);
 
 
@@ -540,10 +464,6 @@ void CAutoPilotSim::TimeStep(float dt)
 	// Therefore, we put the type in front on the contents
 	VecMsgReply.push_back(PROT_SIMSTAT_GEOM);
 	ToCont(Geom, VecMsgReply);
-
-//	VecMsgReply.push_back(PROT_SIMSTAT_GEOM_EXTRA);
-//	VecMsgReply.push_back(Heading);
-//	VecMsgReply.push_back(RollAngle.angle());
 
 	VecMsgReply.push_back(PROT_SIMSTAT_BATTERY);
 	VecMsgReply.push_back(BatteryTimeLeft);

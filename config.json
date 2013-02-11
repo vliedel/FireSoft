@@ -3,18 +3,19 @@
 	{
 		"OriginX": 8000.0,
 		"OriginY": 9000.0,
-		"AreaOriginX": 100.0,
-		"AreaOriginY": 200.0,
+		"AreaOriginX": 1000.0,
+		"AreaOriginY": 500.0,
 		"AreaSizeX": 1000.0,
 		"AreaSizeY": 3000.0,
-		"AreaRotation": 0.78,
-		"LandPointX": 250.0,
-		"LandPointY": 350.0,
-		"LandHeading": 1.57,
+		"AreaRotation": 0.0,
+		"LandPointX": 1050.0,
+		"LandPointY": 550.0,
+		"LandHeading": 4.7124,
 		"LandLeftTurn": true,
-		"LandLength":100.0,
-		"GroundStationX": 100.0,
-		"GroundStationY": 100.0
+		"LandLength":400.0,
+		"LandRadius":100.0,
+		"GroundStationX": 1000.0,
+		"GroundStationY": 500.0
 	},
 	"UAV":
 	{
@@ -40,9 +41,8 @@
 		"CoverageSigmaX": 10.0,
 		"CoverageSigmaY": 10.0,
 		"CoverageMaxSum": 1.0,
-		"WallAmplitude": 10.0,
-		"WallSigma": 100.0,
-		"BatteryAmplitude": -3.0
+		"BatteryAmplitude": -3.0,
+		"LandingAmplitude": 1.5
 	},
 	"autoPilot":
 	{

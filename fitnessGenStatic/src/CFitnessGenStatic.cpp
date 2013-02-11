@@ -104,9 +104,11 @@ void CFitnessGenStatic::GenFitness()
 	// Add walls on the edges of the map, so the UAV won't fly outside the map
 	// Offset the walls <WallSigma> to the inside, so that the value at the edge is correct
 	Position p0, p1, p2, p3;
+	LandingStruct landing;
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf);
 		p0 = MapSelf->GsCmd.AreaZero;
+		p0.z() = 0;
 		p0.x() += config.WallSigma;
 		p0.y() += config.WallSigma;
 
@@ -125,10 +127,7 @@ void CFitnessGenStatic::GenFitness()
 		p3.x() += dy * cos(MapSelf->GsCmd.AreaRotation.angle() + 0.5*M_PI);
 		p3.y() += dy * sin(MapSelf->GsCmd.AreaRotation.angle() + 0.5*M_PI);
 
-//		p0 << config.WallSigma, 				config.WallSigma, 0;
-//		p1 << config.MaxX-config.WallSigma, 	config.WallSigma, 0;
-//		p2 << config.MaxX-config.WallSigma, 	config.MaxY-config.WallSigma, 0;
-//		p3 << config.WallSigma, 				config.MaxY-config.WallSigma, 0;
+		landing = MapSelf->GsCmd.Landing;
 	}
 
 	{
@@ -136,7 +135,8 @@ void CFitnessGenStatic::GenFitness()
 
 		FitnessWallVec->clear();
 
-		float amplitude = 10.0/(3*config.WallSigma*3*config.WallSigma);
+		//float amplitude = 10.0/(3*config.WallSigma*3*config.WallSigma);
+		float amplitude = config.WallAmplitude;
 
 		FitnessQuadraticWall wall(0, FITSRC_EDGE, p0, p1, amplitude);
 		FitnessWallVec->push_back(wall);
@@ -187,20 +187,40 @@ void CFitnessGenStatic::GenFitness()
 //		std::cout<<std::endl;
 	}
 
-/*
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockStatic(*MutexFitnessStatic);
-		// Add a gausian that makes the center attractive
-		float amplitude = -2.0;
-		float sigmaX = 100.0;
-		float sigmaY = 100.0;
-		float rotation = 0.0;
-		Position center;
-		center << fieldSize/4, fieldSize*3/4, 0; // left top quarter of the map
-		//center << (max_x + min_x)/2, (max_y + min_y)/2, 0; // Center of the map
-		// Max val of -1, makes it a nice plateau
-		FitnessGaussian2D gaussianCenter(0, FITSRC_STATIC, center, amplitude, sigmaX, sigmaY, rotation, 0.0, -1.0);
-		FitnessStaticVec->push_back(gaussianCenter);
+
+		// Add a repulsive gaussian on the straight landing path
+		Position halfPos(landing.Pos);
+		halfPos.z() = 0;
+		halfPos.x() += landing.Length/2 * cos(landing.Heading.angle()+M_PI);
+		halfPos.y() += landing.Length/2 * sin(landing.Heading.angle()+M_PI);
+		float amplitude = config.LandingAmplitude;
+		float sigmaX = landing.Length/2;
+		float sigmaY = 10; // TODO: magic number
+		float rotation = M_PI - landing.Heading.angle();
+		FitnessGaussian2D gaussianLandPath(0, FITSRC_STATIC, halfPos, amplitude, sigmaX, sigmaY, rotation);
+		FitnessStaticVec->push_back(gaussianLandPath);
+
+		// Add a repulsive gaussian on the landing spiral
+		Position spiralPos(landing.Pos);
+		spiralPos.z() = 0;
+		spiralPos.x() += landing.Length * cos(landing.Heading.angle()+M_PI);
+		spiralPos.y() += landing.Length * sin(landing.Heading.angle()+M_PI);
+		if (landing.LeftTurn)
+		{
+			spiralPos.x() += landing.Radius * cos(landing.Heading.angle()+0.5*M_PI);
+			spiralPos.y() += landing.Radius * sin(landing.Heading.angle()+0.5*M_PI);
+		}
+		else
+		{
+			spiralPos.x() += landing.Radius * cos(landing.Heading.angle()-0.5*M_PI);
+			spiralPos.y() += landing.Radius * sin(landing.Heading.angle()-0.5*M_PI);
+		}
+		sigmaX = landing.Radius/2;
+		sigmaY = landing.Radius/2;
+		rotation = 0.0;
+		FitnessGaussian2D gaussianSpiral(0, FITSRC_STATIC, spiralPos, amplitude, sigmaX, sigmaY, rotation);
+		FitnessStaticVec->push_back(gaussianSpiral);
 	}
-*/
 }

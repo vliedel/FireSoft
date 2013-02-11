@@ -54,6 +54,8 @@ struct MapSelfConfig
 	float LandPointY;
 	float LandHeading;
 	bool LandLeftTurn;
+	float LandLength;
+	float LandRadius;
 	float MinHeight;
 	float MaxHeight;
 
@@ -77,6 +79,8 @@ struct MapSelfConfig
 		LandPointY = pt.get<float>("field.LandPointY");
 		LandHeading = pt.get<float>("field.LandHeading");
 		LandLeftTurn = pt.get<bool>("field.LandLeftTurn");
+		LandLength = pt.get<float>("field.LandLength");
+		LandRadius = pt.get<float>("field.LandRadius");
 		MinHeight = pt.get<float>("UAV.MinHeight");
 		MaxHeight = pt.get<float>("UAV.MaxHeight");
 	}

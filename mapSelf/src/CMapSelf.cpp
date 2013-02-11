@@ -97,6 +97,8 @@ void CMapSelf::Init(std::string module_id)
 		Map->GsCmd.Landing.Pos << config.LandPointX, config.LandPointY, 0;
 		Map->GsCmd.Landing.Heading.angle() = config.LandHeading;
 		Map->GsCmd.Landing.LeftTurn = config.LandLeftTurn;
+		Map->GsCmd.Landing.Length = config.LandLength;
+		Map->GsCmd.Landing.Radius = config.LandRadius;
 		Map->GsCmd.Mode = AP_PROT_MODE_WP;
 		Map->GsCmd.EnablePlanner = true;
 	}
@@ -289,6 +291,8 @@ void CMapSelf::Tick()
 							writeToAutoPilot(vecMsg);
 						}
 						Map->GsCmd = gsCmd;
+						Map->GsCmd.Landing.Length = config.LandLength; // This is not included in the cmd msg!
+						Map->GsCmd.Landing.Radius = config.LandRadius; // This is not included in the cmd msg!
 
 						// Check mode to update state
 						switch (gsCmd.Mode)

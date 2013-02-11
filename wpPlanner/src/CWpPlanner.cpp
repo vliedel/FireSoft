@@ -250,7 +250,7 @@ void CWpPlanner::Plan()
 	}
 
 
-	// TODO: this is not the best way ofc
+	// Fly height: default height + adjustment for collision avoidance
 	pos.z() = minHeight + id * (maxHeight-minHeight) / (UAVS_NUM-1);
 	pos.z() += heightAdjustment;
 
@@ -261,18 +261,15 @@ void CWpPlanner::Plan()
 		{
 			// Fly directly to land circle
 			WayPoint wp;
-			wp.to << landing.Pos.x(), landing.Pos.y(), pos.z();
-			wp.wpMode = WP_CIRCLE;
-			wp.Radius = config.MinTurnRadius;
-			wp.AngleStart = -1.0;
+			GetLandWp(wp, landing, pos.z());
 			bestChoicesWp.push_back(wp);
 
 			// Check if we are at the land circle yet
 			Position dPos(pos);
-			dPos.x() -= landing.Pos.x();
-			dPos.y() -= landing.Pos.y();
+			dPos.x() -= wp.to.x();
+			dPos.y() -= wp.to.y();
 			dPos.z() = 0;
-			if (dPos.norm() < config.MinTurnRadius + 50) // TODO: magic number
+			if (dPos.norm() < landing.Radius + 50) // TODO: magic number
 				newState = UAVSTATE_WAITING_TO_LAND;
 			break;
 		}
@@ -285,7 +282,8 @@ void CWpPlanner::Plan()
 				MapUavIterType it;
 				for (it = MapUavs->begin(); it != MapUavs->end(); ++it)
 				{
-					if ((it->second.data.UavId < id && it->second.data.State == UAVSTATE_WAITING_TO_LAND) || it->second.data.State == UAVSTATE_LANDING)
+					if ((it->second.data.UavId < id && it->second.data.State == UAVSTATE_WAITING_TO_LAND)
+							|| it->second.data.State == UAVSTATE_LANDING)
 					{
 						std::cout << "Waiting for uav " << it->second.data.UavId << " to land" << std::endl;
 						land = false;
@@ -307,6 +305,36 @@ void CWpPlanner::Plan()
 		case UAVSTATE_LANDING:
 		{
 			// Landing is performed by auto pilot
+			// Check if no other UAVs below us are landing, if so: abort landing!
+
+			bool land=true;
+			{
+				boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
+				MapUavIterType it;
+				for (it = MapUavs->begin(); it != MapUavs->end(); ++it)
+				{
+					if (it->second.data.State == UAVSTATE_LANDING)
+					{
+						std::cout << "Waiting for uav " << it->second.data.UavId << " to land" << std::endl;
+						land = false;
+						break;
+					}
+				}
+			}
+			if (!land)
+			{
+				std::cout << "Aborting landing" << std::endl;
+				newState = UAVSTATE_WAITING_TO_LAND;
+				VecMsgType vecMsg;
+				vecMsg.push_back(PROT_AP_SET_MODE);
+				vecMsg.push_back(AP_PROT_MODE_WP);
+				writeToAutoPilot(vecMsg);
+
+				// TODO: Assume the waypoint is still in autopilot memory or set it again?
+				WayPoint wp;
+				GetLandWp(wp, landing, pos.z());
+				bestChoicesWp.push_back(wp);
+			}
 			break;
 		}
 		case UAVSTATE_LANDED:
@@ -627,7 +655,10 @@ float CWpPlanner::GetVal(const Position& pos, std::vector<FitnessGaussian2D>& co
 		FitnessWallVecIterType itWall;
 		boost::interprocess::scoped_lock<MapMutexType> lockWall(*MutexWall);
 		for (itWall = FitnessWall->begin(); itWall != FitnessWall->end(); ++itWall)
+		{
 			fit += itWall->GetValue(pos);
+			//std::cout << "pos=[" << pos.transpose() << "] fitWall=" << itWall->GetValue(pos) << std::endl;
+		}
 	}
 
 	return fit;
@@ -661,6 +692,29 @@ float CWpPlanner::GetColVal(int& uavId, const Position& pos)
 bool CWpPlanner::OutOfBounds(Position& pos)
 {
 	return false;
+}
+
+void CWpPlanner::GetLandWp(WayPoint& wp, const LandingStruct& landing, float height)
+{
+	wp.to = landing.Pos;
+	wp.to.z() = height;
+	wp.to.x() += landing.Length * cos(landing.Heading.angle()+M_PI);
+	wp.to.y() += landing.Length * sin(landing.Heading.angle()+M_PI);
+	if (landing.LeftTurn)
+	{
+		wp.to.x() += landing.Radius * cos(landing.Heading.angle()+0.5*M_PI);
+		wp.to.y() += landing.Radius * sin(landing.Heading.angle()+0.5*M_PI);
+		wp.AngleArc = 1.0;
+	}
+	else
+	{
+		wp.to.x() += landing.Radius * cos(landing.Heading.angle()-0.5*M_PI);
+		wp.to.y() += landing.Radius * sin(landing.Heading.angle()-0.5*M_PI);
+		wp.AngleArc = -1.0;
+	}
+
+	wp.wpMode = WP_CIRCLE;
+	wp.Radius = landing.Radius;
 }
 
 void CWpPlanner::WriteFitnessToFile()

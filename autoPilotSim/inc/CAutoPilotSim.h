@@ -47,11 +47,12 @@ struct AutoPilotSimConfig
 	float LineAheadTime;
 	float PreBankAngleInner;
 	float PreBankAngleOuter;
-
 	float LandPointX;
 	float LandPointY;
 	float LandHeading;
 	bool LandLeftTurn;
+	float LandLength;
+	float LandRadius;
 
 	void load(const std::string &filename)
 	{
@@ -69,12 +70,12 @@ struct AutoPilotSimConfig
 		LineAheadTime 		= pt.get<float>("autoPilotSim.LineAheadTime");
 		PreBankAngleInner 	= pt.get<float>("autoPilotSim.PreBankAngleInner");
 		PreBankAngleOuter 	= pt.get<float>("autoPilotSim.PreBankAngleOuter");
-//		HomeX	= pt.get<float>("field.HomeX");
-//		HomeY	= pt.get<float>("field.HomeY");
 		LandPointX = pt.get<float>("field.LandPointX");
 		LandPointY = pt.get<float>("field.LandPointY");
 		LandHeading = pt.get<float>("field.LandHeading");
 		LandLeftTurn = pt.get<bool>("field.LandLeftTurn");
+		LandLength = pt.get<float>("field.LandLength");
+		LandRadius = pt.get<float>("field.LandRadius");
 	}
 };
 
@@ -105,6 +106,8 @@ class CAutoPilotSim : public autoPilotSim
 		WayPointsStruct WayPoints;
 		UAVState State;
 		float BatteryTimeLeft; // In seconds
+
+		bool LandStraight;
 
 		LandingStruct Landing;
 
