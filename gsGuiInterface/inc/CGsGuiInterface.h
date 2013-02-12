@@ -74,7 +74,12 @@ class CGsGuiInterface : public gsGuiInterface
 		boost::property_tree::ptree PropertyTreePos;
 		boost::property_tree::ptree PropertyTreeFire;
 		boost::asio::ip::tcp::socket* Socket;
-		//boost::asio::io_service& IoService;
+
+//		boost::asio::io_service IoService;
+//		boost::asio::ip::tcp::resolver* Resolver;
+//		boost::asio::ip::tcp::resolver::query* Query;
+//		boost::asio::ip::tcp::resolver::iterator ResolveIt;
+
 		//boost::asio::ip::tcp::iostream* socket;
 
 		VecMsgType* VecMsg;
@@ -91,6 +96,11 @@ class CGsGuiInterface : public gsGuiInterface
 		size_t JsonSize;
 
 		// Functions
+		bool Connect();
+		bool Read(size_t& bytesRead, const boost::asio::mutable_buffers_1& buffer);
+		bool Write(const boost::asio::const_buffers_1& buffer);
+		bool Available(size_t& numBytes);
+		void ReadGui();
 //		void HandleRead(const boost::system::error_code& error, size_t bytesRead);
 
 

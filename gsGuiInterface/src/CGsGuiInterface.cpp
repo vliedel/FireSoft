@@ -39,19 +39,105 @@ void CGsGuiInterface::Init(std::string module_id)
 	gsGuiInterface::Init(module_id);
 	config.load("config.json");
 
+	Size[SIZE_SIZE] = 0; // This char array is passed to atoi() so it needs an end
+//	Header[HEADER_SIZE] = 0; // To make it a nice string
+
+	Connect();
+}
+
+bool CGsGuiInterface::Connect()
+{
+	std::cout << "Connecting..." << std::endl;
 	boost::asio::io_service io_service;
 	boost::asio::ip::tcp::resolver resolver(io_service);
 	boost::asio::ip::tcp::resolver::query query(boost::asio::ip::tcp::v4(), config.Host, config.Port);
 	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
 	Socket = new boost::asio::ip::tcp::socket(io_service);
-	Socket->connect(*iterator);
+	boost::system::error_code ec;
+	Socket->connect(*iterator, ec);
+	if (ec)
+	{
+		std::cout << "Failed to connect" << std::endl;
+		delete Socket;
+		Socket = NULL;
+		return false;
+	}
 	std::cout << "Connected" << std::endl;
 
+	// Init state after connecting
 	ReadState = READSTATE_SIZE;
 	BytesToRead = SIZE_SIZE;
-	Size[SIZE_SIZE] = 0; // This char array is passed to atoi() so it needs an end
-//	Header[HEADER_SIZE] = 0; // To make it a nice string
 
+	return true;
+}
+
+bool CGsGuiInterface::Read(size_t& bytesRead, const boost::asio::mutable_buffers_1& buffer)
+{
+	bool error = false;
+	if (Socket == NULL)
+		error = true;
+	else
+	{
+		boost::system::error_code ec;
+		bytesRead = Socket->read_some(buffer, ec);
+		if (ec)
+			error = true;
+	}
+	if (error)
+	{
+		std::cout << "Error: reading from socket" << std::endl;
+		delete Socket;
+		Socket = NULL;
+		return false;
+	}
+//	std::cout << "Read " << bytesRead << "b" << std::endl;
+	return true;
+}
+
+bool CGsGuiInterface::Write(const boost::asio::const_buffers_1& buffer)
+{
+	bool error = false;
+	if (Socket == NULL)
+		error = true;
+	else
+	{
+		boost::system::error_code ec;
+		boost::asio::write(*Socket, buffer, ec);
+		if (ec)
+			error = true;
+	}
+	if (error)
+	{
+		std::cout << "Error: writing to socket" << std::endl;
+		delete Socket;
+		Socket = NULL;
+		return false;
+	}
+	return true;
+}
+
+bool CGsGuiInterface::Available(size_t& numBytes)
+{
+	//Socket->
+	bool error = false;
+	if (Socket == NULL)
+		error = true;
+	else
+	{
+		boost::system::error_code ec;
+		numBytes = Socket->available(ec);
+		if (ec)
+			error = true;
+	}
+	if (error)
+	{
+		std::cout << "Error: checking available bytes to read" << std::endl;
+		delete Socket;
+		Socket = NULL;
+		return false;
+	}
+//	std::cout << numBytes << "b available" << std::endl;
+	return true;
 }
 
 void CGsGuiInterface::Tick()
@@ -62,105 +148,7 @@ void CGsGuiInterface::Tick()
 
 	}
 
-	// Read from GUI
-	size_t availableRead = Socket->available();
-	switch (ReadState)
-	{
-		case READSTATE_SIZE:
-		{
-			if (availableRead >= BytesToRead)
-			{
-				size_t bytesRead = Socket->read_some(boost::asio::buffer(Size, BytesToRead));
-				BytesToRead -= bytesRead;
-				if (BytesToRead == 0)
-				{
-					std::cout << "Size = " << Size << std::endl;
-					JsonSize = atoi(Size) - HEADER_SIZE;
-					std::cout << "Json size: " << JsonSize << std::endl;
-					BytesToRead = HEADER_SIZE;
-					ReadState = READSTATE_HEADER;
-				}
-			}
-			break;
-		}
-		case READSTATE_HEADER:
-		{
-			if (availableRead >= BytesToRead)
-			{
-				size_t bytesRead = Socket->read_some(boost::asio::buffer(Header, BytesToRead));
-				BytesToRead -= bytesRead;
-				if (BytesToRead == 0)
-				{
-					std::cout << "Header = ";
-					std::cout.write(Header, HEADER_SIZE);
-					std::cout << std::endl;
-					if (!strcmp(Header, "0001"))
-						std::cout << "Error wrong msg type" << std::endl;
-					BytesToRead = JsonSize;
-					ReadState = READSTATE_JSON;
-				}
-			}
-			break;
-		}
-		case READSTATE_JSON:
-		{
-			if (availableRead >= BytesToRead)
-			{
-				size_t bytesRead = Socket->read_some(boost::asio::buffer(Json, BytesToRead));
-				BytesToRead -= bytesRead;
-				if (BytesToRead == 0)
-				{
-					std::cout << "Json:" << std::endl;
-					std::cout.write(Json, JsonSize);
-					std::cout << std::endl;
-					BytesToRead = SIZE_SIZE;
-					ReadState = READSTATE_SIZE;
-
-
-					boost::property_tree::ptree pt;
-					std::stringstream ss;
-					ss.write(Json, JsonSize);
-					read_json(ss, pt);
-
-					GsCmdStruct gsCmd;
-					if (pt.get<std::string>("message_type") != "cmd")
-					{
-						std::cout << "Error: wrong json type" << std::endl;
-						return;
-					}
-					std::string timeStamp = pt.get<std::string>("timestamp");
-					int version = pt.get<int>("version");
-					std::cout << "cmd_type=cmd" << " timestamp=" << timeStamp << " version=" << version << std::endl;
-
-					gsCmd.UavId = pt.get<int>("uav_id");
-					gsCmd.MsgId = pt.get<int>("message_id");
-					gsCmd.HeightMin = pt.get<float>("min_height");
-					gsCmd.HeightMax = pt.get<float>("max_height");
-					gsCmd.AreaZero.x() = pt.get<float>("area_min_x") - config.OriginX; // Mercator to local coordinates
-					gsCmd.AreaZero.y() = pt.get<float>("area_min_y") - config.OriginY; // Mercator to local coordinates
-					gsCmd.AreaSize.x() = pt.get<float>("area_dx");
-					gsCmd.AreaSize.y() = pt.get<float>("area_dy");
-					gsCmd.AreaRotation.angle() = pt.get<float>("area_rotation");
-					gsCmd.Landing.Pos.x() = pt.get<float>("land_x") - config.OriginX; // Mercator to local coordinates
-					gsCmd.Landing.Pos.y() = pt.get<float>("land_y") - config.OriginY; // Mercator to local coordinates
-					gsCmd.Landing.Heading.angle() = pt.get<float>("land_heading");
-					gsCmd.Landing.LeftTurn = pt.get<bool>("turn");
-					gsCmd.Mode = pt.get<int>("auto_pilot_mode");
-					gsCmd.EnablePlanner = pt.get<bool>("enable_planner");
-
-					RadioMsgRelayCmd cmdMsg;
-					gsCmd.toMsg(cmdMsg);
-					std::cout << "gsCmd:" << gsCmd << " = " << cmdMsg;
-
-					VecMsgType vecMsg;
-					vecMsg.push_back(RADIO_MSG_RELAY_CMD);
-					ToCont(cmdMsg, vecMsg);
-					writeToRadio(vecMsg);
-				}
-			}
-			break;
-		}
-	}
+	ReadGui();
 
 	// Read radio
 	VecMsg = readFromRadio(false);
@@ -169,7 +157,6 @@ void CGsGuiInterface::Tick()
 		std::cout << "GsGuiInterface from GroundStation: ";
 		dobots::print(VecMsg->begin(), VecMsg->end());
 
-		//std::string header;
 		std::stringstream ssJson;
 		std::stringstream ssOutput;
 
@@ -273,11 +260,136 @@ void CGsGuiInterface::Tick()
 			{
 				ssOutput << std::setw(SIZE_SIZE) << std::setfill('0') << ssJson.str().size() + HEADER_SIZE;
 				ssOutput << config.DataType << ssJson.str();
-				boost::asio::write(*Socket, boost::asio::buffer(ssOutput.str(), ssOutput.str().size()));
+				//boost::asio::write(*Socket, boost::asio::buffer(ssOutput.str(), ssOutput.str().size()));
+				if (!Write(boost::asio::buffer(ssOutput.str(), ssOutput.str().size())))
+					break; // Break out of while loop
 			}
 		}
 		VecMsg->clear();
 	}
 
 	usleep(config.TickTime);
+}
+
+void CGsGuiInterface::ReadGui()
+{
+	if (Socket == NULL)
+	{
+		Connect();
+		return;
+	}
+	if (!Socket->is_open())
+		return;
+
+	// Read from GUI
+	boost::system::error_code ec;
+	size_t availableRead;
+	if (!Available(availableRead))
+		return;
+
+	switch (ReadState)
+	{
+		case READSTATE_SIZE:
+		{
+			if (availableRead >= BytesToRead)
+			{
+				size_t bytesRead;
+				if (!Read(bytesRead, boost::asio::buffer(Size, BytesToRead)))
+					return;
+				BytesToRead -= bytesRead;
+				if (BytesToRead == 0)
+				{
+					std::cout << "Size = " << Size << std::endl;
+					JsonSize = atoi(Size) - HEADER_SIZE;
+					std::cout << "Json size: " << JsonSize << std::endl;
+					BytesToRead = HEADER_SIZE;
+					ReadState = READSTATE_HEADER;
+				}
+			}
+			break;
+		}
+		case READSTATE_HEADER:
+		{
+			if (availableRead >= BytesToRead)
+			{
+				//size_t bytesRead = Socket->read_some(boost::asio::buffer(Header, BytesToRead));
+				size_t bytesRead;
+				if (!Read(bytesRead, boost::asio::buffer(Header, BytesToRead)))
+					return;
+				BytesToRead -= bytesRead;
+				if (BytesToRead == 0)
+				{
+					std::cout << "Header = ";
+					std::cout.write(Header, HEADER_SIZE);
+					std::cout << std::endl;
+					if (!strcmp(Header, "0001"))
+						std::cout << "Error wrong msg type" << std::endl;
+					BytesToRead = JsonSize;
+					ReadState = READSTATE_JSON;
+				}
+			}
+			break;
+		}
+		case READSTATE_JSON:
+		{
+			if (availableRead >= BytesToRead)
+			{
+				//size_t bytesRead = Socket->read_some(boost::asio::buffer(Json, BytesToRead));
+				size_t bytesRead;
+				if (!Read(bytesRead, boost::asio::buffer(Json, BytesToRead)))
+					return;
+				BytesToRead -= bytesRead;
+				if (BytesToRead == 0)
+				{
+					std::cout << "Json:" << std::endl;
+					std::cout.write(Json, JsonSize);
+					std::cout << std::endl;
+					BytesToRead = SIZE_SIZE;
+					ReadState = READSTATE_SIZE;
+
+
+					boost::property_tree::ptree pt;
+					std::stringstream ss;
+					ss.write(Json, JsonSize);
+					read_json(ss, pt);
+
+					GsCmdStruct gsCmd;
+					if (pt.get<std::string>("message_type") != "cmd")
+					{
+						std::cout << "Error: wrong json type" << std::endl;
+						return;
+					}
+					std::string timeStamp = pt.get<std::string>("timestamp");
+					int version = pt.get<int>("version");
+					std::cout << "cmd_type=cmd" << " timestamp=" << timeStamp << " version=" << version << std::endl;
+
+					gsCmd.UavId = pt.get<int>("uav_id");
+					gsCmd.MsgId = pt.get<int>("message_id");
+					gsCmd.HeightMin = pt.get<float>("min_height");
+					gsCmd.HeightMax = pt.get<float>("max_height");
+					gsCmd.AreaZero.x() = pt.get<float>("area_min_x") - config.OriginX; // Mercator to local coordinates
+					gsCmd.AreaZero.y() = pt.get<float>("area_min_y") - config.OriginY; // Mercator to local coordinates
+					gsCmd.AreaSize.x() = pt.get<float>("area_dx");
+					gsCmd.AreaSize.y() = pt.get<float>("area_dy");
+					gsCmd.AreaRotation.angle() = pt.get<float>("area_rotation");
+					gsCmd.Landing.Pos.x() = pt.get<float>("land_x") - config.OriginX; // Mercator to local coordinates
+					gsCmd.Landing.Pos.y() = pt.get<float>("land_y") - config.OriginY; // Mercator to local coordinates
+					gsCmd.Landing.Heading.angle() = pt.get<float>("land_heading");
+					gsCmd.Landing.LeftTurn = pt.get<bool>("turn");
+					gsCmd.Mode = pt.get<int>("auto_pilot_mode");
+					gsCmd.EnablePlanner = pt.get<bool>("enable_planner");
+
+					RadioMsgRelayCmd cmdMsg;
+					gsCmd.toMsg(cmdMsg);
+					std::cout << "gsCmd:" << gsCmd << " = " << cmdMsg;
+
+					VecMsgType vecMsg;
+					vecMsg.push_back(RADIO_MSG_RELAY_CMD);
+					ToCont(cmdMsg, vecMsg);
+					writeToRadio(vecMsg);
+				}
+			}
+			break;
+		}
+	}
 }
