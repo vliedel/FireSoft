@@ -190,6 +190,8 @@ void CFitnessGenStatic::GenFitness()
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockStatic(*MutexFitnessStatic);
 
+		FitnessStaticVec->clear();
+
 		// Add a repulsive gaussian on the straight landing path
 		Position halfPos(landing.Pos);
 		halfPos.z() = 0;
