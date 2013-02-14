@@ -62,8 +62,8 @@ class CMapUAVs : public mapUAVs
 		// Functions
 		void Init(std::string module_id);
 		void Tick();
-		void AddUAV(std::vector<float>* vec);
-		void AddUAV(UavStruct* uav);
+//		void AddUAV(std::vector<float>* vec);
+//		void AddUAV(UavStruct* uav);
 		void UpdateUav(RadioMsgRelay& msg);
 		//void RemoveUAV(int id);
 		friend std::ostream& operator<<(std::ostream& os, CMapUAVs& map);

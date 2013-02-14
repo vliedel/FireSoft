@@ -380,7 +380,7 @@ void CGsGuiInterface::ReadGui()
 					gsCmd.EnablePlanner = pt.get<bool>("enable_planner");
 
 					RadioMsgRelayCmd cmdMsg;
-					gsCmd.toMsg(cmdMsg);
+					gsCmd.ToRadioMsg(cmdMsg);
 					std::cout << "gsCmd:" << gsCmd << " = " << cmdMsg;
 
 					VecMsgType vecMsg;

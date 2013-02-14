@@ -68,7 +68,7 @@ class CSim : public sim
 		std::vector<SimUavStruct> Uavs;
 
 		~CSim();
-		void Init(std::string module_id, int numUavsAP, int numUavsRadio, int simTime);
+		void Init(std::string module_id, int numUavs, int numUavsAP, int numUavsRadio, int simTime, int withGS);
 		void Tick();
 
 	private:

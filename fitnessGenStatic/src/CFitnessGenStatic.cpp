@@ -68,15 +68,6 @@ void CFitnessGenStatic::Init(std::string module_id)
 		std::cout << "Error in " << ShMemNameFitness << " or " << ShMemNameSelf << std::endl;
 		throw;
 	}
-//	std::cout << "opened shared memory" << std::endl;
-//	if (FitnessStaticVec == NULL)
-//		std::cout << "FitnessStaticVec=NULL" << std::endl;
-//	if (MutexFitnessStatic == NULL)
-//		std::cout << "MutexFitnessStatic=NULL" << std::endl;
-//	if (FitnessWallVec == NULL)
-//		std::cout << "FitnessWallVec=NULL" << std::endl;
-//	if (MutexFitnessWall == NULL)
-//		std::cout << "MutexFitnessWall=NULL" << std::endl;
 
 	GenFitness();
 	LastTimeGen = get_cur_1ms();

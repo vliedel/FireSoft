@@ -15,9 +15,10 @@ debug:
 	cd build_debug && make
 	
 gumstix:
-	@mkdir -p build_gumstix
-	cd build_gumstix && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../cmake/Toolchain.cmake $(CMAKE_FLAGS) .. $(FLAGS)
-	cd build_gumstix && make
+	echo "UAV doesn't need ground station programs"
+	#@mkdir -p build_gumstix
+	#cd build_gumstix && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../cmake/Toolchain.cmake $(CMAKE_FLAGS) .. $(FLAGS)
+	#cd build_gumstix && make
 
 clean:
 	rm -f build/CMakeCache.txt

@@ -57,6 +57,9 @@ interface radiosim {
   // Commands from ground station are stored in map self
   void ToMapSelf(out float_seq msg);
   
+  // Received fire messages go to MapFire
+  void ToMapFire(out float_seq msg);
+  
   
   // -- Only for simulator --
   

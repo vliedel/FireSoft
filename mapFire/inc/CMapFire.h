@@ -28,6 +28,7 @@
 //#include "StructToFromCont.h"
 #include "Defs.h"
 #include "ShMemTypedefs.h"
+#include "FireMap.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
@@ -61,7 +62,8 @@ class CMapFire : public mapFire
 		MapShMemType* ShMem;
 		MapMutexType* Mutex;
 		MapFireType* Map;
-		MapFireAllocatorType* MapAllocator;
+		MapVoidAllocatorType* VoidAllocator;
+		//MapFireAllocatorType* MapAllocator;
 		std::string ShMemName;
 
 		MapFireConfig config;
@@ -71,6 +73,7 @@ class CMapFire : public mapFire
 		std::vector<float>* VecMsg;
 
 		// Functions
+		void AddFire(MapFireStruct& fire);
 };
 
 }

@@ -365,7 +365,7 @@ public:
 
 	GsCmdStruct(): AreaRotation(0) {}
 
-	void fromMsg(RadioMsgRelayCmd& msg)
+	void FromRadioMsg(RadioMsgRelayCmd& msg)
 	{
 		// Id 0 is invalid id
 		UavId = msg.UavId - 1;
@@ -395,7 +395,7 @@ public:
 		EnablePlanner = msg.EnablePlanner;
 	}
 
-	void toMsg(RadioMsgRelayCmd& msg)
+	void ToRadioMsg(RadioMsgRelayCmd& msg)
 	{
 		// Clamp the values to be sure!
 		msg.UavId = UavId + 1;

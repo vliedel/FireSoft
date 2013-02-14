@@ -37,13 +37,18 @@ CSim::~CSim()
 	FileOut.close();
 }
 
-void CSim::Init(std::string module_id, int numUavsAP, int numUavsRadio, int simTime)
+void CSim::Init(std::string module_id, int numUavs, int numUavsAP, int numUavsRadio, int simTime, int withGS)
 {
 	sim::Init(module_id);
 	config.load("config.json");
-	if (numUavsAP < 1 && numUavsRadio < 1)
+	if (numUavs < 1)
 	{
 		std::cout << "Number of UAVs should be a number larger than 0!" << std::endl;
+		assert(false);
+	}
+	if (numUavsAP > numUavs || numUavsRadio > numUavs)
+	{
+		std::cout << "Number of UAVs with real AP/Radio can't be larger than number of UAVs!" << std::endl;
 		assert(false);
 	}
 
@@ -55,7 +60,7 @@ void CSim::Init(std::string module_id, int numUavsAP, int numUavsRadio, int simT
 	Running = false;
 	SimUavStruct uav;
 
-	for (int i=0; i<std::max(numUavsAP,numUavsRadio); ++i)
+	for (int i=0; i<numUavs; ++i)
 	{
 		uav.UavData.UavData.UavId = i;
 		uav.AutoPilotSim = true;
@@ -63,22 +68,25 @@ void CSim::Init(std::string module_id, int numUavsAP, int numUavsRadio, int simT
 		Uavs.push_back(uav);
 	}
 
-	if (numUavsAP > numUavsRadio)
-		for (int i=0; i<numUavsAP-numUavsRadio; ++i)
+	if (numUavsRadio < numUavs)
+		for (int i=0; i<numUavs-numUavsRadio; ++i)
 			Uavs[i].RadioSim = false;
-	else
-		for (int i=0; i<numUavsRadio-numUavsAP; ++i)
+	if (numUavsAP < numUavs)
+		for (int i=0; i<numUavs-numUavsAP; ++i)
 			Uavs[i].AutoPilotSim = false;
 
-	// Add ground station as uav, makes life easier
-	uav.UavData.UavData.UavId = UAVS_NUM;
-	uav.AutoPilotSim = false;
-	uav.RadioSim = true;
-	uav.RadioWorks = true;
-	uav.WaitForReplyRadio = false;
-	uav.WaitForReplyAutoPilot = false;
-	uav.UavData.UavData.State = UAVSTATE_FLYING; // So that this node isn't ignored?
-	Uavs.push_back(uav);
+	if (withGS)
+	{
+		// Add ground station as uav, makes life easier
+		uav.UavData.UavData.UavId = UAVS_NUM;
+		uav.AutoPilotSim = false;
+		uav.RadioSim = true;
+		uav.RadioWorks = true;
+		uav.WaitForReplyRadio = false;
+		uav.WaitForReplyAutoPilot = false;
+		uav.UavData.UavData.State = UAVSTATE_FLYING; // So that this node isn't ignored?
+		Uavs.push_back(uav);
+	}
 
 	FileOut.open(config.OutputFileName.c_str());
 	//{'numUavs':3, 'timeStep':0.1, 'radioRange':100}

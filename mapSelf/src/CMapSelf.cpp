@@ -263,7 +263,7 @@ void CMapSelf::Tick()
 					if (gsCmdMsg.UavId == 11 || gsCmdMsg.UavId == Map->UavData.UavId + 1)
 					{
 						GsCmdStruct gsCmd;
-						gsCmd.fromMsg(gsCmdMsg);
+						gsCmd.FromRadioMsg(gsCmdMsg);
 
 						// If landing changed, update auto pilot
 						if (gsCmd.Landing.Pos.x() != Map->GsCmd.Landing.Pos.x() ||

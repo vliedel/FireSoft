@@ -61,7 +61,7 @@ void CGroundStationSim::Init(std::string module_id)
 	CmdMsg.Data.Data[0].Pos.UavId = 0; // Invalid msg
 
 	CmdMsg.Data.Data[1].MessageType = RADIO_MSG_RELAY_CMD;
-	gsCmd.toMsg(CmdMsg.Data.Data[1].Cmd);
+	gsCmd.ToRadioMsg(CmdMsg.Data.Data[1].Cmd);
 }
 
 void CGroundStationSim::Tick()

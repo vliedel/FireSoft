@@ -24,32 +24,75 @@
 #ifndef FIREMAP_H_
 #define FIREMAP_H_
 
-#include "MapFunctions.h"
+#include "Fire.h"
+#include "ShMemTypedefs.h"
 
-enum EFireSource
-{
-	FIRE_SRC_TPA=0,
-	FIRE_SRC_CAM,
-	FIRE_SRC_CO,
-	FIRE_SRC_TPA_FRONT,
-	FIRE_SRC_CAM_FRONT,
-	FIRE_SRC_NUM
-};
-
-class MapFireStruct : public Gaussian2D
+class MapFireType
 {
 public:
-	//Gaussian2D Gaussian;
-	float Probability[FIRE_SRC_NUM];
-	bool Seen;
-	bool Sent;
-	//int bla;
+	// Data
+	FireMapXType MapX;
+	MapVoidAllocatorType VoidAllocator;
 
-	MapFireStruct(Position& center, float amplitude, float sigmaX, float sigmaY, float rotation):
-		Gaussian2D::Gaussian2D(center, amplitude, sigmaX, sigmaY, rotation)
-		//bla(0)
+	// Constructors
+	MapFireType(const MapVoidAllocatorType &voidAllocator) :
+		MapX(std::less<FireMapKeyType>(), voidAllocator),
+		VoidAllocator(voidAllocator)
+	{}
+
+	// Functions
+	void AddGaussian(MapFireStruct &fire)
 	{
-		//Probability[0] = 0;
+		int x = fire.Fire.Center.x();
+		int y = fire.Fire.Center.y();
+
+		FireMapIterXType itX = MapX.find(x);
+		if (itX == MapX.end())
+		{
+			FireMapYType mapY(std::less<FireMapKeyType>(), VoidAllocator);
+			mapY.insert(FireMapValueYType(y, fire));
+			MapX.insert(FireMapValueXType(x, mapY));
+			std::cout << "Added fire at pos [" << x << " " << y << "]" << std::endl;
+		}
+		else
+		{
+			FireMapIterYType itY;
+			itY = itX->second.find(y);
+			if (itY == itX->second.end())
+			{
+				itX->second.insert(FireMapValueYType(y, fire));
+				std::cout << "Added fire at pos [" << x << " " << y << "]" << std::endl;
+			}
+			else
+			{
+				// Update fire!
+				if ((itY->second.Fire.Amplitude == fire.Fire.Amplitude)
+						&& (itY->second.Fire.Probability[FIRE_SRC_CAM] == fire.Fire.Probability[FIRE_SRC_CAM])
+						&& (itY->second.Fire.Probability[FIRE_SRC_CAM] == fire.Fire.Probability[FIRE_SRC_TPA])
+						&& (itY->second.Fire.Probability[FIRE_SRC_CAM] == fire.Fire.Probability[FIRE_SRC_CO]))
+				{
+					// Ignore?
+				}
+				else
+				{
+					// Update
+					itY->second = fire;
+				}
+			}
+		}
+	}
+
+	void Get(std::vector<MapFireStruct> &result, float minX, float maxX, float minY, float maxY)
+	{
+		FireMapIterXType itX;
+		FireMapIterYType itY;
+		for (itX = MapX.lower_bound(minX); itX != MapX.upper_bound(maxX); ++itX)
+		{
+			for (itY=itX->second.lower_bound(minY); itY != itX->second.upper_bound(maxY); ++itY)
+			{
+				result.push_back(itY->second);
+			}
+		}
 	}
 
 };

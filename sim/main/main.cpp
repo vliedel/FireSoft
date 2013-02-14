@@ -34,13 +34,13 @@ using namespace rur;
 int main(int argc, char *argv[])
 {
 	if (argc < 5) {
-		printf("Usage: %s <module_id> <number_of_UAVs_with_sim_autopilot> <number_of_UAVs_with_sim_radio> <seconds_to_simulate>\n", argv[0]);
+		printf("Usage: %s <module_id> <number_of_UAVs> <number_of_UAVs_with_sim_autopilot> <number_of_UAVs_with_sim_radio> <seconds_to_simulate> <groundstation? 1|0>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
 
 	CSim* sim = new CSim;
 	std::string identifier = argv[1];
-	sim->Init(identifier, atoi(argv[2]), atoi(argv[3]), atoi(argv[4])); // Maybe use strtol() instead?
+	sim->Init(identifier, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6])); // Maybe use strtol() instead?
 
 	do {
 		sim->Tick();

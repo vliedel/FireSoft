@@ -41,6 +41,9 @@ interface mapFire {
   
   
   // -- mapFire interfaces --
+  void FromFireDetector(in float_seq seq);
+  
+  void FromRadio(in float_seq seq);
 
 };
 

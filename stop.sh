@@ -14,6 +14,7 @@
 pkill -f sim/build/main
 pkill -f autoPilot/build/main
 pkill -f autoPilotSim/build/main
+pkill -f mapFire/build/main
 pkill -f mapFitness/build/main
 pkill -f mapSelf/build/main
 pkill -f mapUAVs/build/main

@@ -5,30 +5,38 @@
 		"OriginY": 9000.0,
 		"AreaOriginX": 1000.0,
 		"AreaOriginY": 500.0,
+		"_AreaSizeX": 500.0,
 		"AreaSizeX": 1000.0,
+		"_AreaSizeY": 500.0,
 		"AreaSizeY": 3000.0,
 		"AreaRotation": 0.0,
+		"_LandPointX": 1010.0,
 		"LandPointX": 1050.0,
+		"_LandPointY": 510.0,
 		"LandPointY": 550.0,
 		"LandHeading": 4.7124,
 		"LandLeftTurn": true,
+		"_LandLength":66.7,
 		"LandLength":400.0,
+		"_LandRadius":16.7,
 		"LandRadius":100.0,
 		"GroundStationX": 1000.0,
 		"GroundStationY": 500.0
 	},
 	"UAV":
 	{
+		"_CruiseSpeed": 3.67,
 		"CruiseSpeed": 22.0,
 		"MaxRollAngle": 0.52360,
 		"MaxVertSpeed": 3.0,
+		"_MinTurnRadius": 20.0,
 		"MinTurnRadius": 120.0,
 		"BatteryTime": 2700.0,
 		"BatteryLowTime": 120.0,
 		"BatteryCriticalTime": 60.0,
 		"RadioRange": 3000.0,
-		"MinHeight": 100,
-		"MaxHeight": 200
+		"MinHeight": 50,
+		"MaxHeight": 300
 	},
 	"fitness":
 	{
@@ -119,13 +127,16 @@
 	{
 		"TickTime": 1000,
 		"Debug": true,
-		"MapSize": 1
+		"MapSize": 8388608,
+		"_comment":"72 * 10000 < 8*1024*1024"
 	},
 	"mapFitness":
 	{
 		"TickTime": 1000,
 		"Debug": true,
-		"MapSize": 33554432
+		"MapSize": 16777216,
+		"_comment":"10 * 3600 * 44B for 10 uavs that leave a 2d fitness each second for an hour",
+		"_comment2":"16*1024*1024 is about 10*estimate"
 	},
 	"mapSelf":
 	{
@@ -178,11 +189,11 @@
 		"Debug": true,
 		"PlanIntervalTime": 250,
 		"NumWayPointPerPlan": 4,
-		"WayPointDT": 3.0,
+		"WayPointDT": 3,
 		"StepsPerWayPoint": 6,
 		"StraightPreference": 0.01,
 		"CollisionAvoidHeightDiff": 5.0,
-		"SaveFitnessMap": true,
+		"SaveFitnessMap": false,
 		"FitnessMapFileName": "output/fitness_map_"
 	}
 }

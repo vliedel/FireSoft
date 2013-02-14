@@ -78,6 +78,9 @@ private:
   // the port portToMapSelf itself
   BufferedPort<Bottle> *portToMapSelf;
   
+  // the port portToMapFire itself
+  BufferedPort<Bottle> *portToMapFire;
+  
   // private storage for portSimCommandValues;
   std::vector<float> *portSimCommandValues;
   // the port portSimCommand itself
@@ -115,6 +118,9 @@ public:
     portToMapSelf = new BufferedPort<Bottle>();
     portToMapSelf->setStrict();
     portToMapSelf->writeStrict();
+    portToMapFire = new BufferedPort<Bottle>();
+    portToMapFire->setStrict();
+    portToMapFire->writeStrict();
     portSimCommandValues = new std::vector<float>();
     portSimCommand = new BufferedPort<Bottle>();
     portSimCommand->setStrict();
@@ -133,6 +139,7 @@ public:
     delete portToMapUAVs;
     delete portFromMapUAVs;
     delete portToMapSelf;
+    delete portToMapFire;
     delete portSimCommandValues;
     delete portSimCommand;
     delete portSimState;
@@ -185,6 +192,11 @@ public:
     }
     {
       std::stringstream portName; portName.str(); portName.clear();
+      portName << "/radiosim" << module_id << "/tomapfire";
+      portToMapFire->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
       portName << "/radiosim" << module_id << "/simcommand";
       portSimCommand->open(portName.str().c_str());
     }
@@ -205,6 +217,7 @@ public:
     portToMapUAVs->close();
     portFromMapUAVs->close();
     portToMapSelf->close();
+    portToMapFire->close();
     portSimCommand->close();
     portSimState->close();
   }
@@ -275,6 +288,15 @@ protected:
       msgPrepare.addDouble(msg[i]);
     }
     portToMapSelf->write(true);
+  }
+  
+  inline void writeToMapFire(const float_seq &msg) {
+    Bottle &msgPrepare = portToMapFire->prepare();
+    msgPrepare.clear();
+    for (int i = 0; i < msg.size(); ++i) {
+      msgPrepare.addDouble(msg[i]);
+    }
+    portToMapFire->write(true);
   }
   
   // Remark: caller is responsible for evoking vector.clear()

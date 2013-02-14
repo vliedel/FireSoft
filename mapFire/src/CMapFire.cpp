@@ -22,13 +22,17 @@
  */
 
 #include "CMapFire.h"
+#include "Protocol.h"
+#include "StructToFromCont.h"
+#include "Print.hpp"
 
 using namespace rur;
 
 CMapFire::~CMapFire()
 {
 	Map = NULL;
-	delete MapAllocator;
+//	delete MapAllocator;
+	delete VoidAllocator;
 	delete ShMem;
 	boost::interprocess::shared_memory_object::remove(ShMemName.c_str());
 }
@@ -46,20 +50,23 @@ void CMapFire::Init(std::string module_id)
 	ShMemName = "mapFire_" + module_id;
 	boost::interprocess::shared_memory_object::remove(ShMemName.c_str());
 
-	std::cout << "sizeof(MapFireValueType) = " << sizeof(MapFireValueType) << std::endl;
+	//std::cout << "sizeof(MapFireValueType) = " << sizeof(MapFireValueType) << std::endl;
+	std::cout << "sizeof(MapFireStruct) = " << sizeof(MapFireStruct) << std::endl;
 
 	try
 	{
 		ShMem = new MapShMemType(boost::interprocess::create_only, ShMemName.c_str(), config.MapSize);
 
 		//Initialize the shared memory STL-compatible allocator
-		MapAllocator = new MapFireAllocatorType(ShMem->get_segment_manager());
+		//MapAllocator = new MapFireAllocatorType(ShMem->get_segment_manager());
+		VoidAllocator = new MapVoidAllocatorType(ShMem->get_segment_manager());
 
 		//Construct a shared memory map.
-		Map =
-			ShMem->construct<MapFireType>("Map")	//object name
-			(std::less<MapFireKeyType>()		//first  ctor parameter: comparison function
-			,*MapAllocator);		//second ctor parameter: allocator
+//		Map =
+//			ShMem->construct<MapFireType>("Map")	//object name
+//			(std::less<MapFireKeyType>()		//first  ctor parameter: comparison function
+//			,*MapAllocator);		//second ctor parameter: allocator
+		Map = ShMem->construct<MapFireType>("Map")		(*VoidAllocator);
 
 		Mutex = ShMem->construct<MapMutexType>("Mutex") ();
 	}
@@ -68,12 +75,44 @@ void CMapFire::Init(std::string module_id)
 		Map = NULL;
 		Mutex = NULL;
 		delete ShMem;
-		delete MapAllocator;
+		//delete MapAllocator;
+		delete VoidAllocator;
 		boost::interprocess::shared_memory_object::remove(ShMemName.c_str());
 		std::cout << "Error in " << ShMemName << std::endl;
 		throw;
 	}
 
+	MapFireStruct fire;
+	fire.Seen = true;
+	fire.Sent = false;
+	fire.Fire.Center.x() = 1500;
+	fire.Fire.Center.y() = 2000;
+	fire.Fire.Center.z() = 0;
+
+	fire.Fire.Probability[FIRE_SRC_CAM] = 0.1;
+	fire.Fire.Probability[FIRE_SRC_TPA] = 0.2;
+	fire.Fire.Probability[FIRE_SRC_CO] = 0.3;
+	fire.Fire.Init(10, 15, M_PI/8);
+	fire.Fire.Height = 100;
+	fire.Fire.UavId = atoi(module_id.c_str());
+	fire.Fire.Amplitude = 1-(1-fire.Fire.Probability[FIRE_SRC_CAM])*(1-fire.Fire.Probability[FIRE_SRC_TPA])*(1-fire.Fire.Probability[FIRE_SRC_CO]);
+	AddFire(fire);
+
+	fire.Fire.Center.x() = 1600;
+	fire.Fire.Center.y() = 2100;
+	AddFire(fire);
+
+	fire.Fire.Center.x() = 1700;
+	fire.Fire.Center.y() = 2200;
+	AddFire(fire);
+
+	fire.Fire.Center.x() = 1800;
+	fire.Fire.Center.y() = 2300;
+	AddFire(fire);
+
+	fire.Fire.Center.x() = 1900;
+	fire.Fire.Center.y() = 2400;
+	AddFire(fire);
 }
 
 void CMapFire::Tick()
@@ -83,5 +122,68 @@ void CMapFire::Tick()
 	{
 
 	}
+
+
+	VecMsg = readFromFireDetector(false);
+	if (!VecMsg->empty())
+	{
+		std::cout << "MapFire " << ModuleId << " from Detector: ";
+		dobots::print(VecMsg->begin(), VecMsg->end());
+
+		VecMsgType::iterator it = VecMsg->begin();
+		while (it != VecMsg->end())
+		{
+			int type = *it++;
+			switch (type)
+			{
+				case PROT_FIRE_STRUCT:
+				{
+					//Position pos(0,0,0);
+					//MapFireStruct fire(pos, 1, 1, 1, 0);
+					MapFireStruct fire;
+					FromCont(fire.Fire, it, VecMsg->end());
+					fire.Seen = true;
+					fire.Sent = false;
+					AddFire(fire);
+					break;
+				}
+			}
+		}
+		VecMsg->clear();
+	}
+
+	VecMsg = readFromRadio(false);
+	if (!VecMsg->empty())
+	{
+		std::cout << "MapFire " << ModuleId << " from Radio: ";
+		dobots::print(VecMsg->begin(), VecMsg->end());
+
+		VecMsgType::iterator it = VecMsg->begin();
+		while (it != VecMsg->end())
+		{
+			int type = *it++;
+			switch (type)
+			{
+				case PROT_FIRE_STRUCT:
+				{
+					MapFireStruct fire;
+					FromCont(fire.Fire, it, VecMsg->end());
+					fire.Seen = false;
+					fire.Sent = false;
+					AddFire(fire);
+					break;
+				}
+			}
+		}
+		VecMsg->clear();
+	}
+
 	usleep(config.TickTime);
+}
+
+void CMapFire::AddFire(MapFireStruct& fire)
+{
+	boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
+	// TODO: Should do more than this, merge?
+	Map->AddGaussian(fire);
 }

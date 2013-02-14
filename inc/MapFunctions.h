@@ -38,18 +38,20 @@ class Gaussian2D
 		float C;
 
 		// Constructors
-//		Gaussian2D(Position& center, float amplitude, float a, float b, float c):
-//			Center(center),
-//			A(a),
-//			B(b),
-//			C(c),
-//			Amplitude(amplitude)
-//		{
-//		}
+		Gaussian2D() {}
 
 		Gaussian2D(Position& center, float amplitude, float sigmaX, float sigmaY, float rotation):
 			Center(center),
 			Amplitude(amplitude)
+		{
+			Init(sigmaX, sigmaY, rotation);
+		}
+
+		~Gaussian2D() {}
+
+
+		// Functions
+		void Init(float sigmaX, float sigmaY, float rotation)
 		{
 			// From http://en.wikipedia.org/wiki/Gaussian_function#Meaning_of_parameters_for_the_general_equation
 			double cosine = std::cos(rotation);
@@ -62,10 +64,6 @@ class Gaussian2D
 			C = cosine*cosine / (2*sy2) + sinus*sinus / (2*sx2);
 		}
 
-		~Gaussian2D() {}
-
-
-		// Functions
 		float GetValue(const Position& pos)
 		{
 			//A*exp( - (a*(X-x0).^2 + 2*b*(X-x0).*(Y-y0) + c*(Y-y0).^2)) ;

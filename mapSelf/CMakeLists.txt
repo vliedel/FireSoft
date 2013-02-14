@@ -53,8 +53,6 @@ MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
 FIND_PACKAGE(Eigen3 REQUIRED)
 INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
 
-#SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-ggdb")
-
 # Some debug information
 MESSAGE("[*] Build type: ${CMAKE_BUILD_TYPE}")
 MESSAGE("[*] \"${PROJECT_NAME}\" uses the following CXX flags: \"${CMAKE_CXX_FLAGS}\" (can be empty)")

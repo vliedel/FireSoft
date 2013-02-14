@@ -32,6 +32,7 @@
 #include "UAVState.h"
 #include "Waypoint.h"
 #include "RadioStructs.h"
+#include "Fire.h"
 
 //#include <iostream>
 
@@ -510,6 +511,48 @@ struct StC<SequenceContainer, LandingStruct>
 		cont.push_back(struc.LeftTurn);
 		cont.push_back(struc.Length);
 		cont.push_back(struc.Radius);
+	}
+};
+
+
+
+template<typename InputForwardIter, typename OutputForwardIter>
+struct SfC<InputForwardIter, OutputForwardIter, FireStruct>
+{
+	static OutputForwardIter FromCont(FireStruct& struc, InputForwardIter first, InputForwardIter last)
+	{
+		first = SfC<InputForwardIter, OutputForwardIter, Position>::FromCont(struc.Center, first, last);
+		struc.Amplitude = *first++;
+		struc.A = *first++;
+		struc.B = *first++;
+		struc.C = *first++;
+		struc.UavId = *first++;
+		for (int i=0; i<FIRE_SRC_NUM; ++i)
+			struc.Probability[i] = *first++;
+		struc.Height = *first++;
+		struc.SigmaX = *first++;
+		struc.SigmaY = *first++;
+		struc.Rotation = *first++;
+		return first;
+	}
+};
+template<typename SequenceContainer>
+struct StC<SequenceContainer, FireStruct>
+{
+	static void ToCont(FireStruct& struc, SequenceContainer& cont)
+	{
+		StC<SequenceContainer, Position>::ToCont(struc.Center, cont);
+		cont.push_back(struc.Amplitude);
+		cont.push_back(struc.A);
+		cont.push_back(struc.B);
+		cont.push_back(struc.C);
+		cont.push_back(struc.UavId);
+		for (int i=0; i<FIRE_SRC_NUM; ++i)
+			cont.push_back(struc.Probability[i]);
+		cont.push_back(struc.Height);
+		cont.push_back(struc.SigmaX);
+		cont.push_back(struc.SigmaY);
+		cont.push_back(struc.Rotation);
 	}
 };
 

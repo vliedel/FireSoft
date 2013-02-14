@@ -33,6 +33,7 @@ CMsgPlanner::~CMsgPlanner()
 {
 	delete ShMemUavs;
 	delete ShMemSelf;
+	delete ShMemFire;
 }
 
 void CMsgPlanner::Init(std::string module_id)
@@ -43,31 +44,39 @@ void CMsgPlanner::Init(std::string module_id)
 
 	ShMemNameUavs = "mapUAV_" + module_id;
 	ShMemNameSelf = "mapSelf_" + module_id;
+	ShMemNameFire = "mapFire_" + module_id;
 
 	try
 	{
 		// Open the shared memory
 		ShMemUavs = new MapShMemType(boost::interprocess::open_only, ShMemNameUavs.c_str());
 		ShMemSelf = new MapShMemType(boost::interprocess::open_only, ShMemNameSelf.c_str());
+		ShMemFire = new MapShMemType(boost::interprocess::open_only, ShMemNameFire.c_str());
 
 		// Find the maps and mutexes using the c-string name
 		MapUavs = ShMemUavs->find<MapUavType>("Map").first;
 		MapSelf = ShMemSelf->find<MapSelfStruct>("Map").first;
+		MapFire = ShMemFire->find<MapFireType>("Map").first;
 
 		MutexUavs = ShMemUavs->find<MapMutexType>("Mutex").first;
 		MutexSelf = ShMemSelf->find<MapMutexType>("Mutex").first;
+		MutexFire = ShMemFire->find<MapMutexType>("Mutex").first;
 	}
 	catch(...)
 	{
 		MapUavs = NULL;
 		MapSelf = NULL;
+		MapFire = NULL;
 		MutexUavs = NULL;
 		MutexSelf = NULL;
+		MutexFire = NULL;
 		delete ShMemUavs;
 		delete ShMemSelf;
+		delete ShMemFire;
 		throw;
 	}
 	SendOwnPos = true;
+	RelayPos = true;
 
 	// Init with invalid msgs
 	SelectedRadioMsg.MessageType = RADIO_MSG_2POS;
@@ -107,13 +116,17 @@ void CMsgPlanner::Tick()
 
 void CMsgPlanner::SelectMsgs()
 {
-	std::cout << "selecting msgs" << std::endl;
+	std::cout << "Selecting msgs" << std::endl;
+//	std::cout << "SendOwnPos=" << SendOwnPos << std::endl;
+	bool relayCmdMsg = false;
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf);
 
+		// Relay command message if there is any not relayed yet
+		// Of each 2 messages, at least 1 will send the own position (the other can be a command msg)
 		if (!SendOwnPos)
 		{
-			bool relayCmdMsg = false;
+//			std::cout << "selecting cmd msg.." << std::endl;
 			// Only loop half of the history
 			// TODO: magic number
 			for (int j=0, i=MapSelf->LastGsCmdsIndex; j<MAPSELF_GS_CMDS_HIST/2; ++j, i=(i+1)%MAPSELF_GS_CMDS_HIST)
@@ -124,8 +137,7 @@ void CMsgPlanner::SelectMsgs()
 						&& (MapSelf->LastGsCmds[i].TimesSent < config.RelayNumCmdMsg))
 				{
 					// Relay the cmd msg
-					//SelectedMsgs[0].MessageType = RADIO_MSG_RELAY_CMD;
-					//SelectedMsgs[0].Cmd = MapSelf->LastGsCmds[i].Msg;
+//					std::cout << "Selected cmd msg " << MapSelf->LastGsCmds[i].Msg << std::endl;
 					SelectedRadioMsg.Data.Data[0].MessageType = RADIO_MSG_RELAY_CMD;
 					SelectedRadioMsg.Data.Data[0].Cmd = MapSelf->LastGsCmds[i].Msg;
 					MapSelf->LastGsCmds[i].TimesSent++;
@@ -135,11 +147,17 @@ void CMsgPlanner::SelectMsgs()
 
 			}
 			if (!relayCmdMsg)
+			{
 				SendOwnPos = true;
+//				std::cout << "No cmd msg to send" << std::endl;
+			}
 		}
 
+		// Send own position
+		// Of each 2 messages, at least 1 will send the own position (the other can be a command msg)
 		if (SendOwnPos)
 		{
+//			std::cout << "Selected own pos" << std::endl;
 			//SelectedMsgs[0].MessageType = RADIO_MSG_RELAY_POS;
 			SelectedRadioMsg.Data.Data[0].MessageType = RADIO_MSG_RELAY_POS;
 			//MapSelf->UavData.ToRadioMsg(SelectedMsgs[0].Pos);
@@ -148,9 +166,60 @@ void CMsgPlanner::SelectMsgs()
 		}
 	}
 
+
+	// Send fire msg if there are any not sent yet
+	// Of each 2 messages, at least 1 will relay a pos (the other can be a fire msg)
+//	std::cout << "RelayPos=" << RelayPos << " relayCmdMsg=" << relayCmdMsg << std::endl;
+	bool sendFire = false;
+	if (!RelayPos && !relayCmdMsg) // There is no combination GsCmd + Fire
+	{
+		boost::interprocess::scoped_lock<MapMutexType> lockFire(*MutexFire);
+
+//		std::cout << "selecting fire msg.." << std::endl;
+		// Loop over all fires
+		FireMapIterXType itX;
+		FireMapIterYType itY;
+		int f=0;
+		for (itX=MapFire->MapX.begin(); itX != MapFire->MapX.end(); ++itX)
+		{
+			for (itY=itX->second.begin(); itY!=itX->second.end(); ++itY)
+			{
+				//if (!itY->second.Sent && itY->second.Seen)
+				if (!itY->second.Sent)
+				{
+//					std::cout << "Selected fire msg: " << itY->second << std::endl;
+					SelectedRadioMsg.Data.Data[1].MessageType = RADIO_MSG_RELAY_FIRE;
+					itY->second.Fire.ToRadioMsg(SelectedRadioMsg.Data.Data[1].Fires.Fire[f]);
+					++f;
+					sendFire = true;
+					itY->second.Sent = true;
+				}
+				if (f > 1)
+					break;
+			}
+			if (f > 1)
+				break;
+		}
+		if (f < 2)
+		{
+			// Only 1 fire msg has been selected, fill up the 2nd with an invalid fire msg
+			SelectedRadioMsg.Data.Data[1].Fires.Fire[f].UavId = 0;
+		}
+		if (!sendFire)
+		{
+			RelayPos = true;
+//			std::cout << "No fire msg to send" << std::endl;
+		}
+	}
+
+	// Relay a pos msg
+	// Of each 2 messages, at least 1 will relay a pos (the other can be a fire msg)
+	if (RelayPos || relayCmdMsg) // There is no combination GsCmd + Fire
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
 
+//		std::cout << "Selecting relay pos msg" << std::endl;
+		RelayPos = false;
 		// Find the uavs that have been last sent, and send their last state
 		long lastSentTimes[RADIO_NUM_RELAY_PER_MSG-1] = {LONG_MAX};
 		MapUavIterType iters[RADIO_NUM_RELAY_PER_MSG-1];
@@ -160,7 +229,7 @@ void CMsgPlanner::SelectMsgs()
 		MapUavIterType it;
 		for (it = MapUavs->begin(); it != MapUavs->end(); ++it)
 		{
-			std::cout << "checking uav " << it->second.data.UavId << std::endl;
+//			std::cout << "checking uav " << it->second.data.UavId << std::endl;
 
 			// If last sent happened later than last receive, there is nothing new to tell
 			if (it->second.LastRadioSentTime > it->second.LastRadioReceiveTime)
@@ -205,6 +274,14 @@ void CMsgPlanner::SelectMsgs()
 		}
 	}
 
+	// If a cmd msg has been relayed, next radio message should send own pos
+	if (relayCmdMsg)
+		SendOwnPos=true;
+	// If a fire msg has been sent, next radio message should relay a pos
+	if (sendFire)
+		RelayPos = true;
+//	std::cout << "End of message selection. SendOwnPos=" << SendOwnPos << " RelayPos=" << RelayPos << std::endl;
+
 }
 
 void CMsgPlanner::SendMsgs()
@@ -218,7 +295,7 @@ void CMsgPlanner::SendMsgs()
 	}
 	if (SelectedRadioMsg.Data.Data[0].MessageType == RADIO_MSG_RELAY_CMD)
 	{
-		if (SelectedRadioMsg.Data.Data[0].MessageType != RADIO_MSG_RELAY_POS)
+		if (SelectedRadioMsg.Data.Data[1].MessageType != RADIO_MSG_RELAY_POS)
 			std::cout << "Error: can't combine cmd msg and fire msg!" << std::endl;
 		RadioMsgRelay tmp = SelectedRadioMsg.Data.Data[1];
 		SelectedRadioMsg.Data.Data[1] = SelectedRadioMsg.Data.Data[0];

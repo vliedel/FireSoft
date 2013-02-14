@@ -143,7 +143,9 @@ void CRadioSim::Tick()
 
 bool CRadioSim::ReadReceiveBuffer()
 {
-	VecMsgType vecMsg;
+	VecMsgType vecMsgUavs;
+	//VecMsgType vecMsgSelf;
+	VecMsgType vecMsgFire;
 	UavStruct uav;
 	while (!ReceiveBuffer.empty())
 	{
@@ -161,14 +163,28 @@ bool CRadioSim::ReadReceiveBuffer()
 						uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
 						std::cout << "Radio " << ModuleId << " sending: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
 
-						vecMsg.push_back(PROT_RADIO_MSG_RELAY);
-						ToCont(ReceiveBuffer.front().Data.Data[i], vecMsg);
+						vecMsgUavs.push_back(PROT_RADIO_MSG_RELAY);
+						ToCont(ReceiveBuffer.front().Data.Data[i], vecMsgUavs);
 					}
 					break;
 				}
 				case RADIO_MSG_RELAY_FIRE:
 				{
-					// Send to fire map
+					FireStruct fire;
+
+					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[0]);
+					if (fire.UavId > 0)
+					{
+						vecMsgFire.push_back(PROT_FIRE_STRUCT);
+						ToCont(fire, vecMsgFire);
+					}
+
+					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[1]);
+					if (fire.UavId > 0)
+					{
+						vecMsgFire.push_back(PROT_FIRE_STRUCT);
+						ToCont(fire, vecMsgFire);
+					}
 					break;
 				}
 				case RADIO_MSG_RELAY_CMD:
@@ -199,11 +215,18 @@ bool CRadioSim::ReadReceiveBuffer()
 		}
 		ReceiveBuffer.pop_front();
 	}
-	if (!vecMsg.empty())
+
+	if (!vecMsgFire.empty())
 	{
-		writeToMapUAVs(vecMsg);
+		writeToMapFire(vecMsgFire);
+	}
+
+	if (!vecMsgUavs.empty())
+	{
+		writeToMapUAVs(vecMsgUavs);
 		return true;
 	}
+
 	return false;
 }
 

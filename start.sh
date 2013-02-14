@@ -1,54 +1,56 @@
 #!/bin/sh
 
-# Start the yarp server
-#yarpserver &
-#sleep 1
+# Usage: ./start.sh <total_uavs> <num_uavs_with_sim_auto_pilot> <num_uavs_with_sim_radio> <max_sim_time> <first_uav_is_hil? 1|0> <start_ground_station? 1|0>
 
 # Start the modules
 
 GS_ID=10
-NUM_AP=10
-if [ $1 ]
-then
-        NUM_AP=$1
+
+NUM=10
+if [ $1 ]; then
+	NUM=$1
+fi
+
+NUM_AP=$NUM
+if [ $2 ]; then
+	NUM_AP=$2
 fi
 
 NUM_RADIO=$NUM_AP
-if [ $2 ]
-then
-        NUM_RADIO=$2
-fi
-
-if [ $NUM_RADIO -lt $NUM_AP ]
-then
-	NUM=$NUM_AP
-else
-	NUM=$NUM_RADIO
+if [ $3 ]; then
+	NUM_RADIO=$3
 fi
 
 SIM_TIME=120
-if [ $3 ]
-then
-        SIM_TIME=$3
+if [ $4 ]; then
+	SIM_TIME=$4
 fi
 
-# Start the central simulator
-sim/build/main 0 ${NUM_AP} ${NUM_RADIO} ${SIM_TIME} > output/output_sim &
-
-# Start the simulated ground station with id GS_ID
-groundStationSim/build/main $GS_ID > output/output_gs &
-mapUAVs/build/main $GS_ID > output/output_mapuavs_${GS_ID} &
-gsGuiInterface/build/main $GS_ID > output/output_gsGuiInterface &
-
-# If there is hardware in the loop, don't start its modules on this pc
-i="0"
-if [ $4 ]
-then
-	i="1"
+if [ $5 -a $5 = "1" ]; then
 	HIL="1"
 else
 	HIL="0"
 fi
+
+if [ $6 -a $6 = "0" ]; then
+	GS_START="0"
+else
+	GS_START="1"
+fi
+
+# Start the central simulator
+sim/build/main 0 $NUM $NUM_AP $NUM_RADIO $SIM_TIME $GS_START > output/output_sim &
+
+if [ $GS_START = "1" ]; then
+	# Start the simulated ground station with id GS_ID
+	groundStationSim/build/main $GS_ID > output/output_gs &
+	mapUAVs/build/main $GS_ID > output/output_mapuavs_${GS_ID} &
+	gsGuiInterface/build/main $GS_ID > output/output_gsGuiInterface &
+fi
+
+# If there is hardware in the loop, don't start its modules on this pc
+i=$HIL
+
 
 # Start modules
 while [ $i -lt $NUM ]
@@ -56,10 +58,12 @@ do
 	mapSelf/build/main $i > output/output_mapself_${i} &
 	mapUAVs/build/main $i > output/output_mapuavs_${i} &
 	mapFitness/build/main $i > output/output_mapfitness_${i} &
+	mapFire/build/main $i > output/output_mapfire_${i} &
 	
 	# If there are UAVs with a real autopilot, start autoPilot instead of autoPilotSim
-	if [ $NUM_AP -lt $NUM_RADIO ]; then
-		if [ $i -lt $[$NUM_RADIO - $NUM_AP + $HIL] ]; then
+	if [ $NUM_AP -lt $NUM ]; then
+		#if [ $i -lt $[$NUM - $NUM_AP + $HIL] ]; then
+		if [ $i -lt $[$NUM - $NUM_AP] ]; then
 			autoPilot/build/main $i > output/output_ap_${i} &
 		else
 			autoPilotSim/build/main $i > output/output_ap_${i} &
@@ -69,8 +73,9 @@ do
 	fi
 	
 	# If there are UAVs with a real radio, start radio instead of radioSim module
-	if [ $NUM_RADIO -lt $NUM_AP ]; then
-		if [ $i -lt $[$NUM_AP - $NUM_RADIO + $HIL] ]; then
+	if [ $NUM_RADIO -lt $NUM ]; then
+		#if [ $i -lt $[$NUM - $NUM_RADIO + $HIL] ]; then
+		if [ $i -lt $[$NUM - $NUM_RADIO] ]; then
 			radio/build/main $i > output/output_radio_${i} &
 		else
 			radioSim/build/main $i > output/output_radio_${i} &
@@ -85,9 +90,11 @@ done
 
 
 # Modules that need to read shared memory need to wait a bit until shared memory is created
-sleep $[15 + NUM * 10]
+sleep $[15 + NUM * 12]
 
-gsVisualizer/build/main $GS_ID > output/output_gsVis &
+if [ $GS_START = "1" ]; then
+	gsVisualizer/build/main $GS_ID > output/output_gsVis &
+fi
 
 i=$HIL
 while [ $i -lt $NUM ]

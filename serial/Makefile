@@ -11,8 +11,8 @@ all:
 debug:
 	@mkdir -p build_debug
 	#None Debug Release RelWithDebInfo MinSizeRel
-	cd build && cmake -DCMAKE_BUILD_TYPE=Debug $(CMAKE_FLAGS) .. $(FLAGS)
-	cd build && make
+	cd build_debug && cmake -DCMAKE_BUILD_TYPE=Debug $(CMAKE_FLAGS) .. $(FLAGS)
+	cd build_debug && make
 	
 gumstix:
 	@mkdir -p build_gumstix

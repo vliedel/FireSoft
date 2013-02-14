@@ -59,6 +59,16 @@ private:
   // the port portStatus itself
   BufferedPort<Bottle> *portStatus;
   
+  // private storage for portFromFireDetectorValues;
+  std::vector<float> *portFromFireDetectorValues;
+  // the port portFromFireDetector itself
+  BufferedPort<Bottle> *portFromFireDetector;
+  
+  // private storage for portFromRadioValues;
+  std::vector<float> *portFromRadioValues;
+  // the port portFromRadio itself
+  BufferedPort<Bottle> *portFromRadio;
+  
   // User-defined structs (automatically allocated later)
   Param *cliParam;
 
@@ -72,11 +82,23 @@ public:
     portStatus = new BufferedPort<Bottle>();
     portStatus->setStrict();
     portStatus->writeStrict();
+    portFromFireDetectorValues = new std::vector<float>();
+    portFromFireDetector = new BufferedPort<Bottle>();
+    portFromFireDetector->setStrict();
+    portFromFireDetector->writeStrict();
+    portFromRadioValues = new std::vector<float>();
+    portFromRadio = new BufferedPort<Bottle>();
+    portFromRadio->setStrict();
+    portFromRadio->writeStrict();
   }
   
   ~mapFire() {
     delete portCommand;
     delete portStatus;
+    delete portFromFireDetectorValues;
+    delete portFromFireDetector;
+    delete portFromRadioValues;
+    delete portFromRadio;
     delete cliParam;
   }
   
@@ -99,6 +121,16 @@ public:
       portName << "/mapfire" << module_id << "/status";
       portStatus->open(portName.str().c_str());
     }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/mapfire" << module_id << "/fromfiredetector";
+      portFromFireDetector->open(portName.str().c_str());
+    }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/mapfire" << module_id << "/fromradio";
+      portFromRadio->open(portName.str().c_str());
+    }
   }
   
   // Before destruction you will need to call this function first
@@ -106,6 +138,8 @@ public:
   void Close() {
     portCommand->close();
     portStatus->close();
+    portFromFireDetector->close();
+    portFromRadio->close();
   }
   
   // Function to get Param struct (to subsequently set CLI parameters)
@@ -129,6 +163,28 @@ protected:
     valPrepare.clear();
     valPrepare.addInt(val);
     portStatus->write(true);
+  }
+  
+  // Remark: caller is responsible for evoking vector.clear()
+  inline std::vector<float> *readFromFireDetector(bool blocking=true) {
+    Bottle *b = portFromFireDetector->read(blocking);
+    if (b != NULL) { 
+      for (int i = 0; i < b->size(); ++i) {
+        portFromFireDetectorValues->push_back(b->get(i).asDouble());
+      }
+    }
+    return portFromFireDetectorValues;
+  }
+  
+  // Remark: caller is responsible for evoking vector.clear()
+  inline std::vector<float> *readFromRadio(bool blocking=true) {
+    Bottle *b = portFromRadio->read(blocking);
+    if (b != NULL) { 
+      for (int i = 0; i < b->size(); ++i) {
+        portFromRadioValues->push_back(b->get(i).asDouble());
+      }
+    }
+    return portFromRadioValues;
   }
   
 };

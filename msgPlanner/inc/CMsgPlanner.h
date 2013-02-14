@@ -30,6 +30,7 @@
 #include "ShMemTypedefs.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include "FireMap.h"
 
 namespace rur {
 
@@ -70,6 +71,11 @@ class CMsgPlanner : public msgPlanner
 		MapMutexType* MutexSelf;
 		std::string ShMemNameSelf;
 
+		MapShMemType* ShMemFire;
+		MapFireType* MapFire;
+		MapMutexType* MutexFire;
+		std::string ShMemNameFire;
+
 		MsgPlannerConfig config;
 		std::string ModuleId;
 
@@ -81,6 +87,7 @@ class CMsgPlanner : public msgPlanner
 		//std::vector<int>* VecMsg;
 
 		bool SendOwnPos;
+		bool RelayPos;
 		RadioMsgRelayCmd GsCmds[MAPSELF_GS_CMDS_HIST];
 
 		// Functions
