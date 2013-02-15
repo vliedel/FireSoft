@@ -27,7 +27,8 @@
 using namespace rur;
 using namespace std;
 
-CRadio::CRadio(): IntMsg(NULL), Serial(NULL), fd_cts(0), Synchronize(false), LastReadHeaderUsed(false),
+CRadio::CRadio(): ModuleId("Anonymous"), UavId(0), IntMsg(NULL), Serial(NULL), fd_cts(0),
+		Synchronize(false), LastReadHeaderUsed(false),
 		CheckSum(0), StopByte(0x16), RSSI(0) {
 
 }
@@ -41,6 +42,7 @@ CRadio::~CRadio()
 
 void CRadio::Init(std::string &module_id) {
 	ModuleId = module_id;
+	UavId = atoi(module_id.c_str());
 
 	try
 	{
@@ -90,32 +92,32 @@ void CRadio::Power(bool enable) {
 
 
 /**
- * Read from YARP module with map information and send over serial to MyriaNed radio.
+ * The message planner requires a RADIO_STATE_ROUND_IDLE message after things
+ * have been written towards the radio.
  */
 void CRadio::Tick()
 {
-	IntMsg = readFromMapUAVs(false);
-	if (IntMsg != NULL)
+	// Read the stuff, puts it in a buffer
+	ReadFromRadio();
+
+	// read the stuff from the buffer
+	ReadReceiveBuffer();
+
+	VecMsg = readFromMsgPlanner(false);
+	if (!VecMsg->empty())
 	{
-		switch(*IntMsg)
-		{
-		case PROT_MAPUAV_STATUS_UPDATED:
-		{
-//			if (RadioRoundState == RADIO_STATE_ROUND_END)
-//			{
-//				RadioRoundState = RADIO_STATE_ROUND_IDLE;
-//				writeToMsgPlanner(PROT_RADIOSTATUS_IDLE);
-//			}
-			break;
-		}
-		}
+		std::cout << "RADIO " << ModuleId << " from MsgPlanner: ";
+		dobots::print(VecMsg->begin(), VecMsg->end());
+		// Should have more protocol here?
+		WriteToOutBuffer(VecMsg);
+		VecMsg->clear();
 	}
 
+	// Send everything that is in the outgoing buffer (blocking)
+	WriteToRadio();
 
+	usleep(config.TickTime);
 }
-
-// radio message packed = bit aligned
-
 
 /**
  * Checksum for next byte, requiring previously calculated checksum as argument.
@@ -156,7 +158,7 @@ uint16_t CRadio::CRC(const char *data, const int length, const uint8_t *precessi
 
 void CRadio::ReadFromRadio()
 {
-//	Serial->readBufferSize
+	ReadUart();
 }
 
 bool CRadio::SynchronizeUart(RadioMsgHeader& msgHdr)
@@ -203,9 +205,9 @@ void CRadio::ReadUart()
 	// Check if we need to read a new header
 	if (LastReadHeaderUsed)
 	{
-		if (Serial->available() >= sizeof(AutoPilotMsgHeader))
+		if (Serial->available() >= sizeof(RadioMsgHeader))
 		{
-			Serial->read((char*)&LastReadHeader, sizeof(AutoPilotMsgHeader));
+			Serial->read((char*)&LastReadHeader, sizeof(RadioMsgHeader));
 			if (LastReadHeader.Header != MYRIANED_HEADER)
 			{
 				std::cout << "Error header doesn't match, header=" << LastReadHeader << std::endl;
@@ -229,15 +231,11 @@ void CRadio::ReadUart()
 	RadioMsgPacked data;
 	if (!ReadData((char*)&data, sizeof(RadioMsgPacked)))
 		return;
-	std::cout << "Received radio message:" << data << std::endl;
+	//	std::cout << "Received radio message:" << data << std::endl;
 
 	RadioMsg msg;
 	msg.Unpack(data);
 	ReceiveBuffer.push_back(msg);
-
-	// Read the stuff, not necessary to actually use a buffer for this, but this enables
-	// copying code from ReadReceiveBuffer in CRadioSim
-	ReadReceiveBuffer();
 }
 
 bool CRadio::ReadData(char* data, size_t size)
@@ -285,10 +283,43 @@ bool CRadio::ReadData(char* data, size_t size)
 	return true;
 }
 
+/**
+ * Blocking wait for sending data
+ */
+void CRadio::WriteData(const char* data, ssize_t length) {
+	int ret;
+	uint8_t cts[1];
+
+	while(true) {
+		// Read 'CTS' line
+		ret = read(fd_cts, cts, 1);
+		if( ret == -1 )
+			continue;
+
+		// If 'CTS' is low, send reply
+		if( cts[0] )
+		{
+			Serial->write(data, length);
+			std::cout << "Message " << string(data) << " sent" << std::endl;
+		}
+		else
+			std::cout << "CTS busy..." << std::endl;
+	}
+}
 
 void CRadio::WriteToRadio()
 {
+	RadioMsg radioMsg;
+	if (!SendBuffer.empty())
+	{
+		radioMsg = SendBuffer.front();
+		SendBuffer.pop_front();
+	}
+	RadioMsgPacked data;
+	radioMsg.Pack(data);
+	WriteData((char*)data, sizeof(RadioMsgPacked));
 
+	writeToMsgPlanner(PROT_RADIOSTATUS_IDLE);
 }
 
 void CRadio::UpdateState()
@@ -308,64 +339,64 @@ bool CRadio::ReadReceiveBuffer()
 		{
 			switch (ReceiveBuffer.front().Data.Data[i].MessageType)
 			{
-				case RADIO_MSG_RELAY_POS:
+			case RADIO_MSG_RELAY_POS:
+			{
+				uav.UavId = ReceiveBuffer.front().Data.Data[i].Pos.UavId -1;
+
+				// Ignore invalid uav IDs and own messages
+				if ((uav.UavId > -1) && (uav.UavId != UavId))
 				{
-					uav.UavId = ReceiveBuffer.front().Data.Data[i].Pos.UavId -1;
+					uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
+					std::cout << "Radio " << ModuleId << " sending: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
 
-					// Ignore invalid uav IDs and own messages
-					if ((uav.UavId > -1) && (uav.UavId != UavId))
-					{
-						uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
-						std::cout << "Radio " << ModuleId << " sending: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
-
-						vecMsgUavs.push_back(PROT_RADIO_MSG_RELAY);
-						ToCont(ReceiveBuffer.front().Data.Data[i], vecMsgUavs);
-					}
-					break;
+					vecMsgUavs.push_back(PROT_RADIO_MSG_RELAY);
+					ToCont(ReceiveBuffer.front().Data.Data[i], vecMsgUavs);
 				}
-				case RADIO_MSG_RELAY_FIRE:
+				break;
+			}
+			case RADIO_MSG_RELAY_FIRE:
+			{
+				FireStruct fire;
+
+				fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[0]);
+				if (fire.UavId > 0)
 				{
-					FireStruct fire;
-
-					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[0]);
-					if (fire.UavId > 0)
-					{
-						vecMsgFire.push_back(PROT_FIRE_STRUCT);
-						ToCont(fire, vecMsgFire);
-					}
-
-					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[1]);
-					if (fire.UavId > 0)
-					{
-						vecMsgFire.push_back(PROT_FIRE_STRUCT);
-						ToCont(fire, vecMsgFire);
-					}
-					break;
+					vecMsgFire.push_back(PROT_FIRE_STRUCT);
+					ToCont(fire, vecMsgFire);
 				}
-				case RADIO_MSG_RELAY_CMD:
+
+				fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[1]);
+				if (fire.UavId > 0)
 				{
-					int id = ReceiveBuffer.front().Data.Data[i].Cmd.UavId -1;
-					if (id < 0)
-						break;
-
-					// If message is meant for this uav, execute command
-					if (id == UavId || id == 14) // TODO: magic number
-					{
-
-					}
-					// If message is meant for other uav, relay command
-					if (id != UavId || id == 14) // TODO: magic number
-					{
-
-					}
-
-					VecMsgType vecMsgSelf;
-					ToCont(ReceiveBuffer.front().Data.Data[i].Cmd, vecMsgSelf);
-					vecMsgSelf.push_back(PROT_MAPSELF_GS_CMD);
-					writeToMapSelf(vecMsgSelf);
-
-					break;
+					vecMsgFire.push_back(PROT_FIRE_STRUCT);
+					ToCont(fire, vecMsgFire);
 				}
+				break;
+			}
+			case RADIO_MSG_RELAY_CMD:
+			{
+				int id = ReceiveBuffer.front().Data.Data[i].Cmd.UavId -1;
+				if (id < 0)
+					break;
+
+				// If message is meant for this uav, execute command
+				if (id == UavId || id == 14) // TODO: magic number
+				{
+
+				}
+				// If message is meant for other uav, relay command
+				if (id != UavId || id == 14) // TODO: magic number
+				{
+
+				}
+
+				VecMsgType vecMsgSelf;
+				ToCont(ReceiveBuffer.front().Data.Data[i].Cmd, vecMsgSelf);
+				vecMsgSelf.push_back(PROT_MAPSELF_GS_CMD);
+				writeToMapSelf(vecMsgSelf);
+
+				break;
+			}
 			}
 		}
 		ReceiveBuffer.pop_front();
@@ -383,4 +414,14 @@ bool CRadio::ReadReceiveBuffer()
 	}
 
 	return false;
+}
+
+/**
+ * Writes it to a buffer
+ */
+void CRadio::WriteToOutBuffer(VecMsgType* vecMsg)
+{
+	RadioMsg msg;
+	FromCont(msg, vecMsg->begin(), vecMsg->end());
+	SendBuffer.push_back(msg);
 }

@@ -78,6 +78,9 @@ private:
   // the port portToMapSelf itself
   BufferedPort<Bottle> *portToMapSelf;
   
+  // the port portToMapFire itself
+  BufferedPort<Bottle> *portToMapFire;
+  
   // User-defined structs (automatically allocated later)
   Param *cliParam;
 
@@ -93,6 +96,7 @@ public:
     portToMapUAVs = new BufferedPort<Bottle>();
     portFromMapUAVs = new BufferedPort<Bottle>();
     portToMapSelf = new BufferedPort<Bottle>();
+    portToMapFire = new BufferedPort<Bottle>();
   }
   
   ~radio() {
@@ -104,6 +108,7 @@ public:
     delete portToMapUAVs;
     delete portFromMapUAVs;
     delete portToMapSelf;
+    delete portToMapFire;
     delete cliParam;
   }
   
@@ -153,6 +158,11 @@ public:
       portName << "/radio" << module_id << "/tomapself";
       portToMapSelf->open(portName.str().c_str());
     }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/radio" << module_id << "/tomapfire";
+      portToMapFire->open(portName.str().c_str());
+    }
   }
   
   // Before destruction you will need to call this function first
@@ -165,6 +175,7 @@ public:
     portToMapUAVs->close();
     portFromMapUAVs->close();
     portToMapSelf->close();
+    portToMapFire->close();
   }
   
   // Function to get Param struct (to subsequently set CLI parameters)
@@ -233,6 +244,15 @@ protected:
       msgPrepare.addDouble(msg[i]);
     }
     portToMapSelf->write(true);
+  }
+  
+  inline void writeToMapFire(const float_seq &msg) {
+    Bottle &msgPrepare = portToMapFire->prepare();
+    msgPrepare.clear();
+    for (int i = 0; i < msg.size(); ++i) {
+      msgPrepare.addDouble(msg[i]);
+    }
+    portToMapFire->write(true);
   }
   
 };

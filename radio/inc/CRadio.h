@@ -25,6 +25,15 @@
 #define CRADIO_H_
 
 #include "RadioStructs.h"
+#include <iosfwd>
+#include <sstream>
+#include <iostream>
+#include "Print.hpp"
+
+#include "Protocol.h"
+#include "StructToFromCont.h"
+#include "Defs.h"
+
 #include <radio.h>
 #include <deque>
 #include "BufferedAsyncSerial.h"
@@ -93,7 +102,13 @@ class CRadio : public radio
 	private:
 		std::string ModuleId;
 
+		int UavId;
+
 		int* IntMsg;
+
+		VecMsgType* VecMsg;
+
+		ERadioRoundState RadioRoundState;
 
 		BufferedAsyncSerial *Serial;
 
@@ -132,9 +147,13 @@ class CRadio : public radio
 		bool ReadData(char* data, size_t size);
 
 		bool ReadReceiveBuffer();
+
+		void WriteToOutBuffer(VecMsgType* vecMsg);
+
+		void WriteData(const char* data, ssize_t length);
 	public:
 		// Data
-//		std::deque<RadioMsg> sendBuffer;
+		std::deque<RadioMsg> SendBuffer;
 		std::deque<RadioMsg> ReceiveBuffer;
 		
 		// Constructors
