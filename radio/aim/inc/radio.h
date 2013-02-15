@@ -86,27 +86,13 @@ public:
   radio() {
     cliParam = new Param();
     portCommand = new BufferedPort<Bottle>();
-    portCommand->setStrict();
-    portCommand->writeStrict();
     portStatus = new BufferedPort<Bottle>();
-    portStatus->setStrict();
-    portStatus->writeStrict();
     portToMsgPlanner = new BufferedPort<Bottle>();
-    portToMsgPlanner->setStrict();
-    portToMsgPlanner->writeStrict();
     portFromMsgPlannerValues = new std::vector<float>();
     portFromMsgPlanner = new BufferedPort<Bottle>();
-    portFromMsgPlanner->setStrict();
-    portFromMsgPlanner->writeStrict();
     portToMapUAVs = new BufferedPort<Bottle>();
-    portToMapUAVs->setStrict();
-    portToMapUAVs->writeStrict();
     portFromMapUAVs = new BufferedPort<Bottle>();
-    portFromMapUAVs->setStrict();
-    portFromMapUAVs->writeStrict();
     portToMapSelf = new BufferedPort<Bottle>();
-    portToMapSelf->setStrict();
-    portToMapSelf->writeStrict();
   }
   
   ~radio() {
@@ -123,6 +109,8 @@ public:
   
   // This is the function you will need to implement.
   void Tick(); 
+  
+  bool Stop(); 
   
   
   // After construction you will need to call this function first
