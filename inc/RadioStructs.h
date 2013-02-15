@@ -25,6 +25,7 @@
 #define RADIOSTRUCTS_H_
 
 #include <inttypes.h>
+#include <sstream>
 
 #define RADIO_NUM_RELAY_PER_MSG 2 // This number is still hardcoded at some places (this file and structsToFromcont.h)
 
@@ -477,6 +478,9 @@ struct RadioMsgPackedPosCmd
 	RADIO_STRUCT_CMD(1)
 };
 
+/**
+ * Entity of 28 bytes.
+ */
 struct RadioMsgPacked
 {
 	union

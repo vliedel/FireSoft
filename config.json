@@ -159,7 +159,8 @@
 	"radio":
 	{
 		"TickTime": 1000,
-		"Debug": true
+		"Debug": true,
+		"PortName": "/dev/ttyO3"
 	},
 	"radioSim":
 	{
