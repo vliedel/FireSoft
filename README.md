@@ -1,6 +1,6 @@
 # FireSoft
 
-FireSwarm Software for on the Gumstix
+FireSwarm software for on the Gumstix. Part of the FireSwarm project: http://www.fireswarm.nl
 
 ## Requirements
 This software uses libraries:
@@ -17,18 +17,12 @@ To compile simply type:
 * make
 
 ## Running
-Start a yarp server:
-* yarp server
-Start a yarp write
-* yarp write /simout
-Start the modules:
-./start
-Once all modules started (this might take a while), connect the modules:
-./connect
-Then start the simulation by typing "1" and press return in the yarp write.
-
-To stop all modules:
-./stop
+* Start a yarp server: yarp server
+* Start a yarp write: yarp write /simout
+* Start the modules: ./start.sh
+* Once all modules started (this might take a while), connect the modules: ./connect.sh
+* Type 1<return> in the yarp write to start the simulation.
+* Stop all modules: ./stop.sh
 
 ## Copyrights
 The copyrights (2012) belong to:
