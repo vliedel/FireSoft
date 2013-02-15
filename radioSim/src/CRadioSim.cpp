@@ -155,14 +155,13 @@ bool CRadioSim::ReadReceiveBuffer()
 			{
 				case RADIO_MSG_RELAY_POS:
 				{
-					uav.UavId = ReceiveBuffer.front().Data.Data[i].Pos.UavId -1;
+//					uav.UavId = ReceiveBuffer.front().Data.Data[i].Pos.UavId -1;
+					uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
 
 					// Ignore invalid uav IDs and own messages
 					if ((uav.UavId > -1) && (uav.UavId != UavId))
 					{
-						uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
-						std::cout << "Radio " << ModuleId << " sending: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
-
+//						std::cout << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
 						vecMsgUavs.push_back(PROT_RADIO_MSG_RELAY);
 						ToCont(ReceiveBuffer.front().Data.Data[i], vecMsgUavs);
 					}
@@ -173,15 +172,19 @@ bool CRadioSim::ReadReceiveBuffer()
 					FireStruct fire;
 
 					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[0]);
-					if (fire.UavId > 0)
+					// Ignore invalid uav IDs and own messages
+					if ((fire.UavId > -1) && (fire.UavId != UavId))
 					{
+//						std::cout << fire << std::endl;
 						vecMsgFire.push_back(PROT_FIRE_STRUCT);
 						ToCont(fire, vecMsgFire);
 					}
 
 					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[1]);
-					if (fire.UavId > 0)
+					// Ignore invalid uav IDs and own messages
+					if ((fire.UavId > -1) && (fire.UavId != UavId))
 					{
+//						std::cout << fire << std::endl;
 						vecMsgFire.push_back(PROT_FIRE_STRUCT);
 						ToCont(fire, vecMsgFire);
 					}

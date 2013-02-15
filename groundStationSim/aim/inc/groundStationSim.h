@@ -78,6 +78,9 @@ private:
   // the port portFromGuiInterface itself
   BufferedPort<Bottle> *portFromGuiInterface;
   
+  // the port portToMapFire itself
+  BufferedPort<Bottle> *portToMapFire;
+  
   // User-defined structs (automatically allocated later)
   Param *cliParam;
 
@@ -108,6 +111,9 @@ public:
     portFromGuiInterface = new BufferedPort<Bottle>();
     portFromGuiInterface->setStrict();
     portFromGuiInterface->writeStrict();
+    portToMapFire = new BufferedPort<Bottle>();
+    portToMapFire->setStrict();
+    portToMapFire->writeStrict();
   }
   
   ~groundStationSim() {
@@ -120,6 +126,7 @@ public:
     delete portToGuiInterface;
     delete portFromGuiInterfaceValues;
     delete portFromGuiInterface;
+    delete portToMapFire;
     delete cliParam;
   }
   
@@ -167,6 +174,11 @@ public:
       portName << "/groundstationsim" << module_id << "/fromguiinterface";
       portFromGuiInterface->open(portName.str().c_str());
     }
+    {
+      std::stringstream portName; portName.str(); portName.clear();
+      portName << "/groundstationsim" << module_id << "/tomapfire";
+      portToMapFire->open(portName.str().c_str());
+    }
   }
   
   // Before destruction you will need to call this function first
@@ -179,6 +191,7 @@ public:
     portToMapUavs->close();
     portToGuiInterface->close();
     portFromGuiInterface->close();
+    portToMapFire->close();
   }
   
   // Function to get Param struct (to subsequently set CLI parameters)
@@ -260,6 +273,15 @@ protected:
       }
     }
     return portFromGuiInterfaceValues;
+  }
+  
+  inline void writeToMapFire(const float_seq &seq) {
+    Bottle &seqPrepare = portToMapFire->prepare();
+    seqPrepare.clear();
+    for (int i = 0; i < seq.size(); ++i) {
+      seqPrepare.addDouble(seq[i]);
+    }
+    portToMapFire->write(true);
   }
   
 };

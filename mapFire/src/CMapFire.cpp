@@ -25,6 +25,7 @@
 #include "Protocol.h"
 #include "StructToFromCont.h"
 #include "Print.hpp"
+#include "CTime.h"
 
 using namespace rur;
 
@@ -43,6 +44,7 @@ void CMapFire::Init(std::string module_id)
 	config.load("config.json");
 
 	ModuleId = module_id;
+	UavId = atoi(module_id.c_str());
 
 	//Shared memory front-end that is able to construct objects
 	//associated with a c-string. Erase previous shared memory with the name
@@ -94,7 +96,7 @@ void CMapFire::Init(std::string module_id)
 	fire.Fire.Probability[FIRE_SRC_CO] = 0.3;
 	fire.Fire.Init(10, 15, M_PI/8);
 	fire.Fire.Height = 100;
-	fire.Fire.UavId = atoi(module_id.c_str());
+	fire.Fire.UavId = UavId;
 	fire.Fire.Amplitude = 1-(1-fire.Fire.Probability[FIRE_SRC_CAM])*(1-fire.Fire.Probability[FIRE_SRC_TPA])*(1-fire.Fire.Probability[FIRE_SRC_CO]);
 	AddFire(fire);
 
@@ -113,6 +115,8 @@ void CMapFire::Init(std::string module_id)
 	fire.Fire.Center.x() = 1900;
 	fire.Fire.Center.y() = 2400;
 	AddFire(fire);
+
+	LastTestFireGenTime = get_cur_1ms();
 }
 
 void CMapFire::Tick()
@@ -167,15 +171,38 @@ void CMapFire::Tick()
 				case PROT_FIRE_STRUCT:
 				{
 					MapFireStruct fire;
-					FromCont(fire.Fire, it, VecMsg->end());
+					it = FromCont(fire.Fire, it, VecMsg->end());
 					fire.Seen = false;
 					fire.Sent = false;
+//					std::cout << "Adding: " << fire.Fire << std::endl;
 					AddFire(fire);
 					break;
 				}
 			}
 		}
 		VecMsg->clear();
+	}
+
+	// For test purposes: add random fires
+	if (get_cur_1ms() > LastTestFireGenTime + 10000)
+	{
+		MapFireStruct fire;
+		fire.Seen = true;
+		fire.Sent = false;
+		fire.Fire.Center.x() = rand() % 1000 + 1000;
+		fire.Fire.Center.y() = rand() % 1000 + 1000;
+		fire.Fire.Center.z() = 0;
+
+		fire.Fire.Probability[FIRE_SRC_CAM] = 0.1;
+		fire.Fire.Probability[FIRE_SRC_TPA] = 0.2;
+		fire.Fire.Probability[FIRE_SRC_CO] = 0.3;
+		fire.Fire.Init(10, 15, M_PI/8);
+		fire.Fire.Height = 100;
+		fire.Fire.UavId = UavId;
+		fire.Fire.Amplitude = 1-(1-fire.Fire.Probability[FIRE_SRC_CAM])*(1-fire.Fire.Probability[FIRE_SRC_TPA])*(1-fire.Fire.Probability[FIRE_SRC_CO]);
+		AddFire(fire);
+
+		LastTestFireGenTime = get_cur_1ms();
 	}
 
 	usleep(config.TickTime);

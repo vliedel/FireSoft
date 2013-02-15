@@ -68,6 +68,9 @@ class CMapFire : public mapFire
 
 		MapFireConfig config;
 		std::string ModuleId;
+		int UavId;
+
+		long LastTestFireGenTime;
 
 		int* IntMsg;
 		std::vector<float>* VecMsg;

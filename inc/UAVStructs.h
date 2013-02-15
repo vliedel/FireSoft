@@ -146,14 +146,14 @@ class UavStruct
 		{
 			UavId = msg.UavId - 1;
 			// X and Y are 0 to 2047, convert to 0 to 5000
-			Geom.Pos.x() = msg.X * 5000/2047;
-			Geom.Pos.y() = msg.Y * 5000/2047;
+			Geom.Pos.x() = msg.X * 5000.0/2047;
+			Geom.Pos.y() = msg.Y * 5000.0/2047;
 			// Z is 0 to 127, convert to 0 to 300
-			Geom.Pos.z() = msg.Z * 300/127;
+			Geom.Pos.z() = msg.Z * 300.0/127;
 			// Heading is 0 to 63, convert to 0 to 2*pi
-			Geom.Heading.angle() = msg.Heading * 2*M_PI/63;
+			Geom.Heading.angle() = msg.Heading * 2.0*M_PI/63;
 			// GroundSpeed is 0 to 15, convert to 0 to 33
-			Geom.GroundSpeed = msg.GroundSpeed * 33/15;
+			Geom.GroundSpeed = msg.GroundSpeed * 33.0/15;
 			Geom.VerticalSpeed = 0; // Assumption
 			State = (UAVState)msg.State;
 			// Roll is -15 to 15, convert to -0.5*pi to 0.5pi
@@ -371,20 +371,20 @@ public:
 		UavId = msg.UavId - 1;
 		MsgId = msg.MsgId;
 		// Height is 0 to 255, translate to 50 to 305
-		HeightMin = msg.HeightMin + 50;
-		HeightMax = msg.HeightMax + 50;
+		HeightMin = msg.HeightMin + 50.0;
+		HeightMax = msg.HeightMax + 50.0;
 		// Area is 0 to 1023, translate to 0 to 5000
-		AreaZero.x() = msg.AreaMinX * 5000/1023;
-		AreaZero.y() = msg.AreaMinY * 5000/1023;
+		AreaZero.x() = msg.AreaMinX * 5000.0/1023;
+		AreaZero.y() = msg.AreaMinY * 5000.0/1023;
 		AreaZero.z() = 0;
-		AreaSize.x() = msg.AreaDX * 5000/1023;
-		AreaSize.y() = msg.AreaDY * 5000/1023;
+		AreaSize.x() = msg.AreaDX * 5000.0/1023;
+		AreaSize.y() = msg.AreaDY * 5000.0/1023;
 		AreaSize.z() = 0;
 		// Rotation is 0 to 1023, translate to 0 to 0.5*pi
 		AreaRotation.angle() = msg.AreaRotation * M_PI/2/1023;
 		// Landing pos is 0 to 4095, translate to 0 to 5000
-		Landing.Pos.x() = msg.LandX * 5000/4095;
-		Landing.Pos.y() = msg.LandY * 5000/4095;
+		Landing.Pos.x() = msg.LandX * 5000.0/4095;
+		Landing.Pos.y() = msg.LandY * 5000.0/4095;
 		Landing.Pos.z() = 0;
 		// Land heading is 0 to 255, translate to 0 to 2*pi
 		Landing.Heading.angle() = msg.LandHeading * 2.0*M_PI/255;
