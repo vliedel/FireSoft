@@ -56,7 +56,7 @@
 	{
 		"TickTime": 1000,
 		"Debug": true,
-		"PortName": "/dev/ttyUSB0",
+		"PortName": "/dev/ttyUSB1",
 		"SensorReqIntervalTime": 125,
 		"WPStatustReqIntervalTime": 50,
 		"WPBoundReqIntervalTime": 250 
@@ -112,7 +112,9 @@
 	{
 		"TickTime": 1000,
 		"Debug": true,
+		"_Host": "82.161.90.185",
 		"Host": "10.10.1.109",
+		"_Port": "50013",
 		"Port": "13000",
 		"DataType": "0001"
 	},

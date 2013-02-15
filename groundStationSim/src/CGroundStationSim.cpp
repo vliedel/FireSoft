@@ -181,7 +181,7 @@ void CGroundStationSim::ReadReceiveBuffer()
 					if ((uav.UavId > -1) && (uav.UavId != UavId))
 					{
 						uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
-						std::cout << "GroundStation " << ModuleId << " received: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
+						std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
 						VecMsgType vecMsg;
 						vecMsg.push_back(PROT_RADIO_MSG_RELAY);
 						ToCont(ReceiveBuffer.front().Data.Data[i], vecMsg);
@@ -196,7 +196,39 @@ void CGroundStationSim::ReadReceiveBuffer()
 				}
 				case RADIO_MSG_RELAY_FIRE:
 				{
-					// Add to fire map
+					FireStruct fire;
+
+					VecMsgType vecMsg;
+					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[0]);
+					if (fire.UavId > -1)
+					{
+						std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[0] << std::endl;
+
+						vecMsg.push_back(PROT_FIRE_STRUCT);
+						ToCont(fire, vecMsg);
+						writeToMapFire(vecMsg);
+
+						vecMsg.clear();
+						vecMsg.push_back(PROT_RADIO_MSG_RELAY_FIRE);
+						ToCont(ReceiveBuffer.front().Data.Data[i].Fires.Fire[0], vecMsg);
+						writeToGuiInterface(vecMsg);
+					}
+
+					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[1]);
+					if (fire.UavId > -1)
+					{
+						std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[1] << std::endl;
+
+						vecMsg.clear();
+						vecMsg.push_back(PROT_FIRE_STRUCT);
+						ToCont(fire, vecMsg);
+						writeToMapFire(vecMsg);
+
+						vecMsg.clear();
+						vecMsg.push_back(PROT_RADIO_MSG_RELAY_FIRE);
+						ToCont(ReceiveBuffer.front().Data.Data[i].Fires.Fire[1], vecMsg);
+						writeToGuiInterface(vecMsg);
+					}
 					break;
 				}
 				case RADIO_MSG_RELAY_CMD:

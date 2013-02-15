@@ -68,14 +68,15 @@ public:
 				// Update fire!
 				if ((itY->second.Fire.Amplitude == fire.Fire.Amplitude)
 						&& (itY->second.Fire.Probability[FIRE_SRC_CAM] == fire.Fire.Probability[FIRE_SRC_CAM])
-						&& (itY->second.Fire.Probability[FIRE_SRC_CAM] == fire.Fire.Probability[FIRE_SRC_TPA])
-						&& (itY->second.Fire.Probability[FIRE_SRC_CAM] == fire.Fire.Probability[FIRE_SRC_CO]))
+						&& (itY->second.Fire.Probability[FIRE_SRC_TPA] == fire.Fire.Probability[FIRE_SRC_TPA])
+						&& (itY->second.Fire.Probability[FIRE_SRC_CO] == fire.Fire.Probability[FIRE_SRC_CO]))
 				{
 					// Ignore?
 				}
 				else
 				{
 					// Update
+					std::cout << "Updated fire at pos [" << x << " " << y << "]" << std::endl;
 					itY->second = fire;
 				}
 			}

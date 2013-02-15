@@ -43,6 +43,7 @@ if [ $GS_START = "1" ]; then
 
 	# Connect modules within ground station
 	yarp connect /groundstationsim${GS_ID}/tomapuavs /mapuavs${GS_ID}/fromradio
+	yarp connect /groundstationsim${GS_ID}/tomapfire /mapfire${GS_ID}/fromradio
 	yarp connect /groundstationsim${GS_ID}/toguiinterface /gsguiinterface${GS_ID}/fromradio
 	yarp connect /gsguiinterface${GS_ID}/toradio /groundstationsim${GS_ID}/fromguiinterface
 fi

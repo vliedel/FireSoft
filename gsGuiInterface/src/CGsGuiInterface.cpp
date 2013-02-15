@@ -235,21 +235,23 @@ void CGsGuiInterface::Tick()
 				case PROT_RADIO_MSG_RELAY_FIRE:
 				{
 					it = FromCont(FireMsg, it, VecMsg->end());
+					FireStruct fire;
+					fire.FromRadioMsg(FireMsg);
 
 					// TODO: convert to fire struct (which does the translation to floats)
 					PropertyTreeFire.put("message_type", "fire");
 					PropertyTreePos.put("version", 1);
 					PropertyTreePos.put("timestamp", ssTime.str());
-					PropertyTreeFire.put("uav_id", FireMsg.UavId);
-					PropertyTreeFire.put("p_f_c", FireMsg.PCam);
-					PropertyTreeFire.put("p_f_t", FireMsg.PTPA);
-					PropertyTreeFire.put("p_f_g", FireMsg.PGas);
-					PropertyTreeFire.put("g_x", FireMsg.X + config.OriginX); // Local to mercator coordinates
-					PropertyTreeFire.put("g_y", FireMsg.Y + config.OriginY); // Local to mercator coordinates
-					PropertyTreeFire.put("g_var_x", FireMsg.VarX);
-					PropertyTreeFire.put("g_var_y", FireMsg.VarY);
-					PropertyTreeFire.put("g_var_rot", FireMsg.Rot);
-					PropertyTreeFire.put("uav_z", FireMsg.Z);
+					PropertyTreeFire.put("uav_id", fire.UavId);
+					PropertyTreeFire.put("p_f_c", fire.Probability[FIRE_SRC_CAM]);
+					PropertyTreeFire.put("p_f_t", fire.Probability[FIRE_SRC_TPA]);
+					PropertyTreeFire.put("p_f_g", fire.Probability[FIRE_SRC_CO]);
+					PropertyTreeFire.put("g_x", fire.Center.x() + config.OriginX); // Local to mercator coordinates
+					PropertyTreeFire.put("g_y", fire.Center.y() + config.OriginY); // Local to mercator coordinates
+					PropertyTreeFire.put("g_var_x", fire.SigmaX);
+					PropertyTreeFire.put("g_var_y", fire.SigmaY);
+					PropertyTreeFire.put("g_var_rot", fire.Rotation);
+					PropertyTreeFire.put("uav_z", fire.Height);
 
 					write_json(ssJson, PropertyTreeFire, false); // no pretty output
 					break;

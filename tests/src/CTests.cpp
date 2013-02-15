@@ -27,7 +27,6 @@
 #include "CTime.h"
 #include "Fitness.h"
 
-
 //#include <boost/asio.hpp>
 //#include <boost/thread.hpp>
 
@@ -444,6 +443,25 @@ void CTests::Init(std::string module_id)
 	}
 	else
 		std::cout << "RadioMsg" << " OK :D" << std::endl;
+
+
+	int fireSize = 17;
+	vec.clear();
+	for (int i=0; i<fireSize; ++i)
+		vec.push_back(i);
+	FireStruct fire;
+	Check<FireStruct>(fire, vec, vec2, "FireStruct");
+
+//	int mapFireSize = fireSize + 2;
+//	vec.clear();
+//	for (int i=0; i<mapFireSize; ++i)
+//		vec.push_back(i);
+//	vec[fireSize] = 1; // bool
+//	vec[fireSize+1] = 1; // bool
+//	MapFireStruct mapFire;
+//	Check<MapFireStruct>(mapFire, vec, vec2, "MapFireStruct");
+
+
 
 
 	//////////////////////////////////////

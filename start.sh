@@ -45,6 +45,7 @@ if [ $GS_START = "1" ]; then
 	# Start the simulated ground station with id GS_ID
 	groundStationSim/build/main $GS_ID > output/output_gs &
 	mapUAVs/build/main $GS_ID > output/output_mapuavs_${GS_ID} &
+	mapFire/build/main $GS_ID > output/output_mapfire_${GS_ID} &
 	gsGuiInterface/build/main $GS_ID > output/output_gsGuiInterface &
 fi
 

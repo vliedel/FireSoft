@@ -46,6 +46,7 @@ interface groundStationSim {
   void ToMapUavs(out float_seq seq);
   void ToGuiInterface(out float_seq seq);
   void FromGuiInterface(in float_seq seq);
+  void ToMapFire(out float_seq seq);
 };
 
 };
