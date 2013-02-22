@@ -3,8 +3,10 @@
 	{
 		"_OriginX": 8000.0,
 		"_OriginY": 9000.0,
-		"OriginX": 359286.0,
-		"OriginY": 4812590.0,
+		"__OriginX": 359286.0,
+		"OriginX": 594624.0,
+		"__OriginY": 4812590.0,
+		"OriginY": 5760490.0,
 		"AreaOriginX": 1000.0,
 		"AreaOriginY": 500.0,
 		"_AreaSizeX": 500.0,
@@ -58,7 +60,7 @@
 	{
 		"TickTime": 1000,
 		"Debug": true,
-		"PortName": "/dev/ttyUSB2",
+		"PortName": "/dev/ttyUSB0",
 		"_PortName": "/dev/ttyO0",
 		"SerialSpeed": 57600,
 		"SensorReqIntervalTime": 125,
@@ -111,7 +113,7 @@
 	{
 		"TickTime": 1000,
 		"Debug": true,
-		"PortName": "/dev/ttyUSB2"
+		"PortName": "/dev/ttyUSB1"
 	},
 	"groundStationSim":
 	{
@@ -122,8 +124,10 @@
 	{
 		"TickTime": 1000,
 		"Debug": true,
-		"Host": "10.10.1.109",
-		"Port": "13000",
+		"_Host": "10.10.1.109",
+		"_Port": "13000",
+		"Host": "127.0.0.1",
+		"Port": "8082",
 		"DataType": "0001"
 	},
 	"gsVisualizer":

@@ -57,6 +57,8 @@ struct WayPoint {
 	float AngleArc; // -2PI to 2PI
 	float VerticalSpeed;
 	float ETA;
+	//uint32_t ID;
+	int ID;
 
 //	VerticalMode vMode;
 //	int altitude;
@@ -76,6 +78,7 @@ struct WayPoint {
 		AngleArc = 0;
 		VerticalSpeed = 0;
 		ETA = 0;
+		ID = 0;
 	}
 
 	void GetStartPos(Position& startPos)
@@ -345,7 +348,7 @@ struct WayPoint {
 				os << " AngleStart=" << struc.AngleStart << " AngleArc=" << struc.AngleArc;
 				break;
 		}
-		os << " VerticalSpeed=" << struc.VerticalSpeed << " ETA=" << struc.ETA;
+		os << " VerticalSpeed=" << struc.VerticalSpeed << " ETA=" << struc.ETA << " ID=" << struc.ID;;
 		//os << "Mode=" << struc.wpMode << " from=" << struc.from.transpose() << " to=" << struc.to.transpose() << " vMode=" << struc.vMode;
 		//os << " alt=" << struc.altitude << " pitch=" << struc.pitch << " throttle=" << struc.throttle << " climbrate=" << struc.climbRate;
 		return os;
@@ -374,6 +377,18 @@ class WayPointsStruct
 			if (WayPointsNum > 0)
 			{
 				for (int i=0; i<WayPointsNum-1; ++i)
+				{
+					WayPoints[i] = WayPoints[i+1];
+				}
+				--WayPointsNum;
+			}
+		}
+
+		void remove(int index)
+		{
+			if (WayPointsNum > 0)
+			{
+				for (int i=index; i<WayPointsNum-1; ++i)
 				{
 					WayPoints[i] = WayPoints[i+1];
 				}

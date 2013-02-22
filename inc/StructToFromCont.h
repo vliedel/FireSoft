@@ -310,6 +310,7 @@ struct SfC<InputForwardIter, OutputForwardIter, WayPoint>
 		struc.AngleArc = *first++;
 		struc.VerticalSpeed = *first++;
 		struc.ETA = *first++;
+		struc.ID = *first++;
 		return first;
 	}
 };
@@ -326,6 +327,7 @@ struct StC<SequenceContainer, WayPoint>
 		cont.push_back(struc.AngleArc);
 		cont.push_back(struc.VerticalSpeed);
 		cont.push_back(struc.ETA);
+		cont.push_back(struc.ID);
 	}
 };
 

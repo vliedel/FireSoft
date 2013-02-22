@@ -31,7 +31,7 @@
 // ------------------------------------------------
 
 // Maximum number of waypoints to be set
-#define AP_PROT_WAYPOINTS_MAX 5
+#define AP_PROT_WAYPOINTS_MAX 4
 
 // Number of directions to give the waypoint bounds
 #define AP_PROT_DIRECTIONS 16
@@ -200,7 +200,7 @@ struct AutoPilotMsgWp
 	};
 	friend std::ostream& operator<<(std::ostream& os, const AutoPilotMsgWp& struc)
 	{
-		os << "Id=" << struc.Id << "WpType=" << +struc.WpType << " GroundSpeed=" << struc.GroundSpeed << " VerticalSpeed=" << struc.VerticalSpeed;
+		os << "Id=" << struc.Id << " WpType=" << +struc.WpType << " GroundSpeed=" << struc.GroundSpeed << " VerticalSpeed=" << struc.VerticalSpeed;
 		switch (struc.WpType)
 		{
 			case AP_PROT_WP_LINE: os << " " << struc.Line; break;

@@ -52,6 +52,8 @@ struct AutoPilotConfig
 	float LandHeading;
 	bool LandLeftTurn;
 
+	float CruiseSpeed;
+
 	void load(const std::string &filename)
 	{
 		boost::property_tree::ptree pt;
@@ -82,6 +84,8 @@ struct AutoPilotConfig
 		LandPointY = pt.get<float>("field.LandPointY");
 		LandHeading = pt.get<float>("field.LandHeading");
 		LandLeftTurn = pt.get<bool>("field.LandLeftTurn");
+
+		CruiseSpeed = pt.get<float>("UAV.CruiseSpeed");
 	}
 };
 
@@ -112,6 +116,12 @@ class CAutoPilot : public autoPilot
 		long LastSetTimeLanding;
 		AutoPilotMsgLanding LastSetLanding;
 
+		//std::vector<WayPoint> wps;
+		WayPointsStruct CurWayPoints;
+		uint32_t LastWpId;
+		//uint32_t CurWayPointIds[MAPSELF_MAX_WAYPOINTS];
+
+
 		// Functions
 		bool SynchronizeUart(AutoPilotMsgHeader& msgHdr);
 		void ReadUart();
@@ -126,6 +136,8 @@ class CAutoPilot : public autoPilot
 		void Init(std::string module_id);
 		void Tick();
 };
+
+
 
 }
 #endif // CAUTOPILOT_H_

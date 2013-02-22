@@ -67,6 +67,7 @@ void CAutoPilot::Init(std::string module_id)
 	LastSetLanding.LandHeading = config.LandHeading;
 	LastSetLanding.LandLeftTurn = config.LandLeftTurn;
 
+	LastWpId = 0;
 }
 
 void CAutoPilot::Tick()
@@ -99,10 +100,13 @@ void CAutoPilot::Tick()
 
 	// TODO: set it every time? set on change maybe better, but msg might be missed
 	// From time to time: set correct mode
-	if (get_cur_1ms() - LastSetTimeMode > 125) // TODO: magic number
+	if (get_cur_1ms() - LastSetTimeMode > 500) // TODO: magic number
 	{
 		SendHeader(AP_PROT_SET_MODE, sizeof(AutoPilotMsgMode));
-		SendData((char*)&LastSetMode, sizeof(AutoPilotMsgMode));
+		//SendData((char*)&LastSetMode, sizeof(AutoPilotMsgMode));
+		AutoPilotMsgMode mode;
+		mode.Mode = rand() % 4;
+		SendData((char*)&mode, sizeof(AutoPilotMsgMode));
 		LastSetTimeMode = get_cur_1ms();
 	}
 
@@ -140,6 +144,8 @@ void CAutoPilot::Tick()
 					WayPointsStruct wayPoints;
 					it = FromCont(wayPoints, it, VecMsg->end());
 					SetWayPoints(wayPoints);
+					if (it != VecMsg->end())
+						std::cout << "Error in receiving wps" << std::endl;
 					break;
 				}
 			}
@@ -175,7 +181,11 @@ void CAutoPilot::Tick()
 					LastSetLanding.LandPoint.X = land.Pos.x() + config.OriginX; // Local to mercator coordinates
 					LastSetLanding.LandPoint.Y = land.Pos.y() + config.OriginY; // Local to mercator coordinates
 					LastSetLanding.LandPoint.Z = land.Pos.z();
-					LastSetLanding.LandHeading = land.Heading.angle();
+					LastSetLanding.LandHeading = land.Heading.angle() - 0.5*M_PI;
+					if (LastSetLanding.LandHeading > M_PI)
+						LastSetLanding.LandHeading -= 2*M_PI;
+					if (LastSetLanding.LandHeading < -M_PI)
+						LastSetLanding.LandHeading += 2*M_PI;
 					LastSetLanding.LandLeftTurn = land.LeftTurn;
 					SendHeader(AP_PROT_SET_LAND, sizeof(AutoPilotMsgLanding));
 					SendData((char*)&LastSetLanding, sizeof(AutoPilotMsgLanding));
@@ -272,7 +282,12 @@ void CAutoPilot::ReadUart()
 		geom.Pos.z() = data.Position.Z;
 		geom.GroundSpeed = data.GroundSpeed;
 		geom.VerticalSpeed = data.VerticalSpeed;
-		geom.Heading.angle() = data.Heading;
+		geom.Heading.angle() = data.Heading + 0.5*M_PI;
+		if (geom.Heading.angle() > M_PI)
+			geom.Heading.angle() -= 2*M_PI;
+		if (geom.Heading.angle() < -M_PI)
+			geom.Heading.angle() += 2*M_PI;
+
 		geom.Yaw.angle() = data.Yaw;
 		geom.Pitch.angle() = data.Pitch;
 		geom.Roll.angle() = data.Roll;
@@ -337,11 +352,36 @@ void CAutoPilot::ReadUart()
 			return;
 		std::cout << "Received wp status:" << data << std::endl;
 
-//		// Set waypoints at mapself
-//		VecMsgType vecMsg;
-//		ToCont(wps, vecMsg);
-//		vecMsg.push_back(PROT_MAPSELF_DATAIN_WAYPOINTS);
-//		writeToMapSelf(vecMsg);
+
+		// List current waypoints from back to front, remove ones that are not in the status msg
+		for (int j=CurWayPoints.WayPointsNum-1; j>=0; --j)
+		{
+			std::cout << "checking " << j << " num=" << CurWayPoints.WayPointsNum << std::endl;
+			bool found = false;
+			for (int i=0; i<data.NumWaypoints; ++i)
+			{
+				if (data.ID[i] == CurWayPoints.WayPoints[j].ID)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				std::cout << "removing " << j << std::endl;
+				CurWayPoints.remove(j);
+			}
+		}
+
+		// TODO: ugly way of doing this
+		if (data.NumWaypoints == 0)
+			CurWayPoints.WayPointsNum = 0;
+
+		// Set waypoints at mapself
+		VecMsgType vecMsg;
+		ToCont(CurWayPoints, vecMsg);
+		vecMsg.push_back(PROT_MAPSELF_DATAIN_WAYPOINTS);
+		writeToMapSelf(vecMsg);
 
 		break;
 	}
@@ -426,12 +466,16 @@ bool CAutoPilot::SendHeader(EAutoPilotMsgType type, uint8_t dataSize)
 	if (dataSize == 0)
 		Serial->write(&CheckSumOut, sizeof(CheckSumOut));
 
-	printf("Written:");
+	std::cout << get_cur_1ms() << " Written:";
+//	printf("Written:");
 	for (int i=0; i<sizeof(AutoPilotMsgHeader); ++i)
-		printf(" %X", ((uint8_t*)&msgHdr)[i]);
+		std::cout << " " << +((uint8_t*)&msgHdr)[i];
+//		printf(" %X", ((uint8_t*)&msgHdr)[i]);
 	if (dataSize == 0)
-		printf(" %X", (uint8_t)CheckSumOut);
-	printf("\n");
+		std::cout << " " << +(uint8_t)CheckSumOut;
+//		printf(" %X", (uint8_t)CheckSumOut);
+//	printf("\n");
+	std::cout << std::endl;
 
 	return true;
 }
@@ -443,26 +487,36 @@ bool CAutoPilot::SendData(char* data, size_t size)
 	Serial->write(data, size);
 	Serial->write(&CheckSumOut, sizeof(CheckSumOut));
 
-	printf("Written:");
+	std::cout << get_cur_1ms() << " Written:";
+//	printf("Written:");
 	for (int i=0; i<size; ++i)
-		printf(" %X", ((uint8_t*)data)[i]);
-	printf(" %X", (uint8_t)CheckSumOut);
-	printf("\n");
+		std::cout << " " << +((uint8_t*)&data)[i];
+//		printf(" %X", ((uint8_t*)data)[i]);
+//	printf(" %X", (uint8_t)CheckSumOut);
+	std::cout << " " << +(uint8_t)CheckSumOut << std::endl;
+//	printf("\n");
 	return true;
 }
 
 
 void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 {
+	std::cout << get_cur_1ms() << " SetWayPoints num=" << wps.WayPointsNum << std::endl;
+	if (wps.WayPointsNum < 1)
+		return;
+
+	std::cout << wps << std::endl;
+
 	SendHeader(AP_PROT_SET_WAYPOINTS, sizeof(AutoPilotMsgWayPoints));
 
 	AutoPilotMsgWayPoints msgWps;
 	msgWps.NumWayPoints = wps.WayPointsNum;
 	for (int i=0; i<wps.WayPointsNum; ++i)
 	{
+		LastWpId = (LastWpId+1) % 1024; // TODO: magic number (should be large enough to avoid id collisions)
 		// TODO: set this to something
-		msgWps.WayPoints[i].Id = 0;
-		msgWps.WayPoints[i].GroundSpeed = 0;
+		msgWps.WayPoints[i].Id = LastWpId;
+		msgWps.WayPoints[i].GroundSpeed = config.CruiseSpeed;
 		msgWps.WayPoints[i].VerticalSpeed = wps.WayPoints[i].VerticalSpeed;
 
 		switch(wps.WayPoints[i].wpMode)
@@ -494,12 +548,20 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 				msgWps.WayPoints[i].Arc.Center.Y = wps.WayPoints[i].to.y() + config.OriginY; // Local to mercator coordinates
 				msgWps.WayPoints[i].Arc.Center.Z = wps.WayPoints[i].to.z();
 				msgWps.WayPoints[i].Arc.Radius = wps.WayPoints[i].Radius;
-				msgWps.WayPoints[i].Arc.AngleStart = wps.WayPoints[i].AngleStart;
+				msgWps.WayPoints[i].Arc.AngleStart = wps.WayPoints[i].AngleStart - 0.5*M_PI;
+				if (msgWps.WayPoints[i].Arc.AngleStart > M_PI)
+					msgWps.WayPoints[i].Arc.AngleStart -= 2*M_PI;
+				if (msgWps.WayPoints[i].Arc.AngleStart < -M_PI)
+					msgWps.WayPoints[i].Arc.AngleStart += 2*M_PI;
+
 				msgWps.WayPoints[i].Arc.AngleArc = wps.WayPoints[i].AngleArc;
 				break;
 			}
 		}
 	}
+
+	std::cout << msgWps << std::endl;
+
 	SendData((char*)&msgWps, sizeof(AutoPilotMsgWayPoints));
 
 	// Set waypoints at mapself
@@ -507,4 +569,7 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 	ToCont(wps, vecMsg);
 	vecMsg.push_back(PROT_MAPSELF_DATAIN_WAYPOINTS);
 	writeToMapSelf(vecMsg);
+
+	// Update current waypoints
+	CurWayPoints = wps;
 }
