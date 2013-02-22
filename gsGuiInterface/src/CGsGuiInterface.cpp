@@ -149,7 +149,6 @@ static char tick = 0;
 #define DUMMY
 #define NODEJSSERVER
 
->>>>>>> anne/master
 void CGsGuiInterface::Tick()
 {
 	int* cmd = readCommand(false);
