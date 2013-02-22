@@ -143,7 +143,7 @@ bool CGsGuiInterface::Available(size_t& numBytes)
 
 static char tick = 0;
 
-#define DUMMY
+//#define DUMMY
 void CGsGuiInterface::Tick()
 {
 	int* cmd = readCommand(false);
