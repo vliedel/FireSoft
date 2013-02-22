@@ -24,6 +24,7 @@
 #include "CRadioSim.h"
 #include "Protocol.h"
 #include "Print.hpp"
+#include "CTime.h"
 //#include <cstdlib>
 
 using namespace rur;
@@ -40,6 +41,8 @@ void CRadioSim::Init(std::string module_id)
 
 	ModuleId = module_id;
 	UavId = atoi(module_id.c_str());
+
+	LastSentBufStatusTime = get_cur_1us();
 }
 
 void CRadioSim::Tick()
@@ -53,7 +56,7 @@ void CRadioSim::Tick()
 	VecMsg = readSimCommand(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "RADIO " << ModuleId << " from SIM: ";
+		std::cout << get_cur_1ms() << " RADIO " << ModuleId << " from SIM: ";
 		dobots::print(VecMsg->begin(), VecMsg->end());
 
 		VecMsgType::iterator it = VecMsg->begin();
@@ -87,11 +90,12 @@ void CRadioSim::Tick()
 					//RadioRoundState = RADIO_STATE_ROUND_IDLE; // end and idle are kinda the same here?
 
 					// Send receive buffer to other modules, let MapUavs update first before we let the msgplanner do its work
-					if (!ReadReceiveBuffer())
-					{
-						RadioRoundState = RADIO_STATE_ROUND_IDLE;
-						writeToMsgPlanner(PROT_RADIOSTATUS_IDLE);
-					}
+					ReadReceiveBuffer();
+//					if (!ReadReceiveBuffer())
+//					{
+//						RadioRoundState = RADIO_STATE_ROUND_IDLE;
+//						writeToMsgPlanner(PROT_RADIOSTATUS_IDLE);
+//					}
 
 					VecMsgType vecMsg;
 					vecMsg.push_back(PROT_SIMSTAT_ACK);
@@ -112,27 +116,37 @@ void CRadioSim::Tick()
 		}
 	}
 
-	IntMsg = readFromMapUAVs(false);
-	if (IntMsg != NULL)
+	// Let the msgPlanner know about the buffer size
+	if (get_cur_1us() > LastSentBufStatusTime + config.MsgPlannerTickTime)
 	{
-		switch(*IntMsg)
-		{
-			case PROT_MAPUAV_STATUS_UPDATED:
-			{
-				if (RadioRoundState == RADIO_STATE_ROUND_END)
-				{
-					RadioRoundState = RADIO_STATE_ROUND_IDLE;
-					writeToMsgPlanner(PROT_RADIOSTATUS_IDLE);
-				}
-				break;
-			}
-		}
+		std::vector<int> vecMsg;
+		vecMsg.push_back(PROT_RADIO_STATUS_BUF_SIZE);
+		vecMsg.push_back(SendBuffer.size());
+		writeToMsgPlanner(vecMsg);
+		LastSentBufStatusTime = get_cur_1us();
 	}
+
+//	IntMsg = readFromMapUAVs(false);
+//	if (IntMsg != NULL)
+//	{
+//		switch(*IntMsg)
+//		{
+//			case PROT_MAPUAV_STATUS_UPDATED:
+//			{
+//				if (RadioRoundState == RADIO_STATE_ROUND_END)
+//				{
+//					RadioRoundState = RADIO_STATE_ROUND_IDLE;
+//					writeToMsgPlanner(PROT_RADIOSTATUS_IDLE);
+//				}
+//				break;
+//			}
+//		}
+//	}
 
 	VecMsg = readFromMsgPlanner(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "RADIO " << ModuleId << " from MsgPlanner: ";
+		std::cout << get_cur_1ms() << " RADIO " << ModuleId << " from MsgPlanner: ";
 		dobots::print(VecMsg->begin(), VecMsg->end());
 		// Should have more protocol here?
 		WriteToOutBuffer(VecMsg);
@@ -146,7 +160,7 @@ bool CRadioSim::ReadReceiveBuffer()
 	VecMsgType vecMsgUavs;
 	//VecMsgType vecMsgSelf;
 	VecMsgType vecMsgFire;
-	UavStruct uav;
+//	UavStruct uav;
 	while (!ReceiveBuffer.empty())
 	{
 		for (int i=0; i<RADIO_NUM_RELAY_PER_MSG; ++i)
@@ -156,10 +170,11 @@ bool CRadioSim::ReadReceiveBuffer()
 				case RADIO_MSG_RELAY_POS:
 				{
 //					uav.UavId = ReceiveBuffer.front().Data.Data[i].Pos.UavId -1;
-					uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
+//					uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
+					int id = ReceiveBuffer.front().Data.Data[i].Pos.UavId -1;
 
 					// Ignore invalid uav IDs and own messages
-					if ((uav.UavId > -1) && (uav.UavId != UavId))
+					if ((id > -1) && (id != UavId))
 					{
 //						std::cout << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
 						vecMsgUavs.push_back(PROT_RADIO_MSG_RELAY);
@@ -196,17 +211,6 @@ bool CRadioSim::ReadReceiveBuffer()
 					if (id < 0)
 						break;
 
-					// If message is meant for this uav, execute command
-					if (id == UavId || id == 14) // TODO: magic number
-					{
-
-					}
-					// If message is meant for other uav, relay command
-					if (id != UavId || id == 14) // TODO: magic number
-					{
-
-					}
-
 					VecMsgType vecMsgSelf;
 					ToCont(ReceiveBuffer.front().Data.Data[i].Cmd, vecMsgSelf);
 					vecMsgSelf.push_back(PROT_MAPSELF_GS_CMD);
@@ -227,10 +231,10 @@ bool CRadioSim::ReadReceiveBuffer()
 	if (!vecMsgUavs.empty())
 	{
 		writeToMapUAVs(vecMsgUavs);
-		return true;
+		//return true;
 	}
 
-	return false;
+	//return false;
 }
 
 void CRadioSim::WriteToRadio()
@@ -244,6 +248,11 @@ void CRadioSim::WriteToRadio()
 		SendBuffer.pop_front();
 	}
 	writeSimState(vecMsg);
+
+//	// The message planner can now create a new message
+//	std::vector<int> intVecMsg;
+//	intVecMsg.push_back(PROT_RADIOSTATUS_IDLE);
+//	writeToMsgPlanner(intVecMsg); // Deprecated
 
 //	printf("sending %li msgs\n", SendBuffer.size());
 ////	std::vector<int> length(1, SendBuffer.size());

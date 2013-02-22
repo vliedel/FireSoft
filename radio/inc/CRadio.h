@@ -29,6 +29,7 @@
 #include <sstream>
 #include <iostream>
 #include "Print.hpp"
+#include "CTime.h"
 
 #include "Protocol.h"
 #include "StructToFromCont.h"
@@ -51,22 +52,14 @@ namespace rur {
  * 1 stop bit
  */
 
-// Serial speed (75 110 300 1200 2400 4800 9600 19200 38400 57600 115200)
-#define MYRIANED_SERIAL_SPEED 115200
 
-#define MYRIANED_HEADER 0xAA
-
-//! Checksum polynomial
-#define CRC16_POLY 0x8005
-
-//! Checksum seed value
-#define CRC_INIT 0xFFFF
 
 struct RadioConfig
 {
 	long TickTime; // us
 	bool Debug;
 	std::string PortName;
+	long MsgPlannerTickTime; // us
 
 	void load(const std::string &filename)
 	{
@@ -75,27 +68,9 @@ struct RadioConfig
 		TickTime = pt.get<long>("radio.TickTime");
 		Debug = pt.get<bool>("radio.Debug");
 		PortName = pt.get<std::string>("radio.PortName");
+		MsgPlannerTickTime = pt.get<long>("msgPlanner.TickTime");
 	}
 };
-
-typedef uint8_t	RadioMsgHeaderType;		// Type used for the magic number
-
-#pragma pack(1)
-
-struct RadioMsgHeader
-{
-	RadioMsgHeaderType			Header;		// Set this to some magic number: 0xAA
-	uint8_t 					DataSize; 	// Length of the data following in bytes (can be 0, checksum not included)
-	friend std::ostream& operator<<(std::ostream& os, const RadioMsgHeader& struc)
-	{
-		os << "Header=" << struc.Header << ", DataSize=" << struc.DataSize;
-		return os;
-	}
-};
-
-#pragma pack()
-
-//typedef std::vector<int> RadioMsgVec;
 
 class CRadio : public radio
 {
@@ -108,7 +83,9 @@ class CRadio : public radio
 
 		VecMsgType* VecMsg;
 
-		ERadioRoundState RadioRoundState;
+		long LastSentBufStatusTime; // us
+
+//		ERadioRoundState RadioRoundState;
 
 		BufferedAsyncSerial *Serial;
 
@@ -141,7 +118,8 @@ class CRadio : public radio
 
 		bool SynchronizeUart(RadioMsgHeader& msgHdr);
 
-		void ReadUart();
+		// Reads and parses uart, returns true when whole message was read.
+		bool ReadUart();
 
 		//!
 		bool ReadData(char* data, size_t size);
@@ -168,18 +146,11 @@ class CRadio : public radio
 		// Functions
 		void Tick();
 
-		// Reads (a) msg(s) from the radio chip, relays it to other modules
-		void ReadFromRadio();
+		// Reads a (part of a) msg from the radio chip to buffer, returns true when whole message was read
+		bool ReadFromRadio();
 		
-		// Writes a msg from buffer to the radio chip, msgs other modules that it sent the msg
+		// Writes a msg from buffer to the radio chip
 		void WriteToRadio();
-		
-		// updates state (start/end of radio round), msgs state to other modules
-		// Who triggers this function? should be radio chip? or clock?
-		void UpdateState();
-		
-		//void SendRelayMsg(int uavID, RadioMsgRelay& msg, bool pos=true);
-		//void GetBufferState();
 };
 
 }

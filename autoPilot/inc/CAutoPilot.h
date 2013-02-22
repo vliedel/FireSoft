@@ -39,6 +39,7 @@ struct AutoPilotConfig
 	long TickTime; // us
 	bool Debug;
 	std::string PortName;
+	int SerialSpeed;
 //	AutoPilotMsgField FieldGPS;
 	long SensorReqIntervalTime; // ms
 	long WPStatustReqIntervalTime; // ms
@@ -58,6 +59,7 @@ struct AutoPilotConfig
 		TickTime = pt.get<long>("autoPilot.TickTime");
 		Debug = pt.get<bool>("autoPilot.Debug");
 		PortName = pt.get<std::string>("autoPilot.PortName");
+		SerialSpeed = pt.get<int>("autoPilot.SerialSpeed");
 //		FieldGPS.Origin.GpsLat	= pt.get<float>("field.Origin.GpsLat");
 //		FieldGPS.Origin.GpsLong	= pt.get<float>("field.Origin.GpsLong");
 //		FieldGPS.Origin.GpsZ 	= pt.get<float>("field.Origin.GpsZ");

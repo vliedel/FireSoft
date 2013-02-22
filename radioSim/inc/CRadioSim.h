@@ -40,6 +40,7 @@ struct RadioSimConfig
 {
 	long TickTime; // us
 	bool Debug;
+	long MsgPlannerTickTime; // us
 
 	void load(const std::string &filename)
 	{
@@ -47,6 +48,7 @@ struct RadioSimConfig
 		read_json(filename, pt);
 		TickTime = pt.get<long>("radioSim.TickTime");
 		Debug = pt.get<bool>("radioSim.Debug");
+		MsgPlannerTickTime = pt.get<long>("msgPlanner.TickTime");
 	}
 };
 
@@ -67,6 +69,7 @@ class CRadioSim : public radiosim
 
 		int* IntMsg;
 		VecMsgType* VecMsg;
+		long LastSentBufStatusTime; // us
 
 
 		// Functions

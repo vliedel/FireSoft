@@ -260,7 +260,7 @@ void CMapSelf::Tick()
 						break;
 
 					// Update current variables if the msg is for us
-					if (gsCmdMsg.UavId == 11 || gsCmdMsg.UavId == Map->UavData.UavId + 1)
+					if (gsCmdMsg.UavId == UAVS_NUM+1 || gsCmdMsg.UavId == Map->UavData.UavId + 1)
 					{
 						GsCmdStruct gsCmd;
 						gsCmd.FromRadioMsg(gsCmdMsg);

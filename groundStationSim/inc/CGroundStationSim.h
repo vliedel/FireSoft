@@ -84,7 +84,7 @@ class CGroundStationSim : public groundStationSim
 		RadioMsgBuf ReceiveBuffer;
 		RadioMsg CmdMsg;
 
-		// Reads msgs from the buffer, relays it to other modules, returns true if anything was read
+		// Reads msgs from the buffer, relays it to other modules
 		void ReadReceiveBuffer();
 
 		// Writes a msg from buffer to the radio chip, msgs other modules that it sent the msg

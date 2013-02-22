@@ -43,7 +43,7 @@ interface msgPlanner {
   // -- msgPlanner interfaces --
   void ToRadio(out float_seq seq);
   
-  void FromRadio(in long val);
+  void FromRadio(in long_seq seq);
 
 };
 

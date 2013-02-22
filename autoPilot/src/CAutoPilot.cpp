@@ -41,7 +41,8 @@ void CAutoPilot::Init(std::string module_id)
 
 	try
 	{
-		Serial = new BufferedAsyncSerial(config.PortName, AP_PROT_SERIAL_SPEED);
+		//Serial = new BufferedAsyncSerial(config.PortName, AP_PROT_SERIAL_SPEED);
+		Serial = new BufferedAsyncSerial(config.PortName, config.SerialSpeed);
 	}
 	catch (boost::system::system_error& e)
 	{
@@ -323,7 +324,7 @@ void CAutoPilot::ReadUart()
 		}
 
 		vecMsg.clear();
-		vecMsg.push_back(data.BatteryLeft/1000); // BatteryLeft is in ms?
+		vecMsg.push_back((float)data.BatteryLeft * 10); // TODO: BatteryLeft is in ms?
 		vecMsg.push_back(PROT_MAPSELF_DATAIN_BATTERY);
 		writeToMapSelf(vecMsg);
 

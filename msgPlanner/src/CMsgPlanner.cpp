@@ -96,20 +96,33 @@ void CMsgPlanner::Tick()
 
 	}
 
-	IntMsg = readFromRadio(false);
-	if (IntMsg != NULL)
+	VecMsg = readFromRadio(false);
+	if (!VecMsg->empty())
 	{
-		std::cout << "MSGPLNR " << ModuleId << " from Radio: " << *IntMsg << std::endl;
-		switch (*IntMsg)
-		{
-		case PROT_RADIOSTATUS_IDLE: // Time to fill up the radio buffer
-			SelectMsgs();
-			SendMsgs();
-			break;
-		case PROT_MSGPLANNER_MSG_CMD:
+		std::cout << get_cur_1ms() << " MSGPLNR " << ModuleId << " from Radio: ";
+		dobots::print(VecMsg->begin(), VecMsg->end());
 
-			break;
+		std::vector<int>::iterator it = VecMsg->begin();
+		while (it != VecMsg->end())
+		{
+			int type = *it++;
+			switch (type)
+			{
+				case PROT_RADIOSTATUS_IDLE: // Time to fill up the radio buffer: deprecated
+					SelectMsgs();
+					SendMsgs();
+					break;
+				case PROT_RADIO_STATUS_BUF_SIZE:
+					int BufSize = *it++;
+					if (BufSize < 1) // TODO: magic number, might want to keep more than 1 in buffer
+					{
+						SelectMsgs();
+						SendMsgs();
+					}
+					break;
+			}
 		}
+		VecMsg->clear();
 	}
 	usleep(config.TickTime);
 }
@@ -218,7 +231,7 @@ void CMsgPlanner::SelectMsgs()
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
 
-//		std::cout << "Selecting relay pos msg" << std::endl;
+		std::cout << "Selecting relay pos msg" << std::endl;
 		RelayPos = false;
 		// Find the uavs that have been last sent, and send their last state
 		long lastSentTimes[RADIO_NUM_RELAY_PER_MSG-1] = {LONG_MAX};
@@ -229,7 +242,7 @@ void CMsgPlanner::SelectMsgs()
 		MapUavIterType it;
 		for (it = MapUavs->begin(); it != MapUavs->end(); ++it)
 		{
-//			std::cout << "checking uav " << it->second.data.UavId << std::endl;
+			std::cout << "checking uav " << it->second.data.UavId << std::endl;
 
 			// If last sent happened later than last receive, there is nothing new to tell
 			if (it->second.LastRadioSentTime > it->second.LastRadioReceiveTime)
@@ -238,7 +251,7 @@ void CMsgPlanner::SelectMsgs()
 			// Check if last sent time is smaller than the current smallest N values
 			for (int j=0; j<RADIO_NUM_RELAY_PER_MSG-1; ++j)
 			{
-				//std::cout << j << " Comparing " << it->second.LastRadioSentTime << " with " << lastSentTimes[j] << std::endl;
+				std::cout << j << " Comparing " << it->second.LastRadioSentTime << " with " << lastSentTimes[j] << std::endl;
 
 				if (it->second.LastRadioSentTime < lastSentTimes[j])
 				{
@@ -263,12 +276,14 @@ void CMsgPlanner::SelectMsgs()
 		for (int i=0; i<RADIO_NUM_RELAY_PER_MSG-1; ++i)
 		{
 			if (lastSentTimes[i] == LONG_MAX)
+			{
+				std::cout << "Selected invalid pos msg" << std::endl;
 				SelectedRadioMsg.Data.Data[i+1] = invalidMsg;
-				//SelectedMsgs[i+1] = invalidMsg;
+			}
 			else
 			{
+				std::cout << "Selected:" << iters[i]->second.LastRadioMsgs[iters[i]->second.LastRadioMsgsIndex] << std::endl;
 				SelectedRadioMsg.Data.Data[i+1] = iters[i]->second.LastRadioMsgs[iters[i]->second.LastRadioMsgsIndex];
-				//SelectedMsgs[i+1] = iters[i]->second.LastRadioMsgs[iters[i]->second.LastRadioMsgsIndex];
 				iters[i]->second.LastRadioSentTime = get_cur_1ms();
 			}
 		}

@@ -84,7 +84,7 @@ class CMsgPlanner : public msgPlanner
 		RadioMsg SelectedRadioMsg;
 
 		int* IntMsg;
-		//std::vector<int>* VecMsg;
+		std::vector<int>* VecMsg;
 
 		bool SendOwnPos;
 		bool RelayPos;

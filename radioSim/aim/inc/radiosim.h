@@ -245,10 +245,12 @@ protected:
     portStatus->write(true);
   }
   
-  inline void writeToMsgPlanner(const int cmd) {
-    Bottle &cmdPrepare = portToMsgPlanner->prepare();
-    cmdPrepare.clear();
-    cmdPrepare.addInt(cmd);
+  inline void writeToMsgPlanner(const long_seq &seq) {
+    Bottle &seqPrepare = portToMsgPlanner->prepare();
+    seqPrepare.clear();
+    for (int i = 0; i < seq.size(); ++i) {
+      seqPrepare.addInt(seq[i]);
+    }
     portToMsgPlanner->write(true);
   }
   

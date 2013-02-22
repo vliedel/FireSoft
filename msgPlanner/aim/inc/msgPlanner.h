@@ -62,8 +62,8 @@ private:
   // the port portToRadio itself
   BufferedPort<Bottle> *portToRadio;
   
-  // private storage for portFromRadioValue
-  int portFromRadioValue;
+  // private storage for portFromRadioValues;
+  std::vector<int> *portFromRadioValues;
   // the port portFromRadio itself
   BufferedPort<Bottle> *portFromRadio;
   
@@ -83,6 +83,7 @@ public:
     portToRadio = new BufferedPort<Bottle>();
     portToRadio->setStrict();
     portToRadio->writeStrict();
+    portFromRadioValues = new std::vector<int>();
     portFromRadio = new BufferedPort<Bottle>();
     portFromRadio->setStrict();
     portFromRadio->writeStrict();
@@ -92,6 +93,7 @@ public:
     delete portCommand;
     delete portStatus;
     delete portToRadio;
+    delete portFromRadioValues;
     delete portFromRadio;
     delete cliParam;
   }
@@ -168,13 +170,15 @@ protected:
     portToRadio->write(true);
   }
   
-  inline int *readFromRadio(bool blocking=true) {
+  // Remark: caller is responsible for evoking vector.clear()
+  inline std::vector<int> *readFromRadio(bool blocking=true) {
     Bottle *b = portFromRadio->read(blocking);
     if (b != NULL) { 
-      portFromRadioValue = b->get(0).asInt();
-      return &portFromRadioValue;
+      for (int i = 0; i < b->size(); ++i) {
+        portFromRadioValues->push_back(b->get(i).asInt());
+      }
     }
-    return NULL;
+    return portFromRadioValues;
   }
   
 };

@@ -44,6 +44,7 @@
 
 // Serial speed (75 110 300 1200 2400 4800 9600 19200 38400 57600 115200)
 #define AP_PROT_SERIAL_SPEED 57600
+//#define AP_PROT_SERIAL_SPEED
 
 // Checksum is sent after header and data.
 // Checksum is 1 byte (uint8_t) and sum of header and data.

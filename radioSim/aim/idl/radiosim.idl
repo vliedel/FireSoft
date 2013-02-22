@@ -43,7 +43,7 @@ interface radiosim {
   // -- Radio interfaces --
 
   // Let msg planner know when it can send msgs  
-  void ToMsgPlanner(out long cmd);
+  void ToMsgPlanner(out long_seq seq);
   
   // Msgs to be sent
   void FromMsgPlanner(in float_seq msg);

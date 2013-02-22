@@ -51,6 +51,15 @@ void CSim::Init(std::string module_id, int numUavs, int numUavsAP, int numUavsRa
 		std::cout << "Number of UAVs with real AP/Radio can't be larger than number of UAVs!" << std::endl;
 		assert(false);
 	}
+	if (withGS != 1)
+		withGS = 0; // Real ground station is not connected to simulator
+
+	std::cout << "Starting sim with " << numUavs << " uavs, " << numUavs-numUavsAP << " real auto pilots, "
+			<< numUavs-numUavsRadio << " real radios," << " for " << simTime << "s";
+	if (withGS)
+		std::cout << " with ground station" << std::endl;
+	else
+		std::cout << " without ground station" << std::endl;
 
 //	TimeStep = timeStep;
 //	RadioRoundTime = radioRoundTime;
@@ -65,15 +74,12 @@ void CSim::Init(std::string module_id, int numUavs, int numUavsAP, int numUavsRa
 		uav.UavData.UavData.UavId = i;
 		uav.AutoPilotSim = true;
 		uav.RadioSim = true;
+		if (i < numUavs-numUavsRadio)
+			uav.RadioSim = false;
+		if (i < numUavs-numUavsAP)
+			uav.AutoPilotSim = false;
 		Uavs.push_back(uav);
 	}
-
-	if (numUavsRadio < numUavs)
-		for (int i=0; i<numUavs-numUavsRadio; ++i)
-			Uavs[i].RadioSim = false;
-	if (numUavsAP < numUavs)
-		for (int i=0; i<numUavs-numUavsAP; ++i)
-			Uavs[i].AutoPilotSim = false;
 
 	if (withGS)
 	{
@@ -91,7 +97,10 @@ void CSim::Init(std::string module_id, int numUavs, int numUavsAP, int numUavsRa
 	FileOut.open(config.OutputFileName.c_str());
 	//{'numUavs':3, 'timeStep':0.1, 'radioRange':100}
 
-	FileOut << "{'numUavs':" << numUavsAP << ", 'timeStep':" << config.TimeStep << ", 'radioRange':" << config.RadioRange << "}" << std::endl;
+	int num = numUavsAP;
+	if (withGS)
+		num++;
+	FileOut << "{'numUavs':" << num << ", 'timeStep':" << config.TimeStep << ", 'radioRange':" << config.RadioRange << "}" << std::endl;
 }
 
 void CSim::Tick()
@@ -237,7 +246,10 @@ void CSim::Tick()
 		for (itUav=Uavs.begin(); itUav != Uavs.end(); ++itUav)
 		{
 			if (itUav->WaitForReplyRadio)
+			{
+//				std::cout << "waiting for radio reply " << itUav->UavData.UavData.UavId << std::endl;
 				return;
+			}
 		}
 
 		// One radio round
@@ -318,7 +330,10 @@ void CSim::Tick()
 		for (itUav=Uavs.begin(); itUav != Uavs.end(); ++itUav)
 		{
 			if (itUav->WaitForReplyAutoPilot || itUav->WaitForReplyRadio)
+			{
+//				std::cout << "waiting for reply " << itUav->UavData.UavData.UavId << std::endl;
 				return;
+			}
 		}
 
 #ifdef SIM_REALTIME
@@ -513,17 +528,21 @@ void CSim::CmdStart()
 			writeAutoPilotCommand(id, vecMsg);
 			it->WaitForReplyAutoPilot = true;
 		}
+		else
+			it->WaitForReplyAutoPilot = false;
 
 		// Each 2 minutes 2 uavs liftoff (with 20s in between)
 		//it->TakeOffTime = int(id/2)*120.0 + id*20 + rand()%10;
 		it->TakeOffTime = id*5.0;
+		if (id == UAVS_NUM)
+			it->TakeOffTime = 0;
 		//it->TakeOffTime = 0;
 		it->RadioWorks = false;
 		it->WaitForReplyRadio = false;
 
 		// Add a dummy wp
 		WayPoint wp;
-		wp.to << 0, 0, 0;
+		wp.to << config.GroundStationX, config.GroundStationY, 0;
 		it->UavData.WayPoints.push_back(wp);
 
 		BroadcastMsgs[id].clear();

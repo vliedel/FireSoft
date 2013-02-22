@@ -56,6 +56,8 @@ sed -i -r "s/${tclass}/${class}/g" ${1}/main/main.cpp
 sed -i -r "s/${template}/${1}/g" ${1}/main/main.cpp
 
 # SVN settings
+exit 0
+
 echo "Add \"${1}\" to svn?"
 read go
 if [ "$go" == "n" ]; then

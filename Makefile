@@ -11,6 +11,7 @@ all:
 	cd fitnessGenCollision && make
 	cd fitnessGenCoverage && make
 	cd fitnessGenStatic && make
+	cd groundStation && make
 	cd groundStationSim && make
 	cd gsGuiInterface && make
 	cd gsVisualizer && make
@@ -37,6 +38,7 @@ debug:
 	cd fitnessGenCollision && make debug
 	cd fitnessGenCoverage && make debug
 	cd fitnessGenStatic && make debug
+	cd groundStation && make debug
 	cd groundStationSim && make debug
 	cd gsGuiInterface && make debug
 	cd gsVisualizer && make debug
@@ -62,6 +64,7 @@ gumstix:
 	cd fitnessGenCollision && make gumstix
 	cd fitnessGenCoverage && make gumstix
 	cd fitnessGenStatic && make gumstix
+	cd groundStation && make gumstix
 	cd groundStationSim && make gumstix
 	cd gsGuiInterface && make gumstix
 	cd gsVisualizer && make gumstix
@@ -87,6 +90,7 @@ clean:
 	cd fitnessGenCollision && make clean
 	cd fitnessGenCoverage && make clean
 	cd fitnessGenStatic && make clean
+	cd groundStation && make clean
 	cd groundStationSim && make clean
 #	cd map && make clean
 	cd mapFire && make clean
@@ -109,3 +113,5 @@ install:
 
 uninstall:
 	echo "Do not install, I said! I don't know how to uninstall..."
+	
+.PHONY: gumstix

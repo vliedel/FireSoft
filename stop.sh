@@ -22,6 +22,7 @@ pkill -f fitnessGenBattery/build/main
 pkill -f fitnessGenCollision/build/main
 pkill -f fitnessGenCoverage/build/main
 pkill -f fitnessGenStatic/build/main
+pkill -f groundStation/build/main
 pkill -f groundStationSim/build/main
 pkill -f gsGuiInterface/build/main
 pkill -f gsVisualizer/build/main

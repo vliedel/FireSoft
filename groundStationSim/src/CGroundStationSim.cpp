@@ -41,7 +41,7 @@ void CGroundStationSim::Init(std::string module_id)
 	RadioRoundState = RADIO_STATE_ROUND_IDLE;
 
 	GsCmdStruct gsCmd;
-	gsCmd.UavId = 10; // 10 for all uavs
+	gsCmd.UavId = UAVS_NUM; // 10 for all uavs
 	gsCmd.MsgId = 0;
 	gsCmd.HeightMin = config.MinHeight;
 	gsCmd.HeightMax = config.MaxHeight;

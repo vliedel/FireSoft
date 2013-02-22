@@ -27,6 +27,35 @@
 #include <inttypes.h>
 #include <sstream>
 
+// Serial speed (75 110 300 1200 2400 4800 9600 19200 38400 57600 115200)
+#define MYRIANED_SERIAL_SPEED 115200
+
+// Header
+#define MYRIANED_HEADER 0xAA
+
+//! Checksum polynomial
+#define MYRIANED_CRC16_POLY 0x8005
+
+//! Checksum seed value
+#define MYRIANED_CRC_INIT 0xFFFF
+
+typedef uint8_t	RadioMsgHeaderType;		// Type used for the magic number
+
+#pragma pack(1)
+struct RadioMsgHeader
+{
+	RadioMsgHeaderType			Header;		// Set this to some magic number: 0xAA
+	uint8_t 					DataSize; 	// Length of the data following in bytes (can be 0, checksum not included)
+	friend std::ostream& operator<<(std::ostream& os, const RadioMsgHeader& struc)
+	{
+		os << "Header=" << struc.Header << ", DataSize=" << +struc.DataSize;
+		return os;
+	}
+};
+#pragma pack()
+
+
+
 #define RADIO_NUM_RELAY_PER_MSG 2 // This number is still hardcoded at some places (this file and structsToFromcont.h)
 
 enum ERadioRoundState {

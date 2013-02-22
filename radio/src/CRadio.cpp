@@ -22,7 +22,6 @@
  */
 
 #include "CRadio.h"
-#include <iostream>
 
 using namespace rur;
 using namespace std;
@@ -41,6 +40,8 @@ CRadio::~CRadio()
 }
 
 void CRadio::Init(std::string &module_id) {
+	radio::Init(module_id);
+	config.load("config.json");
 	ModuleId = module_id;
 	UavId = atoi(module_id.c_str());
 
@@ -58,9 +59,11 @@ void CRadio::Init(std::string &module_id) {
 	// Get gpio as 'CTS'
 	fd_cts = open("/sys/class/gpio/gpio56/value", O_RDONLY);
 	if( fd_cts > 0 )
-		printf("CTS line succesfully opened\n");
+		std::cout << "CTS line successfully opened" << std::endl;
 
 	Power(true);
+
+	LastSentBufStatusTime = get_cur_1us();
 }
 
 /**
@@ -71,17 +74,17 @@ void CRadio::Power(bool enable) {
 
 	/* Get ENA_VCOM as gpio */
 	fd_pwr = open("/sys/class/gpio/gpio38/value", O_WRONLY);
-	if( fd_pwr > 0 )
-		printf("ENA_VCOM succesfully opened\n");
+	if(fd_pwr > 0)
+		std::cout << "ENA_VCOM succesfully opened" << std::endl;
 
 	if (enable) {
 		// Power on the Vitelec PCB (active low pin!)
-		if (write( fd_pwr, "0", 2 ) < 0) {
+		if (write(fd_pwr, "0", 2) < 0) {
 			std::cerr << "Could not write byte to turn on radio" << std::endl;
 		}
 	}
 	else {
-		if (write( fd_pwr, "1", 2 ) < 0) {
+		if (write(fd_pwr, "1", 2) < 0) {
 			std::cerr << "Could not write byte to turn off radio" << std::endl;
 		}
 	}
@@ -97,8 +100,13 @@ void CRadio::Power(bool enable) {
  */
 void CRadio::Tick()
 {
+
 	// Read the stuff, puts it in a buffer
-	ReadFromRadio();
+	if (ReadFromRadio())
+	{
+		// Send next message in the outgoing buffer (blocking when buffer is not empty)
+		WriteToRadio();
+	}
 
 	// read the stuff from the buffer
 	ReadReceiveBuffer();
@@ -106,15 +114,22 @@ void CRadio::Tick()
 	VecMsg = readFromMsgPlanner(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "RADIO " << ModuleId << " from MsgPlanner: ";
+		std::cout << get_cur_1ms() << " RADIO " << ModuleId << " from MsgPlanner: ";
 		dobots::print(VecMsg->begin(), VecMsg->end());
 		// Should have more protocol here?
 		WriteToOutBuffer(VecMsg);
 		VecMsg->clear();
 	}
 
-	// Send everything that is in the outgoing buffer (blocking)
-	WriteToRadio();
+	// Let the msgPlanner know about the buffer size
+	if (get_cur_1us() > LastSentBufStatusTime + config.MsgPlannerTickTime)
+	{
+		std::vector<int> vecMsg;
+		vecMsg.push_back(PROT_RADIO_STATUS_BUF_SIZE);
+		vecMsg.push_back(SendBuffer.size());
+		writeToMsgPlanner(vecMsg);
+		LastSentBufStatusTime = get_cur_1us();
+	}
 
 	usleep(config.TickTime);
 }
@@ -126,7 +141,7 @@ uint16_t culCalcCRC(uint8_t crcData, uint16_t crcReg) {
 	uint8_t i;
 	for (i = 0; i < 8; i++) {
 		if (((crcReg & 0x8000) >> 8) ^ (crcData & 0x80))
-			crcReg = (crcReg << 1) ^ CRC16_POLY;
+			crcReg = (crcReg << 1) ^ MYRIANED_CRC16_POLY;
 		else
 			crcReg = (crcReg << 1);
 		crcData <<= 1;
@@ -141,24 +156,24 @@ uint16_t culCalcCRC(uint8_t crcData, uint16_t crcReg) {
  */
 uint16_t CRadio::CRC(const char *data, const int length, const uint8_t *precession, const int p_length,
 		const uint8_t *succession, const int s_length) {
-	uint16_t checksum = CRC_INIT;
+	uint16_t checksum = MYRIANED_CRC_INIT;
 	uint8_t i;
 
-	for (i = 0; i != p_length-1; i++)
+	for (i = 0; i != p_length; i++)
 		checksum = culCalcCRC(precession[i], checksum);
 
-	for (i = 0; i != length-1; i++)
+	for (i = 0; i != length; i++)
 		checksum = culCalcCRC(data[i], checksum);
 
-	for (i = 0; i != s_length-1; i++)
+	for (i = 0; i != s_length; i++)
 		checksum = culCalcCRC(succession[i], checksum);
 
 	return checksum;
 }
 
-void CRadio::ReadFromRadio()
+bool CRadio::ReadFromRadio()
 {
-	ReadUart();
+	return ReadUart();
 }
 
 bool CRadio::SynchronizeUart(RadioMsgHeader& msgHdr)
@@ -183,14 +198,15 @@ bool CRadio::SynchronizeUart(RadioMsgHeader& msgHdr)
 			return true;
 		}
 		Serial->read(&chr, 1);
-		header = (header << 8) | chr;
+		//header = (header << 8) | chr;
+		header = (uint8_t) chr;
 	}
 	//std::cout << std::endl;
 	return false;
 }
 
 
-void CRadio::ReadUart()
+bool CRadio::ReadUart()
 {
 	//std::cout << get_cur_1ms() << " Read UART " << Serial->available() << std::endl;
 
@@ -198,7 +214,7 @@ void CRadio::ReadUart()
 	if (Synchronize)
 	{
 		if (!SynchronizeUart(LastReadHeader))
-			return;
+			return false;
 		std::cout << "Synched, header=" << LastReadHeader << std::endl;
 	}
 
@@ -212,36 +228,39 @@ void CRadio::ReadUart()
 			{
 				std::cout << "Error header doesn't match, header=" << LastReadHeader << std::endl;
 				Synchronize = true;
-				return;
+				return false;
 			}
 		}
 		else
-			return;
+			return false;
 		LastReadHeaderUsed = false;
 		std::cout << "Read new header: " << LastReadHeader << std::endl;
 	}
 
 	// Header is read successfully, now read the data
-	if (Serial->available() < LastReadHeader.DataSize + sizeof(RSSI) + sizeof(CheckSum) + sizeof(StopByte))
-		return;
+	if (Serial->available() < sizeof(RadioMsgPacked) + sizeof(RSSI) + sizeof(CheckSum) + sizeof(StopByte))
+		return false;
 	LastReadHeaderUsed = true;
 
 	// There is only one type of message that can arrive here
 
 	RadioMsgPacked data;
 	if (!ReadData((char*)&data, sizeof(RadioMsgPacked)))
-		return;
+		return false;
 	//	std::cout << "Received radio message:" << data << std::endl;
 
 	RadioMsg msg;
 	msg.Unpack(data);
+	std::cout << get_cur_1ms() << " Received: " << msg << std::endl;
 	ReceiveBuffer.push_back(msg);
+	return true;
 }
 
 bool CRadio::ReadData(char* data, size_t size)
 {
-	if (size != LastReadHeader.DataSize)
+	if (size+1 != LastReadHeader.DataSize)
 	{
+		std::cerr << "size=" << +size << " LastReadHeader.DataSize=" << +LastReadHeader.DataSize << std::endl;
 		Synchronize = true;
 		return false;
 	}
@@ -256,9 +275,9 @@ bool CRadio::ReadData(char* data, size_t size)
 	// get the checksum over serial
 	uint16_t checkSum1 = 0;
 	Serial->read(&chr, 1);
-	checkSum1 = chr;
+	checkSum1 = (uint8_t)chr;
 	Serial->read(&chr, 1);
-	checkSum1 = (checkSum1 << 8) | chr;
+	checkSum1 = (checkSum1 << 8) | (uint8_t) chr;
 
 	Serial->read(&chr, 1);
 
@@ -287,44 +306,127 @@ bool CRadio::ReadData(char* data, size_t size)
  * Blocking wait for sending data
  */
 void CRadio::WriteData(const char* data, ssize_t length) {
+
+	// For now: do not check CTS, just write after successful read.
+	uint8_t header = MYRIANED_HEADER;
+	Serial->write((char*)&header, 1);
+	std::cout << get_cur_1ms() << " written: " << +header << std::endl;
+
+	uint8_t dataSize = 28;
+	Serial->write((char*)&dataSize, 1);
+	std::cout << get_cur_1ms() << " written: " << +dataSize << std::endl;
+
+	Serial->write(data, length);
+	std::cout << get_cur_1ms() << " Sent message:";
+	for (int i=0; i<length; ++i)
+		std::cout << " " << +(uint8_t)data[i];
+	std::cout << std::endl;
+
+	uint16_t crc = CRC(data, length, (uint8_t*) NULL, 0, (uint8_t*) NULL, 0);
+	uint8_t crcMsb = ((crc & 0xFF00) >> 8);
+	uint8_t crcLsb = crc & 0x00FF;
+	Serial->write((char*)&crcMsb, 1);
+	std::cout << get_cur_1ms() << " written: " << +crcMsb << std::endl;
+	Serial->write((char*)&crcLsb, 1);
+	std::cout << get_cur_1ms() << " written: " << +crcLsb << std::endl;
+	Serial->write((char*)&StopByte, 1);
+	std::cout << get_cur_1ms() << " written: " << +StopByte << std::endl;
+
+	/*
+	// Wait for CTS to go active, then write data to radio, then wait for CTS to go inactive.
+	// This way we can be reasonably that the data will be transmitted over the radio.
 	int ret;
 	uint8_t cts[1];
 
 	while(true) {
-		// Read 'CTS' line
+		// Read 'CTS' (clear to send) line
 		ret = read(fd_cts, cts, 1);
 		if( ret == -1 )
+		{
+			// Wait a little, we don't want to use too much cpu.
+			// CTS will last for about 50ms, sending 33B at 115200b/s takes less than 3ms.
+			//usleep(config.TickTime);
 			continue;
+		}
 
 		// If 'CTS' is low, send reply
-		if( cts[0] )
+		if (cts[0])
 		{
+
+			uint8_t header = MYRIANED_HEADER;
+			Serial->write((char*)&header, 1);
+			std::cout << "written: " << +header << std::endl;
+
+			uint8_t dataSize = 28;
+			Serial->write((char*)&dataSize, 1);
+			std::cout << "written: " << +dataSize << std::endl;
+
 			Serial->write(data, length);
-			std::cout << "Message " << string(data) << " sent" << std::endl;
+			std::cout << get_cur_1ms() << " Sent message:";
+			for (int i=0; i<length; ++i)
+				std::cout << " " << +(uint8_t)data[i];
+			std::cout << std::endl;
+
+			uint16_t crc = CRC(data, length, (uint8_t*) NULL, 0, (uint8_t*) NULL, 0);
+			uint8_t crcMsb = ((crc & 0xFF00) >> 8);
+			uint8_t crcLsb = crc & 0x00FF;
+			Serial->write((char*)&crcMsb, 1);
+			std::cout << "written: " << +crcMsb << std::endl;
+			Serial->write((char*)&crcLsb, 1);
+			std::cout << "written: " << +crcLsb << std::endl;
+			Serial->write((char*)&StopByte, 1);
+			std::cout << "written: " << +StopByte << std::endl;
+
+			while (true)
+			{
+				// Read 'CTS' (clear to send) line
+				ret = read(fd_cts, cts, 1);
+				if (ret == -1)
+				{
+					// Wait a little, we don't want to use too much cpu.
+					// CTS will last for about 50ms, sending 33B at 115200b/s takes less than 3ms.
+					//usleep(config.TickTime);
+					continue;
+				}
+				if (!cts[0])
+				{
+					break;
+				}
+				else
+				{
+					usleep(config.TickTime);
+					std::cout << get_cur_1ms() << " Waiting for CTS to go inactive..." << std::endl;
+				}
+			}
+
+			return;
 		}
 		else
-			std::cout << "CTS busy..." << std::endl;
+		{
+			// Wait a little, we don't want to use too much cpu.
+			// CTS will last for about 50ms, sending 33B at 115200b/s takes less than 3ms.
+			usleep(config.TickTime);
+			std::cout << get_cur_1ms() << " CTS busy..." << std::endl;
+			continue;
+		}
 	}
+	*/
 }
 
 void CRadio::WriteToRadio()
 {
 	RadioMsg radioMsg;
-	if (!SendBuffer.empty())
-	{
-		radioMsg = SendBuffer.front();
-		SendBuffer.pop_front();
-	}
+	if (SendBuffer.empty())
+		return;
+
+	radioMsg = SendBuffer.front();
+	SendBuffer.pop_front();
+
 	RadioMsgPacked data;
 	radioMsg.Pack(data);
-	WriteData((char*)data, sizeof(RadioMsgPacked));
+	WriteData((char*)(&data), sizeof(RadioMsgPacked));
 
-	writeToMsgPlanner(PROT_RADIOSTATUS_IDLE);
-}
-
-void CRadio::UpdateState()
-{
-
+	//writeToMsgPlanner(PROT_RADIOSTATUS_IDLE);
 }
 
 bool CRadio::ReadReceiveBuffer()
@@ -378,17 +480,6 @@ bool CRadio::ReadReceiveBuffer()
 				int id = ReceiveBuffer.front().Data.Data[i].Cmd.UavId -1;
 				if (id < 0)
 					break;
-
-				// If message is meant for this uav, execute command
-				if (id == UavId || id == 14) // TODO: magic number
-				{
-
-				}
-				// If message is meant for other uav, relay command
-				if (id != UavId || id == 14) // TODO: magic number
-				{
-
-				}
 
 				VecMsgType vecMsgSelf;
 				ToCont(ReceiveBuffer.front().Data.Data[i].Cmd, vecMsgSelf);

@@ -23,16 +23,17 @@ then
 	NUM_RADIO=$3
 fi
 
+HIL="0"
 if [ $4 -a $4 = "1" ]; then
 	HIL="1"
-else
-	HIL="0"
 fi
 
+GS_START="1"
 if [ $5 -a $5 = "0" ]; then
 	GS_START="0"
-else
-	GS_START="1"
+fi
+if [ $5 -a $5 = "2" ]; then
+	GS_START="2"
 fi
 
 
@@ -40,12 +41,19 @@ if [ $GS_START = "1" ]; then
 	# Connect ground station to simulator
 	yarp connect /sim0/groundstation /groundstationsim${GS_ID}/sim
 	yarp connect /groundstationsim${GS_ID}/tosim /sim0/fromgroundstation
-
-	# Connect modules within ground station
+	# Connect modules within simulated ground station
 	yarp connect /groundstationsim${GS_ID}/tomapuavs /mapuavs${GS_ID}/fromradio
 	yarp connect /groundstationsim${GS_ID}/tomapfire /mapfire${GS_ID}/fromradio
 	yarp connect /groundstationsim${GS_ID}/toguiinterface /gsguiinterface${GS_ID}/fromradio
 	yarp connect /gsguiinterface${GS_ID}/toradio /groundstationsim${GS_ID}/fromguiinterface
+fi
+
+if [ $GS_START = "2" ]; then
+	# Connect modules within real ground station
+	yarp connect /groundstation${GS_ID}/tomapuavs /mapuavs${GS_ID}/fromradio
+	yarp connect /groundstation${GS_ID}/tomapfire /mapfire${GS_ID}/fromradio
+	yarp connect /groundstation${GS_ID}/toguiinterface /gsguiinterface${GS_ID}/fromradio
+	yarp connect /gsguiinterface${GS_ID}/toradio /groundstation${GS_ID}/fromguiinterface
 fi
 
 # Connect simulator to UAVs
