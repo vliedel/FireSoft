@@ -31,6 +31,7 @@ using namespace rur;
 
 CGsGuiInterface::~CGsGuiInterface()
 {
+	Socket->close();
 	delete Socket;
 }
 
@@ -140,6 +141,9 @@ bool CGsGuiInterface::Available(size_t& numBytes)
 	return true;
 }
 
+static char tick = 0;
+
+#define DUMMY
 void CGsGuiInterface::Tick()
 {
 	int* cmd = readCommand(false);
@@ -152,6 +156,22 @@ void CGsGuiInterface::Tick()
 
 	// Read radio
 	VecMsg = readFromRadio(false);
+
+#ifdef DUMMY
+	static const float arr0[] = { 0, 3, 385, 485, 33, 0, 0, 2, 0, 39, 27, 7, -11, -30, -40, 240, 0};
+	static const float arr1[] = { 0, 2, 243, 234, 23, 0, 0, 2, 0, 39, 27, 7, -11, -30, -40, 240, 0};
+
+	tick = 1 - tick;
+
+	std::vector<float> vec0 (arr0, arr0 + sizeof(arr0) / sizeof(arr0[0]) );
+	std::vector<float> vec1 (arr1, arr1 + sizeof(arr1) / sizeof(arr1[0]) );
+
+	if (tick)
+		VecMsg = &vec0;
+	else
+		VecMsg = &vec1;
+#endif
+
 	if (!VecMsg->empty())
 	{
 		std::cout << "GsGuiInterface from GroundStation: ";
@@ -183,11 +203,12 @@ void CGsGuiInterface::Tick()
 			ssTime << bufTime << "." << tp.tv_nsec/1000 << "Z";
 
 			int type = *it++;
-			//std::cout << "Type=" << type << std::endl;
+			std::cout << "Type=" << type << std::endl;
 			switch (type)
 			{
-				case PROT_RADIO_MSG_RELAY_POS:
+				case PROT_RADIO_MSG_RELAY_POS: default:
 				{
+					std::cout << "Send position/state message" << std::endl;
 					it = FromCont(PosMsg, it, VecMsg->end());
 					Uav.FromRadioMsg(PosMsg);
 
@@ -230,10 +251,12 @@ void CGsGuiInterface::Tick()
 					//PropertyTreePos.put("autopilot_status", "gps error, engine error");
 
 					write_json(ssJson, PropertyTreePos, false); // no pretty output
+					//std::cout << "Write " << PropertyTreePos << std::endl;
 					break;
 				}
 				case PROT_RADIO_MSG_RELAY_FIRE:
 				{
+					std::cout << "Send fire message" << std::endl;
 					it = FromCont(FireMsg, it, VecMsg->end());
 					FireStruct fire;
 					fire.FromRadioMsg(FireMsg);
@@ -260,8 +283,26 @@ void CGsGuiInterface::Tick()
 
 			if (ssJson.str().size() > 0)
 			{
+#ifdef DUMMY
+				size_t size = ssJson.str().size();
+#ifdef HELLOWORLD
+				std::string test = "{\"question\":\"Hello world?\"}";
+				size = test.size();
+#endif
+				ssOutput << (char)0xce << (char)0x00;
+				ssOutput << (char)(size & 0xFF) << (char)(size >> 8);
+				ssOutput << (char)0x00 << (char)0x00;
+
+				ssOutput << ssJson.str();
+#ifdef HELLOWORLD
+				ssOutput << test;
+#endif
+
+				std::cout << "Send this: " << ssOutput.str() << std::dec << std::endl;
+#else
 				ssOutput << std::setw(SIZE_SIZE) << std::setfill('0') << ssJson.str().size() + HEADER_SIZE;
 				ssOutput << config.DataType << ssJson.str();
+#endif
 				//boost::asio::write(*Socket, boost::asio::buffer(ssOutput.str(), ssOutput.str().size()));
 				if (!Write(boost::asio::buffer(ssOutput.str(), ssOutput.str().size())))
 					break; // Break out of while loop
