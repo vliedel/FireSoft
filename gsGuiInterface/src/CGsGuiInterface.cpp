@@ -143,7 +143,13 @@ bool CGsGuiInterface::Available(size_t& numBytes)
 
 static char tick = 0;
 
+<<<<<<< HEAD
 //#define DUMMY
+=======
+#define DUMMY
+#define NODEJSSERVER
+
+>>>>>>> anne/master
 void CGsGuiInterface::Tick()
 {
 	int* cmd = readCommand(false);
@@ -283,7 +289,7 @@ void CGsGuiInterface::Tick()
 
 			if (ssJson.str().size() > 0)
 			{
-#ifdef DUMMY
+#ifdef NODEJSSERVER
 				size_t size = ssJson.str().size();
 #ifdef HELLOWORLD
 				std::string test = "{\"question\":\"Hello world?\"}";
@@ -298,7 +304,7 @@ void CGsGuiInterface::Tick()
 				ssOutput << test;
 #endif
 
-				std::cout << "Send this: " << ssOutput.str() << std::dec << std::endl;
+				//std::cout << "Send this: " << ssOutput.str() << std::dec << std::endl;
 #else
 				ssOutput << std::setw(SIZE_SIZE) << std::setfill('0') << ssJson.str().size() + HEADER_SIZE;
 				ssOutput << config.DataType << ssJson.str();
