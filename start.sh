@@ -36,6 +36,11 @@ if [ $6 -a $6 = "2" ]; then
 	GS_START="2"
 fi
 
+# Check if the output dir exists, create if not
+if [ ! -e output ]; then
+	mkdir output
+fi
+
 # Start the central simulator
 ./start_sim.sh $NUM $NUM_AP $NUM_RADIO $SIM_TIME $GS_START
 

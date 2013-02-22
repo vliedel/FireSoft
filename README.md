@@ -19,8 +19,7 @@ To compile simply type:
 ## Running
 * Start a yarp server: yarp server
 * Start a yarp write: yarp write /simout
-* Start the modules: ./start.sh
-* Once all modules started (this might take a while), connect the modules: ./connect.sh
+* Start modules: ./start.sh
 * Type 1<return> in the yarp write to start the simulation.
 * Stop all modules: ./stop.sh
 
