@@ -3,6 +3,12 @@
 # Usage: ./start_gs.sh <start_ground_station? 0|1|2> <gs_id>
 
 GS_START="1"
+
+if [ $1 -a $1 = "h" ]; then
+	echo "Usage: ${0} <start_ground_station? 0|1|2> <gs_id>"
+	exit 0
+fi
+
 if [ $1 -a $1 = "0" ]; then
 	GS_START="0"
 fi

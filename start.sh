@@ -4,6 +4,12 @@
 GS_ID=10
 
 NUM=10
+
+if [ $1 -a $1 = "h" ]; then
+	echo "Usage: ${0} <total_uavs> <num_uavs_with_sim_auto_pilot> <num_uavs_with_sim_radio> <max_sim_time> <first_uav_is_hil? 1|0> <start_ground_station? 0|1|2>"
+	exit 0
+fi
+
 if [ $1 ]; then
 	NUM=$1
 fi

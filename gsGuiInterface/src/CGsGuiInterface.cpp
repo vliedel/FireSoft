@@ -143,10 +143,7 @@ bool CGsGuiInterface::Available(size_t& numBytes)
 
 static char tick = 0;
 
-<<<<<<< HEAD
 //#define DUMMY
-=======
-#define DUMMY
 #define NODEJSSERVER
 
 void CGsGuiInterface::Tick()
@@ -256,7 +253,6 @@ void CGsGuiInterface::Tick()
 					//PropertyTreePos.put("autopilot_status", "gps error, engine error");
 
 					write_json(ssJson, PropertyTreePos, false); // no pretty output
-					//std::cout << "Write " << PropertyTreePos << std::endl;
 					break;
 				}
 				case PROT_RADIO_MSG_RELAY_FIRE:
@@ -303,11 +299,12 @@ void CGsGuiInterface::Tick()
 				ssOutput << test;
 #endif
 
-				//std::cout << "Send this: " << ssOutput.str() << std::dec << std::endl;
 #else
 				ssOutput << std::setw(SIZE_SIZE) << std::setfill('0') << ssJson.str().size() + HEADER_SIZE;
 				ssOutput << config.DataType << ssJson.str();
 #endif
+				//std::cout << "Send this: " << ssOutput.str() << std::dec << std::endl;
+				std::cout << "Send this: " << ssOutput.str() << std::endl;
 				//boost::asio::write(*Socket, boost::asio::buffer(ssOutput.str(), ssOutput.str().size()));
 				if (!Write(boost::asio::buffer(ssOutput.str(), ssOutput.str().size())))
 					break; // Break out of while loop

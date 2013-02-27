@@ -1,7 +1,12 @@
 #!/bin/sh
 
-# Usage: ./start_sim.sh <total_uavs> <num_uavs_with_sim_auto_pilot> <num_uavs_with_sim_radio> <max_sim_time> <start_ground_station? 0|1|2>
 NUM=10
+
+if [ $1 -a $1 = "h" ]; then
+	echo "${0} <total_uavs> <num_uavs_with_sim_auto_pilot> <num_uavs_with_sim_radio> <max_sim_time> <start_ground_station? 0|1|2>"
+	exit 0
+fi
+
 if [ $1 ]; then
 	NUM=$1
 fi

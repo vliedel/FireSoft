@@ -1,7 +1,12 @@
 #!/bin/sh
 
-# Usage: ./start_uav.sh <id> <real_ap? 0|1> <real_radio? 0|1>
 ID=0
+
+if [ $1 -a $1 = "h" ]; then
+	echo "Usage: ${0} <id> <real_ap? 0|1> <real_radio? 0|1>"
+	exit 0
+fi
+
 if [ $1 ]; then
 	ID=$1
 fi
