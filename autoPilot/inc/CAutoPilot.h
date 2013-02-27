@@ -121,6 +121,8 @@ class CAutoPilot : public autoPilot
 		uint32_t LastWpId;
 		//uint32_t CurWayPointIds[MAPSELF_MAX_WAYPOINTS];
 
+		std::ofstream PathOutFile;
+		std::ofstream PlanOutFile;
 
 		// Functions
 		bool SynchronizeUart(AutoPilotMsgHeader& msgHdr);

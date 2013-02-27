@@ -106,7 +106,7 @@ struct WayPoint {
 			{
 				startPos = to;
 				startPos.x() += Radius*cos(AngleStart);
-				startPos.x() += Radius*sin(AngleStart);
+				startPos.y() += Radius*sin(AngleStart);
 				break;
 			}
 		}

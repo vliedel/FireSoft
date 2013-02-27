@@ -31,6 +31,8 @@ using namespace rur;
 CAutoPilot::~CAutoPilot()
 {
 	delete Serial;
+	PathOutFile.close();
+	PlanOutFile.close();
 }
 
 void CAutoPilot::Init(std::string module_id)
@@ -68,6 +70,11 @@ void CAutoPilot::Init(std::string module_id)
 	LastSetLanding.LandLeftTurn = config.LandLeftTurn;
 
 	LastWpId = 0;
+
+	std::string fileName = "output/path_" + module_id + ".txt";
+	PathOutFile.open(fileName.c_str());
+	fileName = "output/plan_" + module_id + ".txt";
+	PlanOutFile.open(fileName.c_str());
 }
 
 void CAutoPilot::Tick()
@@ -181,7 +188,7 @@ void CAutoPilot::Tick()
 					LastSetLanding.LandPoint.X = land.Pos.x() + config.OriginX; // Local to mercator coordinates
 					LastSetLanding.LandPoint.Y = land.Pos.y() + config.OriginY; // Local to mercator coordinates
 					LastSetLanding.LandPoint.Z = land.Pos.z();
-					LastSetLanding.LandHeading = land.Heading.angle() - 0.5*M_PI;
+					LastSetLanding.LandHeading = -(land.Heading.angle() - 0.5*M_PI);
 					if (LastSetLanding.LandHeading > M_PI)
 						LastSetLanding.LandHeading -= 2*M_PI;
 					if (LastSetLanding.LandHeading < -M_PI)
@@ -272,7 +279,7 @@ void CAutoPilot::ReadUart()
 		AutoPilotMsgSensorData data;
 		if (!ReadData((char*)&data, sizeof(AutoPilotMsgSensorData)))
 			return;
-		std::cout << "Received sensor data:" << data << std::endl;
+		std::cout << get_cur_1ms() << " Received sensor data:" << data << std::endl;
 
 
 		// Write to state to mapSelf
@@ -280,13 +287,16 @@ void CAutoPilot::ReadUart()
 		geom.Pos.x() = data.Position.X - config.OriginX; // Mercator to local coordinates
 		geom.Pos.y() = data.Position.Y - config.OriginY; // Mercator to local coordinates
 		geom.Pos.z() = data.Position.Z;
+
 		geom.GroundSpeed = data.GroundSpeed;
 		geom.VerticalSpeed = data.VerticalSpeed;
-		geom.Heading.angle() = data.Heading + 0.5*M_PI;
+		geom.Heading.angle() = -1.0*data.Heading + 0.5*M_PI;
 		if (geom.Heading.angle() > M_PI)
 			geom.Heading.angle() -= 2*M_PI;
 		if (geom.Heading.angle() < -M_PI)
 			geom.Heading.angle() += 2*M_PI;
+
+		PathOutFile << geom.Pos.x() << " " << geom.Pos.y() << " " << geom.Heading.angle() << std::endl;
 
 		geom.Yaw.angle() = data.Yaw;
 		geom.Pitch.angle() = data.Pitch;
@@ -350,7 +360,7 @@ void CAutoPilot::ReadUart()
 		AutoPilotMsgWpStatus data;
 		if (!ReadData((char*)&data, sizeof(AutoPilotMsgWpStatus)))
 			return;
-		std::cout << "Received wp status:" << data << std::endl;
+		std::cout << get_cur_1ms() << " Received wp status:" << data << std::endl;
 
 
 		// List current waypoints from back to front, remove ones that are not in the status msg
@@ -390,7 +400,7 @@ void CAutoPilot::ReadUart()
 		AutoPilotMsgWpBounds data;
 		if (!ReadData((char*)&data, sizeof(AutoPilotMsgWpBounds)))
 			return;
-		std::cout << "Received wp bounds:" << data << std::endl;
+		std::cout << get_cur_1ms() << " Received wp bounds:" << data << std::endl;
 		break;
 	}
 	case AP_PROT_XBEE_MSG:
@@ -398,13 +408,13 @@ void CAutoPilot::ReadUart()
 		AutoPilotMsgXBeeMsg data;
 		if (!ReadData((char*)&data, sizeof(AutoPilotMsgXBeeMsg)))
 			return;
-		std::cout << "Received xbee msg:" << data << std::endl;
+		std::cout << get_cur_1ms() << " Received xbee msg:" << data << std::endl;
 		break;
 	}
 	default:
 	{
 		Synchronize = true;
-		std::cout << "Received unknown msg type from autopilot: " << LastReadHeader << std::endl;
+		std::cout << get_cur_1ms() << " Received unknown msg type from autopilot: " << LastReadHeader << std::endl;
 		break;
 	}
 	}
@@ -511,6 +521,11 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 
 	AutoPilotMsgWayPoints msgWps;
 	msgWps.NumWayPoints = wps.WayPointsNum;
+
+	Position startPos;
+	wps.WayPoints[0].GetStartPos(startPos);
+	PlanOutFile << startPos.x() << " " << startPos.y() << " ";
+
 	for (int i=0; i<wps.WayPointsNum; ++i)
 	{
 		LastWpId = (LastWpId+1) % 1024; // TODO: magic number (should be large enough to avoid id collisions)
@@ -518,6 +533,11 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 		msgWps.WayPoints[i].Id = LastWpId;
 		msgWps.WayPoints[i].GroundSpeed = config.CruiseSpeed;
 		msgWps.WayPoints[i].VerticalSpeed = wps.WayPoints[i].VerticalSpeed;
+
+		Position endPos;
+		wps.WayPoints[i].GetEndPos(endPos);
+
+		PlanOutFile << endPos.x() << " " << endPos.y() << " ";
 
 		switch(wps.WayPoints[i].wpMode)
 		{
@@ -548,17 +568,18 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 				msgWps.WayPoints[i].Arc.Center.Y = wps.WayPoints[i].to.y() + config.OriginY; // Local to mercator coordinates
 				msgWps.WayPoints[i].Arc.Center.Z = wps.WayPoints[i].to.z();
 				msgWps.WayPoints[i].Arc.Radius = wps.WayPoints[i].Radius;
-				msgWps.WayPoints[i].Arc.AngleStart = wps.WayPoints[i].AngleStart - 0.5*M_PI;
+				msgWps.WayPoints[i].Arc.AngleStart = -(wps.WayPoints[i].AngleStart - 0.5*M_PI);
 				if (msgWps.WayPoints[i].Arc.AngleStart > M_PI)
 					msgWps.WayPoints[i].Arc.AngleStart -= 2*M_PI;
 				if (msgWps.WayPoints[i].Arc.AngleStart < -M_PI)
 					msgWps.WayPoints[i].Arc.AngleStart += 2*M_PI;
 
-				msgWps.WayPoints[i].Arc.AngleArc = wps.WayPoints[i].AngleArc;
+				msgWps.WayPoints[i].Arc.AngleArc = -(wps.WayPoints[i].AngleArc -0.5*M_PI);
 				break;
 			}
 		}
 	}
+	PlanOutFile << std::endl;
 
 	std::cout << msgWps << std::endl;
 
