@@ -21,7 +21,8 @@
  * @case          Swarm robots
  */
 
-#define WPPLAN_CHOICES_NUM 3 // Number of choices per path segment, must be uneven
+//#define WPPLAN_CHOICES_NUM 3 // Number of choices per path segment, must be uneven
+#define WPPLAN_CHOICES_NUM 5 // Number of choices per path segment, must be uneven
 //#define WPPLAN_SEGMENTS_NUM 4 // Number of path segments to plan
 //#define WPPLAN_SEGMENT_DT 3.0 // Time that each path segment takes
 
@@ -126,18 +127,18 @@ void CWpPlanner::Init(std::string module_id)
 
 void CWpPlanner::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
-	}
-
-	if (get_cur_1ms() - LastPlanTime > config.PlanIntervalTime)
+	if (get_duration(LastPlanTime, get_cur_1ms()) > config.PlanIntervalTime)
 	{
 		LastPlanTime = get_cur_1ms();
-		long t_start = get_cur_1us();
+		long start = get_cur_1us();
 		Plan();
-		std::cout << get_cur_1ms() << " Planning took " << (get_cur_1us() - t_start)/1000 << " ms" << std::endl;
+		std::cout << get_cur_1ms() << " Planning took " << get_duration(start, get_cur_1us())/1000 << " ms" << std::endl;
 
 		if (config.SaveFitnessMap)
 			WriteFitnessToFile();
@@ -442,7 +443,9 @@ bool CWpPlanner::CheckCurPlan(float& dz, UAVState& curState, UAVState& oldState,
 	}
 
 	if (wps.WayPointsNum < 2)
-		return false;
+		//return false; // Why?
+		return true;
+
 
 	std::cout << " wp=" << wps[1];
 	checkPos.clear();

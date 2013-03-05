@@ -37,7 +37,7 @@ interface fitnessGenBattery {
   void Command(in long cmd);
   
   // Outgoing status updates or replies
-  void Status(out long val);
+//  void Status(out long val);
   
   
   // -- fitnessGenBattery interfaces --

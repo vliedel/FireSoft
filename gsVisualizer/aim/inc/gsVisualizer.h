@@ -51,14 +51,6 @@ private:
   Network yarp;
   std::string module_id;
   
-  // private storage for portCommandValue
-  int portCommandValue;
-  // the port portCommand itself
-  BufferedPort<Bottle> *portCommand;
-  
-  // the port portStatus itself
-  BufferedPort<Bottle> *portStatus;
-  
   // User-defined structs (automatically allocated later)
   Param *cliParam;
 
@@ -66,17 +58,9 @@ public:
   // The constructor needs to be called, also when you derive from this class
   gsVisualizer() {
     cliParam = new Param();
-    portCommand = new BufferedPort<Bottle>();
-    portCommand->setStrict();
-    portCommand->writeStrict();
-    portStatus = new BufferedPort<Bottle>();
-    portStatus->setStrict();
-    portStatus->writeStrict();
   }
   
   ~gsVisualizer() {
-    delete portCommand;
-    delete portStatus;
     delete cliParam;
   }
   
@@ -89,23 +73,11 @@ public:
   void Init(std::string module_id) {
     this->module_id = module_id;
     
-    {
-      std::stringstream portName; portName.str(); portName.clear();
-      portName << "/gsvisualizer" << module_id << "/command";
-      portCommand->open(portName.str().c_str());
-    }
-    {
-      std::stringstream portName; portName.str(); portName.clear();
-      portName << "/gsvisualizer" << module_id << "/status";
-      portStatus->open(portName.str().c_str());
-    }
   }
   
   // Before destruction you will need to call this function first
   // it closes the YARP ports
   void Close() {
-    portCommand->close();
-    portStatus->close();
   }
   
   // Function to get Param struct (to subsequently set CLI parameters)
@@ -114,22 +86,6 @@ public:
 protected:
   // All subsequent functions should be called from "within" this module
   // From either the Tick() routine itself, or Tick() in a derived class
-  
-  inline int *readCommand(bool blocking=true) {
-    Bottle *b = portCommand->read(blocking);
-    if (b != NULL) { 
-      portCommandValue = b->get(0).asInt();
-      return &portCommandValue;
-    }
-    return NULL;
-  }
-  
-  inline void writeStatus(const int val) {
-    Bottle &valPrepare = portStatus->prepare();
-    valPrepare.clear();
-    valPrepare.addInt(val);
-    portStatus->write(true);
-  }
   
 };
 }

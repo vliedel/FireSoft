@@ -90,11 +90,11 @@ void CMsgPlanner::Init(std::string module_id)
 
 void CMsgPlanner::Tick()
 {
-	IntMsg = readCommand(false);
-	if (IntMsg != NULL)
-	{
-
-	}
+//	IntMsg = readCommand(false);
+//	if (IntMsg != NULL)
+//	{
+//
+//	}
 
 	VecMsg = readFromRadio(false);
 	if (!VecMsg->empty())

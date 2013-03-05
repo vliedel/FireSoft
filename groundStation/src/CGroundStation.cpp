@@ -88,11 +88,11 @@ void CGroundStation::Init(std::string module_id)
 
 void CGroundStation::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-
-	}
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
 	// Read the stuff, puts it in a buffer
 	ReadFromRadio();
@@ -129,7 +129,7 @@ void CGroundStation::Tick()
 
 	// Send everything that is in the outgoing buffer (blocking)
 	// TODO: make non blocking?
-	if (get_cur_1ms() > LastWriteTime + 125)
+	if (get_duration(LastWriteTime, get_cur_1ms()) > 125) // TODO: magic number
 	{
 		WriteToRadio();
 		WriteToOutBuffer(CmdMsg);

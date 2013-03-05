@@ -76,11 +76,11 @@ void CAutoPilotSim::ReInit(int moduleId)
 
 void CAutoPilotSim::Tick()
 {
-	IntMsg = readCommand(false);
-	if (IntMsg != NULL)
-	{
-
-	}
+//	IntMsg = readCommand(false);
+//	if (IntMsg != NULL)
+//	{
+//
+//	}
 
 	VecMsg = readSimCommand(false);
 	if (!VecMsg->empty())

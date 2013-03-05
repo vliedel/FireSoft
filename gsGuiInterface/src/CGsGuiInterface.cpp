@@ -148,11 +148,11 @@ static char tick = 0;
 
 void CGsGuiInterface::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-
-	}
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
 	ReadGui();
 

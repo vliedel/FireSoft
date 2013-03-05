@@ -121,11 +121,11 @@ void CMapFire::Init(std::string module_id)
 
 void CMapFire::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-
-	}
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
 
 	VecMsg = readFromFireDetector(false);
@@ -184,7 +184,7 @@ void CMapFire::Tick()
 	}
 
 	// For test purposes: add random fires
-	if (get_cur_1ms() > LastTestFireGenTime + 10000)
+	if (get_duration(LastTestFireGenTime, get_cur_1ms()) > 10000)
 	{
 		MapFireStruct fire;
 		fire.Seen = true;

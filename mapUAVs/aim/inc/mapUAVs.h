@@ -51,14 +51,6 @@ private:
   Network yarp;
   std::string module_id;
   
-  // private storage for portCommandValue
-  int portCommandValue;
-  // the port portCommand itself
-  BufferedPort<Bottle> *portCommand;
-  
-  // the port portStatus itself
-  BufferedPort<Bottle> *portStatus;
-  
   // the port portToRadio itself
   BufferedPort<Bottle> *portToRadio;
   
@@ -74,12 +66,6 @@ public:
   // The constructor needs to be called, also when you derive from this class
   mapUAVs() {
     cliParam = new Param();
-    portCommand = new BufferedPort<Bottle>();
-    portCommand->setStrict();
-    portCommand->writeStrict();
-    portStatus = new BufferedPort<Bottle>();
-    portStatus->setStrict();
-    portStatus->writeStrict();
     portToRadio = new BufferedPort<Bottle>();
     portToRadio->setStrict();
     portToRadio->writeStrict();
@@ -90,8 +76,6 @@ public:
   }
   
   ~mapUAVs() {
-    delete portCommand;
-    delete portStatus;
     delete portToRadio;
     delete portFromRadioValues;
     delete portFromRadio;
@@ -109,16 +93,6 @@ public:
     
     {
       std::stringstream portName; portName.str(); portName.clear();
-      portName << "/mapuavs" << module_id << "/command";
-      portCommand->open(portName.str().c_str());
-    }
-    {
-      std::stringstream portName; portName.str(); portName.clear();
-      portName << "/mapuavs" << module_id << "/status";
-      portStatus->open(portName.str().c_str());
-    }
-    {
-      std::stringstream portName; portName.str(); portName.clear();
       portName << "/mapuavs" << module_id << "/toradio";
       portToRadio->open(portName.str().c_str());
     }
@@ -132,8 +106,6 @@ public:
   // Before destruction you will need to call this function first
   // it closes the YARP ports
   void Close() {
-    portCommand->close();
-    portStatus->close();
     portToRadio->close();
     portFromRadio->close();
   }
@@ -144,22 +116,6 @@ public:
 protected:
   // All subsequent functions should be called from "within" this module
   // From either the Tick() routine itself, or Tick() in a derived class
-  
-  inline int *readCommand(bool blocking=true) {
-    Bottle *b = portCommand->read(blocking);
-    if (b != NULL) { 
-      portCommandValue = b->get(0).asInt();
-      return &portCommandValue;
-    }
-    return NULL;
-  }
-  
-  inline void writeStatus(const int val) {
-    Bottle &valPrepare = portStatus->prepare();
-    valPrepare.clear();
-    valPrepare.addInt(val);
-    portStatus->write(true);
-  }
   
   inline void writeToRadio(const int cmd) {
     Bottle &cmdPrepare = portToRadio->prepare();

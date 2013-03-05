@@ -84,12 +84,11 @@ void CMapUAVs::Init(std::string module_id)
 
 void CMapUAVs::Tick()
 {
-	//printf("tick\n");
-	IntMsg = readCommand(false);
-	if (IntMsg != NULL)
-	{
-
-	}
+//	IntMsg = readCommand(false);
+//	if (IntMsg != NULL)
+//	{
+//
+//	}
 
 	// All messages that will access the shared memory go in here, as we need a lock
 	//if (Mutex->try_lock())

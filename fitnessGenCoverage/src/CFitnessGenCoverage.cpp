@@ -109,13 +109,13 @@ void CFitnessGenCoverage::Init(std::string module_id)
 
 void CFitnessGenCoverage::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
-	}
-
-	if (get_cur_1ms() - LastGenTime > config.IntervalTime)
+	if (get_duration(LastGenTime, get_cur_1ms()) > config.IntervalTime)
 	{
 		LastGenTime = get_cur_1ms();
 		GenFitness();

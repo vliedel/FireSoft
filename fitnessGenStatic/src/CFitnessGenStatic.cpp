@@ -70,21 +70,21 @@ void CFitnessGenStatic::Init(std::string module_id)
 	}
 
 	GenFitness();
-	LastTimeGen = get_cur_1ms();
+	LastGenTime = get_cur_1ms();
 }
 
 void CFitnessGenStatic::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
-	}
-
-	if (get_cur_1ms() - LastTimeGen > config.IntervalTime)
+	if (get_duration(LastGenTime, get_cur_1ms()) > config.IntervalTime)
 	{
 		GenFitness();
-		LastTimeGen = get_cur_1ms();
+		LastGenTime = get_cur_1ms();
 	}
 
 	usleep(config.TickTime);

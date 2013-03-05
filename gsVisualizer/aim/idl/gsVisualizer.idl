@@ -34,10 +34,10 @@ interface gsVisualizer {
   // -- All modules have a command and status link --
 
   // Module takes certain predefined commands
-  void Command(in long cmd);
+//  void Command(in long cmd);
   
   // Outgoing status updates or replies
-  void Status(out long val);
+//  void Status(out long val);
   
   
   // -- gsVisualizer interfaces --

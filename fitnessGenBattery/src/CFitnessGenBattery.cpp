@@ -73,14 +73,14 @@ void CFitnessGenBattery::Init(std::string module_id)
 
 void CFitnessGenBattery::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-
-	}
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
 //	std::cout << "cur=" << get_cur_1ms() << " last=" << LastGenTime << std::endl;
-	if (get_cur_1ms() - LastGenTime > config.IntervalTime)
+	if (get_duration(LastGenTime, get_cur_1ms()) > config.IntervalTime)
 	{
 		LastGenTime = get_cur_1ms();
 		GenFitness();

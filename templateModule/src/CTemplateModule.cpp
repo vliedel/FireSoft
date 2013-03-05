@@ -39,10 +39,5 @@ void CTemplateModule::Init(std::string module_id)
 
 void CTemplateModule::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-
-	}
 	usleep(config.TickTime);
 }

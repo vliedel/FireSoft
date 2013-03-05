@@ -100,7 +100,6 @@ void CRadio::Power(bool enable) {
  */
 void CRadio::Tick()
 {
-
 	// Read the stuff, puts it in a buffer
 	if (ReadFromRadio())
 	{
@@ -122,7 +121,7 @@ void CRadio::Tick()
 	}
 
 	// Let the msgPlanner know about the buffer size
-	if (get_cur_1us() > LastSentBufStatusTime + config.MsgPlannerTickTime)
+	if (get_duration(LastSentBufStatusTime, get_cur_1ms()) > config.MsgPlannerTickTime)
 	{
 		std::vector<int> vecMsg;
 		vecMsg.push_back(PROT_RADIO_STATUS_BUF_SIZE);

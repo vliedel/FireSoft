@@ -79,17 +79,17 @@ void CAutoPilot::Init(std::string module_id)
 
 void CAutoPilot::Tick()
 {
-	IntMsg = readCommand(false);
-	if (IntMsg != NULL)
-	{
-
-	}
+//	IntMsg = readCommand(false);
+//	if (IntMsg != NULL)
+//	{
+//
+//	}
 
 	// Check if there is something to read
 	ReadUart();
 
 //	// From time to time: request AP for sensor data
-//	if (get_cur_1ms() - LastReqTimeSensorData > config.SensorReqIntervalTime)
+//	if (get_duration(LastReqTimeSensorData, get_cur_1ms()) > config.SensorReqIntervalTime)
 //	{
 //		//std::cout << "Sending sensor request" << std::endl;
 //		SendHeader(AP_PROT_REQ_SENSORDATA, 0);
@@ -97,7 +97,7 @@ void CAutoPilot::Tick()
 //	}
 
 //	// From time to time: request AP for wp data
-//	if (get_cur_1ms() - LastReqTimeWpStatus > config.WPStatustReqIntervalTime)
+//	if (get_duration(LastReqTimeWpStatus, get_cur_1ms()) > config.WPStatustReqIntervalTime)
 //	{
 //		//std::cout << "Sending wp status request" << std::endl;
 //		SendHeader(AP_PROT_REQ_WP_STATUS, 0);
@@ -107,7 +107,7 @@ void CAutoPilot::Tick()
 
 	// TODO: set it every time? set on change maybe better, but msg might be missed
 	// From time to time: set correct mode
-	if (get_cur_1ms() - LastSetTimeMode > 500) // TODO: magic number
+	if (get_duration(LastSetTimeMode, get_cur_1ms()) > 500) // TODO: magic number
 	{
 		SendHeader(AP_PROT_SET_MODE, sizeof(AutoPilotMsgMode));
 		//SendData((char*)&LastSetMode, sizeof(AutoPilotMsgMode));
@@ -117,7 +117,7 @@ void CAutoPilot::Tick()
 		LastSetTimeMode = get_cur_1ms();
 	}
 
-	if (get_cur_1ms() - LastSetTimeLanding > 250) // TODO: magic number
+	if (get_duration(LastSetTimeLanding, get_cur_1ms()) > 250) // TODO: magic number
 	{
 		SendHeader(AP_PROT_SET_LAND, sizeof(AutoPilotMsgLanding));
 		SendData((char*)&LastSetLanding, sizeof(AutoPilotMsgLanding));
@@ -209,29 +209,36 @@ void CAutoPilot::Tick()
 
 bool CAutoPilot::SynchronizeUart(AutoPilotMsgHeader& msgHdr)
 {
-	if (Serial->available() < 2*sizeof(AutoPilotMsgHeader))
+	if (Serial->available() < 2*sizeof(AutoPilotMsgHeader)) // TODO: magic number
 		return false;
 
 	//std::cout << "Synchronizing..";
 	char chr;
 	AutoPilotMsgHeaderType header;
+	uint8_t msgType;
 	Serial->read((char*)&header, sizeof(AutoPilotMsgHeaderType));
+	Serial->read((char*)&msgType, sizeof(msgType));
 	while (Serial->available() >= sizeof(AutoPilotMsgHeader))
 	{
-		//std::cout << " header=" << header;
-		if (header == AP_PROT_HEADER)
+		std::cout << " header=" << header << " msgType=" << +msgType;
+		if (header == AP_PROT_HEADER && msgType < AP_PROT_NUM)
 		{
 			msgHdr.Header = header;
-			Serial->read((char*)&msgHdr+sizeof(AutoPilotMsgHeaderType), sizeof(AutoPilotMsgHeader)-sizeof(AutoPilotMsgHeaderType));
+			//Serial->read((char*)&msgHdr+sizeof(AutoPilotMsgHeaderType), sizeof(AutoPilotMsgHeader)-sizeof(AutoPilotMsgHeaderType));
+			msgHdr.MsgType = msgType;
+			Serial->read((char*)&msgHdr+sizeof(AutoPilotMsgHeaderType)+sizeof(msgType), sizeof(AutoPilotMsgHeader)-sizeof(AutoPilotMsgHeaderType)-sizeof(msgType));
 			Synchronize = false;
 			LastReadHeaderUsed = false;
 			//std::cout << std::endl;
 			return true;
 		}
-		Serial->read(&chr, 1);
-		header = (header << 8) | chr;
+		//Serial->read(&chr, 1);
+		//header = (header << 8) | chr;
+		header = (header << 8) | msgType;
+		Serial->read((char*)&msgType, 1);
+		std::cout << " header=" << header << " msgType=" << +msgType;
 	}
-	//std::cout << std::endl;
+	std::cout << std::endl;
 	return false;
 }
 

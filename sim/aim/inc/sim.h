@@ -56,9 +56,6 @@ private:
   // the port portCommand itself
   BufferedPort<Bottle> *portCommand;
   
-  // the port portStatus itself
-  BufferedPort<Bottle> *portStatus;
-  
   // private storage for portGroundStationValues;
   std::vector<float> *portGroundStationValues;
   // the port portGroundStation itself
@@ -239,9 +236,6 @@ public:
     portCommand = new BufferedPort<Bottle>();
     portCommand->setStrict();
     portCommand->writeStrict();
-    portStatus = new BufferedPort<Bottle>();
-    portStatus->setStrict();
-    portStatus->writeStrict();
     portGroundStationValues = new std::vector<float>();
     portGroundStation = new BufferedPort<Bottle>();
     portGroundStation->setStrict();
@@ -394,7 +388,6 @@ public:
   
   ~sim() {
     delete portCommand;
-    delete portStatus;
     delete portGroundStationValues;
     delete portGroundStation;
     delete portFromGroundStationValues;
@@ -475,11 +468,6 @@ public:
       std::stringstream portName; portName.str(); portName.clear();
       portName << "/sim" << module_id << "/command";
       portCommand->open(portName.str().c_str());
-    }
-    {
-      std::stringstream portName; portName.str(); portName.clear();
-      portName << "/sim" << module_id << "/status";
-      portStatus->open(portName.str().c_str());
     }
     {
       std::stringstream portName; portName.str(); portName.clear();
@@ -697,7 +685,6 @@ public:
   // it closes the YARP ports
   void Close() {
     portCommand->close();
-    portStatus->close();
     portGroundStation->close();
     portFromGroundStation->close();
     portRadioCommand0->close();
@@ -756,13 +743,6 @@ protected:
       return &portCommandValue;
     }
     return NULL;
-  }
-  
-  inline void writeStatus(const int val) {
-    Bottle &valPrepare = portStatus->prepare();
-    valPrepare.clear();
-    valPrepare.addInt(val);
-    portStatus->write(true);
   }
   
   // Remark: caller is responsible for evoking vector.clear()

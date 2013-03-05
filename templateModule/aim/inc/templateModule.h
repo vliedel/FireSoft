@@ -39,6 +39,8 @@ struct Param {
 
 typedef std::vector<int> long_seq;
 
+typedef std::vector<float> float_seq;
+
 // The generated class. Do not modify or add class members
 // Either derive from this class and implement Tick() or
 // use a separate helper class to store state information.
@@ -54,9 +56,6 @@ private:
   // the port portCommand itself
   BufferedPort<Bottle> *portCommand;
   
-  // the port portStatus itself
-  BufferedPort<Bottle> *portStatus;
-  
   // User-defined structs (automatically allocated later)
   Param *cliParam;
 
@@ -65,16 +64,18 @@ public:
   templateModule() {
     cliParam = new Param();
     portCommand = new BufferedPort<Bottle>();
-    portStatus = new BufferedPort<Bottle>();
+    portCommand->setStrict();
+    portCommand->writeStrict();
   }
   
   ~templateModule() {
     delete portCommand;
-    delete portStatus;
+    delete cliParam;
   }
   
   // This is the function you will need to implement.
   void Tick(); 
+  
   
   // After construction you will need to call this function first
   // it opens the YARP ports
@@ -86,11 +87,12 @@ public:
       portName << "/templatemodule" << module_id << "/command";
       portCommand->open(portName.str().c_str());
     }
-    {
-      std::stringstream portName; portName.str(); portName.clear();
-      portName << "/templatemodule" << module_id << "/status";
-      portStatus->open(portName.str().c_str());
-    }
+  }
+  
+  // Before destruction you will need to call this function first
+  // it closes the YARP ports
+  void Close() {
+    portCommand->close();
   }
   
   // Function to get Param struct (to subsequently set CLI parameters)
@@ -107,13 +109,6 @@ protected:
       return &portCommandValue;
     }
     return NULL;
-  }
-  
-  inline void writeStatus(const int val) {
-    Bottle &valPrepare = portStatus->prepare();
-    valPrepare.clear();
-    valPrepare.addInt(val);
-    portStatus->write(true);
   }
   
 };

@@ -39,10 +39,10 @@ void CSensorCO::Init(std::string module_id)
 
 void CSensorCO::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-
-	}
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 	usleep(config.TickTime);
 }

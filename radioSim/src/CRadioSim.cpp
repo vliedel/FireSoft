@@ -47,11 +47,11 @@ void CRadioSim::Init(std::string module_id)
 
 void CRadioSim::Tick()
 {
-	IntMsg = readCommand(false);
-	if (IntMsg != NULL)
-	{
-
-	}
+//	IntMsg = readCommand(false);
+//	if (IntMsg != NULL)
+//	{
+//
+//	}
 
 	VecMsg = readSimCommand(false);
 	if (!VecMsg->empty())
@@ -117,7 +117,7 @@ void CRadioSim::Tick()
 	}
 
 	// Let the msgPlanner know about the buffer size
-	if (get_cur_1us() > LastSentBufStatusTime + config.MsgPlannerTickTime)
+	if (get_duration(LastSentBufStatusTime, get_cur_1ms()) > config.MsgPlannerTickTime)
 	{
 		std::vector<int> vecMsg;
 		vecMsg.push_back(PROT_RADIO_STATUS_BUF_SIZE);

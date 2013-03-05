@@ -26,6 +26,7 @@
 #define CTIME_H_
 
 #include <sys/time.h>
+#include <limits.h>
 //#include <cstddef>
 
 /**
@@ -59,6 +60,15 @@ static long get_cur_1ms() {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+/**
+ * Get the duration from given start time to end time.
+ */
+static long get_duration(long start, long end) {
+	if (start > 0 && end < 0)
+		return LONG_MAX-start + end-LONG_MIN;
+	return end-start;
 }
 
 
