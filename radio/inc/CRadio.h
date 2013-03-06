@@ -84,6 +84,7 @@ class CRadio : public radio
 		VecMsgType* VecMsg;
 
 		long LastSentBufStatusTime; // us
+		long LastWriteTime; // ms
 
 //		ERadioRoundState RadioRoundState;
 
