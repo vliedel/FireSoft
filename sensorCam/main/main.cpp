@@ -1,5 +1,5 @@
 /**
- * @brief 
+ * @brief
  * @file main.cpp
  *
  * This file is created at Almende B.V. It is open-source software and part of the Common
@@ -21,9 +21,9 @@
  * @case          Swarm robots
  */
 
+#include <cstdlib>
+#include <unistd.h>
 #include "CSensorCam.h"
-//#include <cstdlib>
-//#include <unistd.h>
 
 using namespace rur;
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 //		usleep(100);
 	} while (true);
 
-	sensorCam->Close();
+	sensorCam->Close(); // to be added
 	delete sensorCam;
 
 	return EXIT_SUCCESS;
