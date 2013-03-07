@@ -111,10 +111,10 @@ void CMapFitness::Init(std::string module_id)
 
 void CMapFitness::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-
-	}
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 	usleep(config.TickTime);
 }

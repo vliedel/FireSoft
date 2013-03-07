@@ -70,21 +70,21 @@ void CFitnessGenStatic::Init(std::string module_id)
 	}
 
 	GenFitness();
-	LastTimeGen = get_cur_1ms();
+	LastGenTime = get_cur_1ms();
 }
 
 void CFitnessGenStatic::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
-	}
-
-	if (get_cur_1ms() - LastTimeGen > config.IntervalTime)
+	if (get_duration(LastGenTime, get_cur_1ms()) > config.IntervalTime)
 	{
 		GenFitness();
-		LastTimeGen = get_cur_1ms();
+		LastGenTime = get_cur_1ms();
 	}
 
 	usleep(config.TickTime);
@@ -131,7 +131,8 @@ void CFitnessGenStatic::GenFitness()
 
 		FitnessQuadraticWall wall(0, FITSRC_EDGE, p0, p1, amplitude);
 		FitnessWallVec->push_back(wall);
-		std::cout << "wall=[" << wall.StartPoint[0].transpose() << "] [" << wall.StartPoint[1].transpose() << "] " << wall.Amplitude << std::endl;
+		if (config.Debug)
+			std::cout << "wall=[" << wall.StartPoint[0].transpose() << "] [" << wall.StartPoint[1].transpose() << "] " << wall.Amplitude << std::endl;
 //		Position checkPos;
 //		checkPos << config.MaxX/2, config.MaxY/2, 0;
 //		std::cout << "wall at [" << checkPos.transpose() <<"]=" << wall.GetValue(checkPos) << std::endl;
@@ -144,7 +145,8 @@ void CFitnessGenStatic::GenFitness()
 		wall.StartPoint[0] = p1;
 		wall.StartPoint[1] = p2;
 		FitnessWallVec->push_back(wall);
-		std::cout << "wall=[" << wall.StartPoint[0].transpose() << "] [" << wall.StartPoint[1].transpose() << "] " << wall.Amplitude << std::endl;
+		if (config.Debug)
+			std::cout << "wall=[" << wall.StartPoint[0].transpose() << "] [" << wall.StartPoint[1].transpose() << "] " << wall.Amplitude << std::endl;
 //		checkPos << config.MaxX/2, config.MaxY/2, 0;
 //		std::cout << "wall at [" << checkPos.transpose() <<"]=" << wall.GetValue(checkPos) << std::endl;
 //		checkPos << config.MaxX, config.MaxY/2, 0;
@@ -156,7 +158,8 @@ void CFitnessGenStatic::GenFitness()
 		wall.StartPoint[0] = p2;
 		wall.StartPoint[1] = p3;
 		FitnessWallVec->push_back(wall);
-		std::cout << "wall=[" << wall.StartPoint[0].transpose() << "] [" << wall.StartPoint[1].transpose() << "] " << wall.Amplitude << std::endl;
+		if (config.Debug)
+			std::cout << "wall=[" << wall.StartPoint[0].transpose() << "] [" << wall.StartPoint[1].transpose() << "] " << wall.Amplitude << std::endl;
 //		checkPos << config.MaxX/2, config.MaxY/2, 0;
 //		std::cout << "wall at [" << checkPos.transpose() <<"]=" << wall.GetValue(checkPos) << std::endl;
 //		checkPos << config.MaxX/2, config.MaxY, 0;
@@ -168,7 +171,8 @@ void CFitnessGenStatic::GenFitness()
 		wall.StartPoint[0] = p3;
 		wall.StartPoint[1] = p0;
 		FitnessWallVec->push_back(wall);
-		std::cout << "wall=[" << wall.StartPoint[0].transpose() << "] [" << wall.StartPoint[1].transpose() << "] " << wall.Amplitude << std::endl;
+		if (config.Debug)
+			std::cout << "wall=[" << wall.StartPoint[0].transpose() << "] [" << wall.StartPoint[1].transpose() << "] " << wall.Amplitude << std::endl;
 //		checkPos << config.MaxX/2, config.MaxY/2, 0;
 //		std::cout << "wall at [" << checkPos.transpose() <<"]=" << wall.GetValue(checkPos) << std::endl;
 //		checkPos << 0, config.MaxX/2, 0;

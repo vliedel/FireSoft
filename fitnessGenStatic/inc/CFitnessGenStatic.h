@@ -79,7 +79,7 @@ class CFitnessGenStatic : public fitnessGenStatic
 		MapSelfStruct*		MapSelf;
 		MapMutexType*		MutexSelf;
 
-		long LastTimeGen;
+		long LastGenTime;
 		FitnessGenStaticConfig config;
 
 		void GenFitness();

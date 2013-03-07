@@ -56,9 +56,6 @@ private:
   // the port portCommand itself
   BufferedPort<Bottle> *portCommand;
   
-  // the port portStatus itself
-  BufferedPort<Bottle> *portStatus;
-  
   // User-defined structs (automatically allocated later)
   Param *cliParam;
 
@@ -69,14 +66,10 @@ public:
     portCommand = new BufferedPort<Bottle>();
     portCommand->setStrict();
     portCommand->writeStrict();
-    portStatus = new BufferedPort<Bottle>();
-    portStatus->setStrict();
-    portStatus->writeStrict();
   }
   
   ~fitnessGenCoverage() {
     delete portCommand;
-    delete portStatus;
     delete cliParam;
   }
   
@@ -94,18 +87,12 @@ public:
       portName << "/fitnessgencoverage" << module_id << "/command";
       portCommand->open(portName.str().c_str());
     }
-    {
-      std::stringstream portName; portName.str(); portName.clear();
-      portName << "/fitnessgencoverage" << module_id << "/status";
-      portStatus->open(portName.str().c_str());
-    }
   }
   
   // Before destruction you will need to call this function first
   // it closes the YARP ports
   void Close() {
     portCommand->close();
-    portStatus->close();
   }
   
   // Function to get Param struct (to subsequently set CLI parameters)
@@ -122,13 +109,6 @@ protected:
       return &portCommandValue;
     }
     return NULL;
-  }
-  
-  inline void writeStatus(const int val) {
-    Bottle &valPrepare = portStatus->prepare();
-    valPrepare.clear();
-    valPrepare.addInt(val);
-    portStatus->write(true);
   }
   
 };

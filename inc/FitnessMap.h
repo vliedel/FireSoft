@@ -52,7 +52,8 @@ class FitnessMapType
 				FitnessMapYType mapY(std::less<FitnessMapKeyType>(), VoidAllocator);
 				mapY.insert(FitnessMapValueYType(y, gaussian));
 				MapX.insert(FitnessMapValueXType(x, mapY));
-				std::cout << "Added gaussian at pos [" << x << " " << y << "]" << std::endl;
+
+				//std::cout << "Added gaussian at pos [" << x << " " << y << "]" << std::endl;
 			}
 			else
 			{
@@ -61,7 +62,8 @@ class FitnessMapType
 				if (itY == itX->second.end())
 				{
 					itX->second.insert(FitnessMapValueYType(y, gaussian));
-					std::cout << "Added gaussian at pos [" << x << " " << y << "]" << std::endl;
+
+					//std::cout << "Added gaussian at pos [" << x << " " << y << "]" << std::endl;
 				}
 				else
 				{

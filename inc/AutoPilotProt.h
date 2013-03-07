@@ -74,6 +74,7 @@ enum EAutoPilotMsgType
 	AP_PROT_WP_BOUNDS,		// Bounds of waypoints from auto pilot
 	AP_PROT_REQ_XBEE_MSG,	// Gumstix wants to send a msg over xbee
 	AP_PROT_XBEE_MSG,		// Auto pilot received an xbee  msg for the gumstix
+	AP_PROT_NUM
 };
 
 enum EAutoPilotMode

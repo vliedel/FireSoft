@@ -73,14 +73,14 @@ void CFitnessGenBattery::Init(std::string module_id)
 
 void CFitnessGenBattery::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-
-	}
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
 //	std::cout << "cur=" << get_cur_1ms() << " last=" << LastGenTime << std::endl;
-	if (get_cur_1ms() - LastGenTime > config.IntervalTime)
+	if (get_duration(LastGenTime, get_cur_1ms()) > config.IntervalTime)
 	{
 		LastGenTime = get_cur_1ms();
 		GenFitness();
@@ -98,8 +98,8 @@ void CFitnessGenBattery::GenFitness()
 
 		// Estimated time to fly to home is (x+y) * cruisespeed
 //		float timeNeeded = config.BatteryLowTime + (config.MaxX+config.MaxY)*config.CruiseSpeed;
-		float distLeft = MapSelf->UavData.Geom.Pos.x() - MapSelf->GsCmd.Landing.Pos.x();
-		distLeft += MapSelf->UavData.Geom.Pos.y() - MapSelf->GsCmd.Landing.Pos.y();
+		float distLeft = fabs(MapSelf->UavData.Geom.Pos.x() - MapSelf->GsCmd.Landing.Pos.x());
+		distLeft += fabs(MapSelf->UavData.Geom.Pos.y() - MapSelf->GsCmd.Landing.Pos.y());
 
 		std::cout << "BatteryTimeLeft=" << MapSelf->UavData.BatteryTimeLeft << " distLeft=" << distLeft << std::endl;
 

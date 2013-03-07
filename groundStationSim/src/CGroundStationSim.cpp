@@ -66,11 +66,11 @@ void CGroundStationSim::Init(std::string module_id)
 
 void CGroundStationSim::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-
-	}
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//
+//	}
 
 	VecMsg = readSim(false);
 	if (!VecMsg->empty())

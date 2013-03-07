@@ -62,13 +62,12 @@ void CGsVisualizer::Init(std::string module_id)
 
 void CGsVisualizer::Tick()
 {
-	int* cmd = readCommand(false);
-	if (cmd != NULL)
-	{
-	}
+//	int* cmd = readCommand(false);
+//	if (cmd != NULL)
+//	{
+//	}
 
-
-	if (get_cur_1ms() - LastOutputPosTime > config.OutputPosIntervalTime)
+	if (get_duration(LastOutputPosTime, get_cur_1ms()) > config.OutputPosIntervalTime)
 	{
 		LastOutputPosTime = get_cur_1ms();
 

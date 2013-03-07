@@ -46,6 +46,11 @@ MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
 	"${PROJECT_NAME} requires an out of source build."
 )
 
+# Get rid of "undefined reference to `clock_gettime'"
+SET(BOOST_LIBS date_time)
+find_package(Boost COMPONENTS ${BOOST_LIBS} REQUIRED)
+SET(LIBS ${LIBS} ${Boost_LIBRARIES})
+
 # Eigen header only matrix library
 FIND_PACKAGE(Eigen3 REQUIRED)
 INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})

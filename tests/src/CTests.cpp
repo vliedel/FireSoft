@@ -30,7 +30,25 @@
 //#include <boost/asio.hpp>
 //#include <boost/thread.hpp>
 
-
+// See paper "A Fast, Compact Approximation of the Exponential Function".
+// 2x to 9x faster than exp(x)!
+// Can be off by about +-4% in the range -100 to 100.
+//
+// On Intel Core2 Quad Q9550, VS2008 SP1, evaluations per second:
+//  20035805 exp(x) with /fp:fast
+//  29961267 exp(x) with /fp:precise
+//  30386769 exp(x) with /arch:SSE2 /fp:precise
+//  92379955 exp(x) with /arch:SSE2 /fp:fast
+// 132160844 fast_exp(x) with /fp:precise
+// 140163862 fast_exp(x) with /fp:fast
+// 172233728 fast_exp(x) with /arch:SSE2 /fp:precise
+// 182784751 fast_exp(x) with /arch:SSE2 /fp:fast
+double fast_exp(double y) {
+	double d;
+	*((int*)(&d) + 0) = 0;
+	*((int*)(&d) + 1) = (int)(1512775 * y + 1072632447);
+	return d;
+}
 
 using namespace rur;
 
@@ -45,43 +63,61 @@ void CTests::Init(std::string module_id)
 //int id, FitnessSource source, Position& center, float amplitude, float sigmaX, float sigmaY, float rotation, float minVal=0, float maxVal=0)
 
 	srand(get_cur_1ms());
-	int repeats = 100*1000;
-	int numGauss = 1000;
-	int numValPerGauss = 20*20*M_PI; // Circle area with radius = 2*coverage_sigma
 
-	Position c;
-	c << 0,0,0;
-	FitnessGaussian2D gauss(0, FITSRC_STATIC, c, 1, 1, 1, 0);
-	std::vector<FitnessGaussian2D> gaussians;
-	for (int i=0; i<numGauss; ++i)
-	{
-		c << rand()%10, rand()%10, 0;
-		gauss.Center = c;
-		gaussians.push_back(gauss);
-	}
+	int repeats = 100000;
+	long start = get_cur_1us();
+	float f;
+	for (int i=0; i<repeats; ++i)
+		f = fast_exp(rand()%1000/100-10);
+	std::cout << "fast took " << get_cur_1us() - start << " us" << std::endl;
 
-	float fit=0;
-	c << rand()%10, rand()%10, 0;
-	long timeStart = get_cur_1us();
-	std::vector<FitnessGaussian2D>::iterator it;
-	for (int j=0; j<repeats; ++j)
-		for (it=gaussians.begin(); it != gaussians.end(); ++it)
-			fit += it->GetValue(c);
-	std::cout << "time to get fitness with gaussians: " << (get_cur_1us()-timeStart)/1000 << "ms" << std::endl;
+	start = get_cur_1us();
+	for (int i=0; i<repeats; ++i)
+		f = std::exp(rand()%1000/100-10);
+	std::cout << "std took " << get_cur_1us() - start << " us" << std::endl;
 
+	start = get_cur_1us();
+	for (int i=0; i<repeats; ++i)
+		f = rand()%1000/100-10;
+	std::cout << "none took " << get_cur_1us() - start << " us" << std::endl;
+	exit(0);
 
-
-	std::vector<float> values;
-	for (int i=0; i<numGauss*numValPerGauss; ++i)
-		values.push_back(rand()%10);
-
-	fit=0;
-	timeStart = get_cur_1us();
-	std::vector<float>::iterator itv;
-	for (int j=0; j<repeats; ++j)
-		for (itv=values.begin(); itv != values.end(); ++itv)
-			fit += *itv;
-	std::cout << "time to get fitness with grid: " << (get_cur_1us()-timeStart)/1000 << "ms" << std::endl;
+//	srand(get_cur_1ms());
+//	int repeats = 100*1000;
+//	int numGauss = 1000;
+//	int numValPerGauss = 20*20*M_PI; // Circle area with radius = 2*coverage_sigma
+//
+//	Position c;
+//	c << 0,0,0;
+//	FitnessGaussian2D gauss(0, FITSRC_STATIC, c, 1, 1, 1, 0);
+//	std::vector<FitnessGaussian2D> gaussians;
+//	for (int i=0; i<numGauss; ++i)
+//	{
+//		c << rand()%10, rand()%10, 0;
+//		gauss.Center = c;
+//		gaussians.push_back(gauss);
+//	}
+//
+//	float fit=0;
+//	c << rand()%10, rand()%10, 0;
+//	long timeStart = get_cur_1us();
+//	std::vector<FitnessGaussian2D>::iterator it;
+//	for (int j=0; j<repeats; ++j)
+//		for (it=gaussians.begin(); it != gaussians.end(); ++it)
+//			fit += it->GetValue(c);
+//	std::cout << "time to get fitness with gaussians: " << (get_cur_1us()-timeStart)/1000 << "ms" << std::endl;
+//
+//	std::vector<float> values;
+//	for (int i=0; i<numGauss*numValPerGauss; ++i)
+//		values.push_back(rand()%10);
+//
+//	fit=0;
+//	timeStart = get_cur_1us();
+//	std::vector<float>::iterator itv;
+//	for (int j=0; j<repeats; ++j)
+//		for (itv=values.begin(); itv != values.end(); ++itv)
+//			fit += *itv;
+//	std::cout << "time to get fitness with grid: " << (get_cur_1us()-timeStart)/1000 << "ms" << std::endl;
 
 //	return;
 

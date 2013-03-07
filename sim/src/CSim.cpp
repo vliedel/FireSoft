@@ -338,7 +338,7 @@ void CSim::Tick()
 
 #ifdef SIM_REALTIME
 		// Simulation should go real time
-		if (get_cur_1ms() - LastTimeStepTimeStamp < 1000*config.TimeStep)
+		if (get_duration(LastTimeStepTimeStamp, get_cur_1ms()) < 1000*config.TimeStep)
 			return;
 		LastTimeStepTimeStamp = get_cur_1ms();
 #endif
@@ -427,7 +427,7 @@ void CSim::Tick()
 		if (CurTime > SimTime)
 		{
 			std::cout << std::endl << "----- End of simulation -----" << std::endl;
-			std::cout << SimTime << "s simulated in " << (get_cur_1ms() - StartTimeStamp)/1000 << "s" << std::endl;
+			std::cout << SimTime << "s simulated in " << get_duration(StartTimeStamp, get_cur_1ms())/1000 << "s" << std::endl;
 			exit(1);
 		}
 

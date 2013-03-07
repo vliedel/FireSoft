@@ -34,10 +34,10 @@ interface mapUAVs {
   // -- All modules have a command and status link --
 
   // Module takes certain predefined commands
-  void Command(in long cmd);
+//  void Command(in long cmd);
   
   // Outgoing status updates or replies
-  void Status(out long val);
+//  void Status(out long val);
   
   // Let the radio know status (when done updating the map)
   void ToRadio(out long cmd);
