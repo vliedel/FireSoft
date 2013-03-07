@@ -184,6 +184,16 @@
 		"TickTime": 1000,
 		"Debug": false
 	},
+	"sensorCam":
+	{
+		"TickTime": 10000,
+		"Debug": false
+	},
+	"sensorCO":
+	{
+		"TickTime": 10000,
+		"Debug": false
+	},
 	"sim":
 	{
 		"TickTime": 1000,
