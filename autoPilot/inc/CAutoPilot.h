@@ -44,6 +44,8 @@ struct AutoPilotConfig
 	long SensorReqIntervalTime; // ms
 	long WPStatustReqIntervalTime; // ms
 	long WPBoundReqIntervalTime; // ms
+	long SetModeIntervalTime; // ms
+	long SetLandingIntervalTime; // ms
 
 	float OriginX; // Mercator coordinates
 	float OriginY; // Mercator coordinates
@@ -77,6 +79,8 @@ struct AutoPilotConfig
 		SensorReqIntervalTime		= pt.get<long>("autoPilot.SensorReqIntervalTime");
 		WPStatustReqIntervalTime	= pt.get<long>("autoPilot.WPStatustReqIntervalTime");
 		WPBoundReqIntervalTime		= pt.get<long>("autoPilot.WPBoundReqIntervalTime");
+		SetModeIntervalTime		= pt.get<long>("autoPilot.SetModeIntervalTime");
+		SetLandingIntervalTime		= pt.get<long>("autoPilot.SetLandingIntervalTime");
 
 		OriginX = pt.get<float>("field.OriginX");
 		OriginY = pt.get<float>("field.OriginY");

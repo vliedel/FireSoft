@@ -63,7 +63,8 @@ void CRadio::Init(std::string &module_id) {
 
 	Power(true);
 
-	LastSentBufStatusTime = get_cur_1us();
+//	LastSentBufStatusTime = get_cur_1us();
+	LastSentBufStatusTime = get_cur_1ms();
 	LastWriteTime = get_cur_1ms();
 }
 
@@ -122,13 +123,15 @@ void CRadio::Tick()
 	}
 
 	// Let the msgPlanner know about the buffer size
-	if (get_duration(LastSentBufStatusTime, get_cur_1us()) > config.MsgPlannerTickTime)
+//	if (get_duration(LastSentBufStatusTime, get_cur_1us()) > config.MsgPlannerTickTime * 2) // TODO: magic number
+	if (get_duration(LastSentBufStatusTime, get_cur_1ms()) > config.BufStatusIntervalTime)
 	{
 		std::vector<int> vecMsg;
 		vecMsg.push_back(PROT_RADIO_STATUS_BUF_SIZE);
 		vecMsg.push_back(SendBuffer.size());
 		writeToMsgPlanner(vecMsg);
-		LastSentBufStatusTime = get_cur_1us();
+//		LastSentBufStatusTime = get_cur_1us();
+		LastSentBufStatusTime = get_cur_1ms();
 		//std::cout << get_cur_1ms() << " Sent buffer status: " << SendBuffer.size() << std::endl;
 	}
 
@@ -313,27 +316,31 @@ void CRadio::WriteData(const char* data, ssize_t length) {
 	// For now: do not check CTS, just write after successful read.
 	uint8_t header = MYRIANED_HEADER;
 	Serial->write((char*)&header, 1);
-	std::cout << get_cur_1ms() << " written: " << +header << std::endl;
-
 	uint8_t dataSize = 28;
 	Serial->write((char*)&dataSize, 1);
-	std::cout << get_cur_1ms() << " written: " << +dataSize << std::endl;
-
 	Serial->write(data, length);
-	std::cout << get_cur_1ms() << " Sent message:";
-	for (int i=0; i<length; ++i)
-		std::cout << " " << +(uint8_t)data[i];
-	std::cout << std::endl;
+	if (config.Debug)
+	{
+		std::cout << get_cur_1ms() << " written: " << +header << std::endl;
+		std::cout << get_cur_1ms() << " written: " << +dataSize << std::endl;
+		std::cout << get_cur_1ms() << " Sent message:";
+		for (int i=0; i<length; ++i)
+			std::cout << " " << +(uint8_t)data[i];
+		std::cout << std::endl;
+	}
 
 	uint16_t crc = CRC(data, length, (uint8_t*) NULL, 0, (uint8_t*) NULL, 0);
 	uint8_t crcMsb = ((crc & 0xFF00) >> 8);
 	uint8_t crcLsb = crc & 0x00FF;
 	Serial->write((char*)&crcMsb, 1);
-	std::cout << get_cur_1ms() << " written: " << +crcMsb << std::endl;
 	Serial->write((char*)&crcLsb, 1);
-	std::cout << get_cur_1ms() << " written: " << +crcLsb << std::endl;
 	Serial->write((char*)&StopByte, 1);
-	std::cout << get_cur_1ms() << " written: " << +StopByte << std::endl;
+	if (config.Debug)
+	{
+		std::cout << get_cur_1ms() << " written: " << +crcMsb << std::endl;
+		std::cout << get_cur_1ms() << " written: " << +crcLsb << std::endl;
+		std::cout << get_cur_1ms() << " written: " << +StopByte << std::endl;
+	}
 
 	/*
 	// Wait for CTS to go active, then write data to radio, then wait for CTS to go inactive.
@@ -454,7 +461,7 @@ bool CRadio::ReadReceiveBuffer()
 				if ((uav.UavId > -1) && (uav.UavId != UavId))
 				{
 					uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
-					std::cout << "Radio " << ModuleId << " sending: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
+//					std::cout << "Radio " << ModuleId << " sending: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
 
 					vecMsgUavs.push_back(PROT_RADIO_MSG_RELAY);
 					ToCont(ReceiveBuffer.front().Data.Data[i], vecMsgUavs);

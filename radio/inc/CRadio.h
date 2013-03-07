@@ -59,7 +59,8 @@ struct RadioConfig
 	long TickTime; // us
 	bool Debug;
 	std::string PortName;
-	long MsgPlannerTickTime; // us
+//	long MsgPlannerTickTime; // us
+	long BufStatusIntervalTime; // ms
 
 	void load(const std::string &filename)
 	{
@@ -68,7 +69,8 @@ struct RadioConfig
 		TickTime = pt.get<long>("radio.TickTime");
 		Debug = pt.get<bool>("radio.Debug");
 		PortName = pt.get<std::string>("radio.PortName");
-		MsgPlannerTickTime = pt.get<long>("msgPlanner.TickTime");
+//		MsgPlannerTickTime = pt.get<long>("msgPlanner.TickTime");
+		BufStatusIntervalTime = pt.get<long>("radio.BufStatusIntervalTime");
 	}
 };
 
@@ -83,7 +85,8 @@ class CRadio : public radio
 
 		VecMsgType* VecMsg;
 
-		long LastSentBufStatusTime; // us
+//		long LastSentBufStatusTime; // us
+		long LastSentBufStatusTime; // ms
 		long LastWriteTime; // ms
 
 //		ERadioRoundState RadioRoundState;

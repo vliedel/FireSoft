@@ -110,11 +110,16 @@ void CFitnessGenCollision::GenFitness()
 				continue;
 
 			gaussian.ID = it->second.data.UavId;
-			std::cout << it->second.data.UavId << " Adding gaussians with center:";
+
+			if (config.Debug)
+				std::cout << it->second.data.UavId << " Adding gaussians with center:";
+
 			//FitnessGaussian3D gaussian(it->second.data.UavId, FITSRC_COLLISION, pos, amplitude, sigmaX, sigmaY, sigmaZ, rotation);
 			gaussian.Center = it->second.data.Geom.Pos;
 			gaussians.push_back(gaussian);
-			std::cout << " [" << gaussian.Center.transpose() << "]";
+
+			if (config.Debug)
+				std::cout << " [" << gaussian.Center.transpose() << "]";
 
 			// The future path of the UAV should also be avoided
 			//pos = it->second.data.Geom.Pos;
@@ -127,7 +132,8 @@ void CFitnessGenCollision::GenFitness()
 			{
 				gaussian.Center = *itPos;
 				gaussians.push_back(gaussian);
-				std::cout << " [" << gaussian.Center.transpose() << "]";
+				if (config.Debug)
+					std::cout << " [" << gaussian.Center.transpose() << "]";
 			}
 
 
@@ -137,9 +143,11 @@ void CFitnessGenCollision::GenFitness()
 			gaussian.Center.y() += config.PredictAheadTime * it->second.data.Geom.GroundSpeed * sin(it->second.data.Geom.Heading.angle());
 			gaussian.Center.z() -= config.PredictAheadTime * it->second.data.Geom.VerticalSpeed;
 			gaussians.push_back(gaussian);
-			std::cout << " [" << gaussian.Center.transpose() << "]";
-
-			std::cout << std::endl;
+			if (config.Debug)
+			{
+				std::cout << " [" << gaussian.Center.transpose() << "]";
+				std::cout << std::endl;
+			}
 		}
 	}
 

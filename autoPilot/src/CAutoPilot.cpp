@@ -105,9 +105,8 @@ void CAutoPilot::Tick()
 //	}
 
 
-	// TODO: set it every time? set on change maybe better, but msg might be missed
 	// From time to time: set correct mode
-	if (get_duration(LastSetTimeMode, get_cur_1ms()) > 500) // TODO: magic number
+	if (get_duration(LastSetTimeMode, get_cur_1ms()) > config.SetModeIntervalTime)
 	{
 		SendHeader(AP_PROT_SET_MODE, sizeof(AutoPilotMsgMode));
 		//SendData((char*)&LastSetMode, sizeof(AutoPilotMsgMode));
@@ -117,7 +116,8 @@ void CAutoPilot::Tick()
 		LastSetTimeMode = get_cur_1ms();
 	}
 
-	if (get_duration(LastSetTimeLanding, get_cur_1ms()) > 250) // TODO: magic number
+	// From time to time: set correct landing
+	if (get_duration(LastSetTimeLanding, get_cur_1ms()) > config.SetLandingIntervalTime)
 	{
 		SendHeader(AP_PROT_SET_LAND, sizeof(AutoPilotMsgLanding));
 		SendData((char*)&LastSetLanding, sizeof(AutoPilotMsgLanding));
@@ -271,7 +271,8 @@ void CAutoPilot::ReadUart()
 		else
 			return;
 		LastReadHeaderUsed = false;
-		std::cout << "Read new header: " << LastReadHeader << std::endl;
+		if (config.Debug)
+			std::cout << "Read new header: " << LastReadHeader << std::endl;
 	}
 
 	// Header is read successfully, now read the data
@@ -390,7 +391,7 @@ void CAutoPilot::ReadUart()
 			}
 		}
 
-		// TODO: ugly way of doing this
+		// TODO: ugly, but safe way of doing this
 		if (data.NumWaypoints == 0)
 			CurWayPoints.WayPointsNum = 0;
 
@@ -421,7 +422,7 @@ void CAutoPilot::ReadUart()
 	default:
 	{
 		Synchronize = true;
-		std::cout << get_cur_1ms() << " Received unknown msg type from autopilot: " << LastReadHeader << std::endl;
+		std::cout << get_cur_1ms() << " Error: received unknown msg type from autopilot: " << LastReadHeader << std::endl;
 		break;
 	}
 	}
@@ -447,7 +448,7 @@ bool CAutoPilot::ReadData(char* data, size_t size)
 		checkSum2 += data[i];
 	if (checkSum1 != checkSum2)
 	{
-		std::cout << "Read checksum error: " << +checkSum1 << " vs " << +checkSum2 << std::endl;
+		std::cout << "Error: read checksum: " << +checkSum1 << " vs " << +checkSum2 << std::endl;
 		return false;
 	}
 	return true;
@@ -483,16 +484,15 @@ bool CAutoPilot::SendHeader(EAutoPilotMsgType type, uint8_t dataSize)
 	if (dataSize == 0)
 		Serial->write(&CheckSumOut, sizeof(CheckSumOut));
 
-	std::cout << get_cur_1ms() << " Written:";
-//	printf("Written:");
-	for (int i=0; i<sizeof(AutoPilotMsgHeader); ++i)
-		std::cout << " " << +((uint8_t*)&msgHdr)[i];
-//		printf(" %X", ((uint8_t*)&msgHdr)[i]);
-	if (dataSize == 0)
-		std::cout << " " << +(uint8_t)CheckSumOut;
-//		printf(" %X", (uint8_t)CheckSumOut);
-//	printf("\n");
-	std::cout << std::endl;
+	if (config.Debug)
+	{
+		std::cout << get_cur_1ms() << " Written:";
+		for (int i=0; i<sizeof(AutoPilotMsgHeader); ++i)
+			std::cout << " " << +((uint8_t*)&msgHdr)[i];
+		if (dataSize == 0)
+			std::cout << " " << +(uint8_t)CheckSumOut;
+		std::cout << std::endl;
+	}
 
 	return true;
 }
@@ -504,21 +504,21 @@ bool CAutoPilot::SendData(char* data, size_t size)
 	Serial->write(data, size);
 	Serial->write(&CheckSumOut, sizeof(CheckSumOut));
 
-	std::cout << get_cur_1ms() << " Written:";
-//	printf("Written:");
-	for (int i=0; i<size; ++i)
-		std::cout << " " << +((uint8_t*)&data)[i];
-//		printf(" %X", ((uint8_t*)data)[i]);
-//	printf(" %X", (uint8_t)CheckSumOut);
-	std::cout << " " << +(uint8_t)CheckSumOut << std::endl;
-//	printf("\n");
+	if (config.Debug)
+	{
+		std::cout << get_cur_1ms() << " Written:";
+		for (int i=0; i<size; ++i)
+			std::cout << " " << +((uint8_t*)&data)[i];
+		std::cout << " " << +(uint8_t)CheckSumOut << std::endl;
+	}
 	return true;
 }
 
 
 void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 {
-	std::cout << get_cur_1ms() << " SetWayPoints num=" << wps.WayPointsNum << std::endl;
+	if (config.Debug)
+		std::cout << get_cur_1ms() << " SetWayPoints num=" << wps.WayPointsNum << std::endl;
 	if (wps.WayPointsNum < 1)
 		return;
 

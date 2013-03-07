@@ -137,7 +137,7 @@ void CMapSelf::Tick()
 					//Map->Heading = atan2(geom.Speed.x(), geom.Speed.y());
 				}
 				else
-					std::cout << "Invalid vector to create a UAVStruct" << std::endl;
+					std::cout << "Error: invalid vector to create a UAVStruct" << std::endl;
 					//printf("Invalid vector to create an UAVStruct!\n");
 				break;
 			}
@@ -202,7 +202,7 @@ void CMapSelf::Tick()
 					Map->NeighBours = nb;
 				}
 				else
-					std::cout << "Invalid vector to create Neighbours" << std::endl;
+					std::cout << "Error: invalid vector to create Neighbours" << std::endl;
 				break;
 			}
 			case PROT_MAPSELF_DATAIN_AP_STATUS:
@@ -214,7 +214,7 @@ void CMapSelf::Tick()
 					Map->UavData.APStatus = apStatus;
 				}
 				else
-					std::cout << "Invalid vector to create ap status" << std::endl;
+					std::cout << "Error: invalid vector to create ap status" << std::endl;
 				break;
 			}
 		}

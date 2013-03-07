@@ -77,6 +77,11 @@ void CFitnessGenCoverage::Init(std::string module_id)
 	}
 
 
+	long time = get_cur_1ms();
+	for (int i=0; i<UAVS_NUM; ++i)
+	{
+		lastAddedTime[i] = time;
+	}
 
 //	// Test to see if range query works
 //	float amplitude = 1.0;
@@ -128,7 +133,7 @@ void CFitnessGenCoverage::GenFitness()
 {
 	// TODO: set the correct rotation
 
-	std::cout << get_cur_1ms() << std::endl;
+	//std::cout << get_cur_1ms() << std::endl;
 	float rotation = 0.0;
 	Position pos;
 	std::vector<FitnessGaussian2D> gaussians;
@@ -140,10 +145,11 @@ void CFitnessGenCoverage::GenFitness()
 		MapUavIterType it;
 		for (it = MapUavs->begin(); it != MapUavs->end(); ++it)
 		{
-			if (lastAddedTime[it->second.data.UavId] + config.CoverageIntervalTime < time)
+			//if (lastAddedTime[it->second.data.UavId] + config.CoverageIntervalTime < time)
+			if (get_duration(lastAddedTime[it->second.data.UavId], time) > config.CoverageIntervalTime)
 			{
 				gaussian.Center = it->second.data.Geom.Pos;
-				std::cout << get_cur_1ms() << " ";
+				//std::cout << get_cur_1ms() << " ";
 				//FitnessMap->AddGaussian(gaussian);
 				gaussians.push_back(gaussian);
 				lastAddedTime[it->second.data.UavId] = time;
@@ -161,7 +167,8 @@ void CFitnessGenCoverage::GenFitness()
 		boost::interprocess::scoped_lock<MapMutexType> lockSelf(*MutexSelf);
 
 		long time = get_cur_1ms();
-		if (lastAddedTime[MapSelf->UavData.UavId] + config.CoverageIntervalTime < time)
+		//if (lastAddedTime[MapSelf->UavData.UavId] + config.CoverageIntervalTime < time)
+		if (get_duration(lastAddedTime[MapSelf->UavData.UavId], time) > config.CoverageIntervalTime)
 		{
 			CoverageSelfTrace cur;
 			cur.Pos = MapSelf->UavData.Geom.Pos;
@@ -185,7 +192,7 @@ void CFitnessGenCoverage::GenFitness()
 				break;
 
 			gaussian.Center = Trace.front().Pos;
-			std::cout << get_cur_1ms() << " ";
+			//std::cout << get_cur_1ms() << " ";
 			FitnessMap->AddGaussian(gaussian);
 
 			Trace.pop_front();

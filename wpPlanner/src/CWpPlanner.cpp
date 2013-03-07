@@ -199,9 +199,11 @@ void CWpPlanner::Plan()
 	}
 */
 
-
-	std::cout << "Curwp num=" << curWps.WayPointsNum << " pos=[" << pos.transpose() << "]"
-					<< " state=" << state << " oldState=" << oldState;
+	if (config.Debug)
+	{
+		std::cout << "Curwp num=" << curWps.WayPointsNum << " pos=[" << pos.transpose() << "]"
+				<< " state=" << state << " oldState=" << oldState;
+	}
 
 	// When flying normally: check current plan for collisions etc. And check if the plan is still long enough.
 	// If no collisions etc. and plan is long enough, we don't need a new plan.
@@ -219,7 +221,8 @@ void CWpPlanner::Plan()
 		if (newState == UAVSTATE_COLLISION_AVOIDING && state != UAVSTATE_COLLISION_AVOIDING)
 			newOldState = state;
 	}
-	std::cout << std::endl;
+	if (config.Debug)
+		std::cout << std::endl;
 
 	// Update state in map self
 	if (state != newState || oldState != newOldState)
@@ -408,7 +411,8 @@ bool CWpPlanner::CheckCurPlan(float& dz, UAVState& curState, UAVState& oldState,
 	float stepDist = 2*std::min(config.CollisionSigmaX, config.CollisionSigmaY);
 	wps[0].GetPath(checkPos, distanceLeft, stepDist, &curPos);
 
-	std::cout << " wp=" << wps[0];
+	if (config.Debug)
+		std::cout << " wp=" << wps[0];
 	std::vector<Position>::iterator itPos;
 	int uavId;
 	for (itPos = checkPos.begin(); itPos != checkPos.end(); ++itPos)
@@ -428,7 +432,8 @@ bool CWpPlanner::CheckCurPlan(float& dz, UAVState& curState, UAVState& oldState,
 		}
 	}
 
-	std::cout << " distanceLeft=" << distanceLeft;
+	if (config.Debug)
+		std::cout << " distanceLeft=" << distanceLeft;
 	// If the current waypoint is far from done, we don't need to check the next one
 	// TODO: magic number
 	if (distanceLeft > config.CruiseSpeed * 2)
@@ -446,8 +451,8 @@ bool CWpPlanner::CheckCurPlan(float& dz, UAVState& curState, UAVState& oldState,
 		//return false; // Why?
 		return true;
 
-
-	std::cout << " wp=" << wps[1];
+	if (config.Debug)
+		std::cout << " wp=" << wps[1];
 	checkPos.clear();
 	wps[1].GetPath(checkPos, distanceLeft, stepDist);
 	for (itPos = checkPos.begin(); itPos != checkPos.end(); ++itPos)
@@ -687,7 +692,8 @@ float CWpPlanner::GetColVal(int& uavId, const Position& pos)
 		}
 	}
 
-	std::cout << " checkPos=[" << pos.transpose() << "]" << " fit=" << maxFit;
+	if (config.Debug)
+		std::cout << " checkPos=[" << pos.transpose() << "]" << " fit=" << maxFit;
 	return maxFit;
 }
 
