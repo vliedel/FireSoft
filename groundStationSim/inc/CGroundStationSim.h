@@ -39,7 +39,7 @@ typedef std::deque<RadioMsg> RadioMsgBuf;
 struct GroundStationSimConfig
 {
 	long TickTime;
-	bool Debug;
+	int Debug;
 	float AreaOriginX;
 	float AreaOriginY;
 	float AreaSizeX;
@@ -57,7 +57,7 @@ struct GroundStationSimConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("groundStationSim.TickTime");
-		Debug = pt.get<bool>("groundStationSim.Debug");
+		Debug = pt.get<int>("groundStationSim.Debug");
 		AreaOriginX = pt.get<float>("field.AreaOriginX");
 		AreaOriginY = pt.get<float>("field.AreaOriginY");
 		AreaSizeX = pt.get<float>("field.AreaSizeX");

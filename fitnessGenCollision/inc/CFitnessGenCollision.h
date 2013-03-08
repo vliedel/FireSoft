@@ -37,7 +37,7 @@ namespace rur {
 struct FitnessGenCollisionConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	long IntervalTime;
 	float CollisionAmplitude;
 	float CollisionSigmaX;
@@ -51,7 +51,7 @@ struct FitnessGenCollisionConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("fitnessGenCollision.TickTime");
-		Debug = pt.get<bool>("fitnessGenCollision.Debug");
+		Debug = pt.get<int>("fitnessGenCollision.Debug");
 		IntervalTime = pt.get<long>("fitnessGenCollision.IntervalTime");
 		CollisionAmplitude = pt.get<float>("fitness.CollisionAmplitude");
 		CollisionSigmaX = pt.get<float>("fitness.CollisionSigmaX");

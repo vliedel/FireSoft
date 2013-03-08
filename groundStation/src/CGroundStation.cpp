@@ -103,8 +103,11 @@ void CGroundStation::Tick()
 	VecMsg = readFromGuiInterface(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "RADIO " << ModuleId << " from GuiInterface: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << "RADIO " << ModuleId << " from GuiInterface: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 		// Should have more protocol here?
 
 		VecMsgType::iterator it = VecMsg->begin();
@@ -186,7 +189,8 @@ bool CGroundStation::SynchronizeUart(RadioMsgHeader& msgHdr)
 	if (Serial->available() < 2*sizeof(RadioMsgHeader))
 		return false;
 
-	std::cout << "Synchronizing the radio stream on start of the message with magic header.." << std::endl;
+	if (config.Debug > 0)
+		std::cout << "Synchronizing the radio stream on start of the message with magic header.." << std::endl;
 	char chr;
 	RadioMsgHeaderType header;
 	Serial->read((char*)&header, sizeof(RadioMsgHeaderType));
@@ -220,7 +224,8 @@ void CGroundStation::ReadUart()
 	{
 		if (!SynchronizeUart(LastReadHeader))
 			return;
-		std::cout << "Synched, header=" << LastReadHeader << std::endl;
+		if (config.Debug > 0)
+			std::cout << "Synched, header=" << LastReadHeader << std::endl;
 	}
 
 	// Check if we need to read a new header
@@ -231,7 +236,8 @@ void CGroundStation::ReadUart()
 			Serial->read((char*)&LastReadHeader, sizeof(RadioMsgHeader));
 			if (LastReadHeader.Header != MYRIANED_HEADER)
 			{
-				std::cout << "Error header doesn't match, header=" << LastReadHeader << std::endl;
+				if (config.Debug > 0)
+					std::cout << "Error header doesn't match, header=" << LastReadHeader << std::endl;
 				Synchronize = true;
 				return;
 			}
@@ -239,7 +245,8 @@ void CGroundStation::ReadUart()
 		else
 			return;
 		LastReadHeaderUsed = false;
-		std::cout << "Read new header: " << LastReadHeader << std::endl;
+		if (config.Debug > 0)
+			std::cout << "Read new header: " << LastReadHeader << std::endl;
 	}
 
 	// Header is read successfully, now read the data
@@ -256,7 +263,8 @@ void CGroundStation::ReadUart()
 
 	RadioMsg msg;
 	msg.Unpack(data);
-	std::cout << "Received: " << msg << std::endl;
+	if (config.Debug > 0)
+		std::cout << "Received: " << msg << std::endl;
 	ReceiveBuffer.push_back(msg);
 }
 
@@ -302,7 +310,8 @@ bool CGroundStation::ReadData(char* data, size_t size)
 		return false;
 	}
 	if (chr != StopByte) {
-		std::cout << "StopByte error: " << +chr << " (should be 0x16=22) " << std::endl;
+		if (config.Debug > 0)
+			std::cout << "StopByte error: " << +chr << " (should be 0x16=22) " << std::endl;
 		return false;
 	}
 	return true;
@@ -324,10 +333,13 @@ void CGroundStation::WriteData(const char* data, ssize_t length) {
 	Serial->write((char*)&crcLsb, 1);
 	Serial->write((char*)&StopByte, 1);
 	//std::cout << "Message " << std::string(data, length) << " sent" << std::endl;
-	std::cout << get_cur_1ms() << " Sent message:";
-	for (int i=0; i<length; ++i)
-		std::cout << " " << +(uint8_t)data[i];
-	std::cout << std::endl;
+	if (config.Debug > 0)
+	{
+		std::cout << get_cur_1ms() << " Sent message:";
+		for (int i=0; i<length; ++i)
+			std::cout << " " << +(uint8_t)data[i];
+		std::cout << std::endl;
+	}
 
 	// The ground station doesn't have a gpio line for the cts.
 	// Check for TIOCM_CTS with ioctl(fd, TIOCMGET).
@@ -390,7 +402,8 @@ bool CGroundStation::ReadReceiveBuffer()
 					if ((uav.UavId > -1) && (uav.UavId != UavId))
 					{
 						uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
-						std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
+						if (config.Debug > 0)
+							std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
 						VecMsgType vecMsg;
 						vecMsg.push_back(PROT_RADIO_MSG_RELAY);
 						ToCont(ReceiveBuffer.front().Data.Data[i], vecMsg);
@@ -411,7 +424,8 @@ bool CGroundStation::ReadReceiveBuffer()
 					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[0]);
 					if (fire.UavId > -1)
 					{
-						std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[0] << std::endl;
+						if (config.Debug > 0)
+							std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[0] << std::endl;
 
 						vecMsg.push_back(PROT_FIRE_STRUCT);
 						ToCont(fire, vecMsg);
@@ -426,7 +440,8 @@ bool CGroundStation::ReadReceiveBuffer()
 					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[1]);
 					if (fire.UavId > -1)
 					{
-						std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[1] << std::endl;
+						if (config.Debug > 0)
+							std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[1] << std::endl;
 
 						vecMsg.clear();
 						vecMsg.push_back(PROT_FIRE_STRUCT);
@@ -453,7 +468,8 @@ bool CGroundStation::ReadReceiveBuffer()
 
 void CGroundStation::WriteToOutBuffer(RadioMsg& msg)
 {
-	std::cout << "Requested msg to be sent: " << msg << std::endl;
+	if (config.Debug > 0)
+		std::cout << "Requested msg to be sent: " << msg << std::endl;
 
 	SendBuffer.push_back(msg);
 }

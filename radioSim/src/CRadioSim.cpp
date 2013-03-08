@@ -57,8 +57,11 @@ void CRadioSim::Tick()
 	VecMsg = readSimCommand(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << get_cur_1ms() << " RADIO " << ModuleId << " from SIM: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << get_cur_1ms() << " RADIO " << ModuleId << " from SIM: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		VecMsgType::iterator it = VecMsg->begin();
 		while (it != VecMsg->end())
@@ -81,7 +84,8 @@ void CRadioSim::Tick()
 					RadioRoundState = RADIO_STATE_ROUND_SENDRECEIVE;
 					RadioMsg bmsg;
 					it = FromCont(bmsg, it, VecMsg->end());
-					std::cout << "Radio " << ModuleId << " received bmsg: " << bmsg << std::endl;
+					if (config.Debug > 0)
+						std::cout << "Radio " << ModuleId << " received bmsg: " << bmsg << std::endl;
 					ReceiveBuffer.push_back(bmsg);
 					break;
 				}
@@ -150,8 +154,11 @@ void CRadioSim::Tick()
 	VecMsg = readFromMsgPlanner(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << get_cur_1ms() << " RADIO " << ModuleId << " from MsgPlanner: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << get_cur_1ms() << " RADIO " << ModuleId << " from MsgPlanner: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 		// Should have more protocol here?
 		WriteToOutBuffer(VecMsg);
 		VecMsg->clear();

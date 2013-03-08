@@ -99,8 +99,11 @@ void CMsgPlanner::Tick()
 	VecMsg = readFromRadio(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << get_cur_1ms() << " MSGPLNR " << ModuleId << " from Radio: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << get_cur_1ms() << " MSGPLNR " << ModuleId << " from Radio: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		std::vector<int>::iterator it = VecMsg->begin();
 		while (it != VecMsg->end())
@@ -129,7 +132,7 @@ void CMsgPlanner::Tick()
 
 void CMsgPlanner::SelectMsgs()
 {
-	if (config.Debug)
+	if (config.Debug > 1)
 		std::cout << "Selecting msgs" << std::endl;
 
 	bool relayCmdMsg = false;
@@ -232,7 +235,7 @@ void CMsgPlanner::SelectMsgs()
 	{
 		boost::interprocess::scoped_lock<MapMutexType> lockUavs(*MutexUavs);
 
-		if (config.Debug)
+		if (config.Debug > 1)
 			std::cout << "Selecting relay pos msg" << std::endl;
 		RelayPos = false;
 		// Find the uavs that have been last sent, and send their last state
@@ -244,7 +247,7 @@ void CMsgPlanner::SelectMsgs()
 		MapUavIterType it;
 		for (it = MapUavs->begin(); it != MapUavs->end(); ++it)
 		{
-			if (config.Debug)
+			if (config.Debug > 1)
 				std::cout << "checking uav " << it->second.data.UavId << std::endl;
 
 			// If last sent happened later than last receive, there is nothing new to tell
@@ -254,7 +257,7 @@ void CMsgPlanner::SelectMsgs()
 			// Check if last sent time is smaller than the current smallest N values
 			for (int j=0; j<RADIO_NUM_RELAY_PER_MSG-1; ++j)
 			{
-				if (config.Debug)
+				if (config.Debug > 1)
 					std::cout << j << " Comparing " << it->second.LastRadioSentTime << " with " << lastSentTimes[j] << std::endl;
 
 				if (it->second.LastRadioSentTime < lastSentTimes[j])
@@ -281,13 +284,13 @@ void CMsgPlanner::SelectMsgs()
 		{
 			if (lastSentTimes[i] == LONG_MAX)
 			{
-				if (config.Debug)
+				if (config.Debug > 1)
 					std::cout << "Selected invalid pos msg" << std::endl;
 				SelectedRadioMsg.Data.Data[i+1] = invalidMsg;
 			}
 			else
 			{
-				if (config.Debug)
+				if (config.Debug > 1)
 					std::cout << "Selected:" << iters[i]->second.LastRadioMsgs[iters[i]->second.LastRadioMsgsIndex] << std::endl;
 				SelectedRadioMsg.Data.Data[i+1] = iters[i]->second.LastRadioMsgs[iters[i]->second.LastRadioMsgsIndex];
 				iters[i]->second.LastRadioSentTime = get_cur_1ms();

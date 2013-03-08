@@ -40,7 +40,7 @@ namespace rur {
 struct MapUAVsConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	long MapSize; // bytes
 
 	void load(const std::string &filename)
@@ -48,7 +48,7 @@ struct MapUAVsConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("mapUAVs.TickTime");
-		Debug = pt.get<bool>("mapUAVs.Debug");
+		Debug = pt.get<int>("mapUAVs.Debug");
 		MapSize = pt.get<long>("mapUAVs.MapSize");
 	}
 };

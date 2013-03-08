@@ -47,7 +47,7 @@ enum EReadState {
 struct GsGuiInterfaceConfig
 {
 	long TickTime;
-	bool Debug;
+	int Debug;
 	std::string Host;
 	std::string Port;
 	std::string DataType;
@@ -59,7 +59,7 @@ struct GsGuiInterfaceConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("gsGuiInterface.TickTime");
-		Debug = pt.get<bool>("gsGuiInterface.Debug");
+		Debug = pt.get<int>("gsGuiInterface.Debug");
 		Host = pt.get<std::string>("gsGuiInterface.Host");
 		Port = pt.get<std::string>("gsGuiInterface.Port");
 		DataType = pt.get<std::string>("gsGuiInterface.DataType");

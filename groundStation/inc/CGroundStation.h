@@ -40,7 +40,7 @@ namespace rur {
 struct GroundStationConfig
 {
 	long TickTime;
-	bool Debug;
+	int Debug;
 	std::string PortName;
 	float AreaOriginX;
 	float AreaOriginY;
@@ -59,7 +59,7 @@ struct GroundStationConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("groundStation.TickTime");
-		Debug = pt.get<bool>("groundStation.Debug");
+		Debug = pt.get<int>("groundStation.Debug");
 		PortName = pt.get<std::string>("groundStation.PortName");
 		AreaOriginX = pt.get<float>("field.AreaOriginX");
 		AreaOriginY = pt.get<float>("field.AreaOriginY");

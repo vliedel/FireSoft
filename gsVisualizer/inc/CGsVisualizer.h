@@ -36,7 +36,7 @@ namespace rur {
 struct GsVisualizerConfig
 {
 	long TickTime;
-	bool Debug;
+	int Debug;
 
 	std::string OutputFilePosName;
 	long OutputPosIntervalTime;
@@ -46,7 +46,7 @@ struct GsVisualizerConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("gsVisualizer.TickTime");
-		Debug = pt.get<bool>("gsVisualizer.Debug");
+		Debug = pt.get<int>("gsVisualizer.Debug");
 
 		OutputFilePosName = pt.get<std::string>("gsVisualizer.OutputFilePosName");
 		OutputPosIntervalTime = pt.get<long>("gsVisualizer.OutputPosIntervalTime");

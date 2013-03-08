@@ -132,8 +132,11 @@ void CSim::Tick()
 		VecMsg = readRadioState(id, false);
 		if (!VecMsg->empty())
 		{
-			std::cout << "SIM from Radio " << id << ": ";
-			dobots::print(VecMsg->begin(), VecMsg->end());
+			if (config.Debug > 0)
+			{
+				std::cout << "SIM from Radio " << id << ": ";
+				dobots::print(VecMsg->begin(), VecMsg->end());
+			}
 
 			VecMsgType::iterator it = VecMsg->begin();
 			while (it != VecMsg->end())
@@ -168,7 +171,8 @@ void CSim::Tick()
 							it = FromCont(bmsg, it, VecMsg->end());
 							if (it != VecMsg->end())
 								std::cout << "ERROR! " << bmsg << std::endl;
-							std::cout << "Adding bmsg: " << bmsg << std::endl;
+							if (config.Debug > 0)
+								std::cout << "Adding bmsg: " << bmsg << std::endl;
 						}
 						break;
 					}
@@ -189,8 +193,11 @@ void CSim::Tick()
 		VecMsg = readAutoPilotState(id, false);
 		if (!VecMsg->empty())
 		{
-			std::cout << "SIM from AP " << id << ": ";
-			dobots::print(VecMsg->begin(), VecMsg->end());
+			if (config.Debug > 0)
+			{
+				std::cout << "SIM from AP " << id << ": ";
+				dobots::print(VecMsg->begin(), VecMsg->end());
+			}
 
 			//			if (Uavs[i].UavData.UavData.State == UAVSTATE_LANDED)
 			//				return; // Nothing to read here :)
@@ -263,7 +270,7 @@ void CSim::Tick()
 		// ==> end --- state = end
 
 		// <== ack --- state = end -> idle, wait for time
-		if (RadioRoundState != RADIO_STATE_ROUND_IDLE)
+		if (RadioRoundState != RADIO_STATE_ROUND_IDLE && config.Debug > 0)
 			std::cout << "RadioRoundState=" << RadioRoundState << std::endl;
 		switch (RadioRoundState)
 		{
@@ -442,7 +449,8 @@ void CSim::Tick()
 #endif
 
 		// Now that we've written all the latest states, we can go to the next time step
-		std::cout << std::endl << "----- Next time step " << CurTime << " -----" << std::endl;
+		if (config.Debug > 0)
+			std::cout << std::endl << "----- Next time step " << CurTime << " -----" << std::endl;
 
 		// Command autopilot to take a time step
 		for (itUav=Uavs.begin(); itUav != Uavs.end(); ++itUav)
@@ -451,7 +459,8 @@ void CSim::Tick()
 			int id = itUav->UavData.UavData.UavId;
 			if (itUav->UavData.UavData.State == UAVSTATE_LANDED)
 			{
-				std::cout << id << " takeofftime=" << itUav->TakeOffTime << std::endl;
+				if (config.Debug > 1)
+					std::cout << id << " takeofftime=" << itUav->TakeOffTime << std::endl;
 				if (CurTime > itUav->TakeOffTime)
 				{
 					itUav->UavData.UavData.State = UAVSTATE_FLYING;

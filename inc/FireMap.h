@@ -52,7 +52,7 @@ public:
 			FireMapYType mapY(std::less<FireMapKeyType>(), VoidAllocator);
 			mapY.insert(FireMapValueYType(y, fire));
 			MapX.insert(FireMapValueXType(x, mapY));
-			std::cout << "Added fire at pos [" << x << " " << y << "]" << std::endl;
+//			std::cout << "Added fire at pos [" << x << " " << y << "]" << std::endl;
 		}
 		else
 		{
@@ -61,7 +61,7 @@ public:
 			if (itY == itX->second.end())
 			{
 				itX->second.insert(FireMapValueYType(y, fire));
-				std::cout << "Added fire at pos [" << x << " " << y << "]" << std::endl;
+//				std::cout << "Added fire at pos [" << x << " " << y << "]" << std::endl;
 			}
 			else
 			{
@@ -76,7 +76,7 @@ public:
 				else
 				{
 					// Update
-					std::cout << "Updated fire at pos [" << x << " " << y << "]" << std::endl;
+//					std::cout << "Updated fire at pos [" << x << " " << y << "]" << std::endl;
 					itY->second = fire;
 				}
 			}

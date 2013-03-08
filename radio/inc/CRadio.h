@@ -57,7 +57,7 @@ namespace rur {
 struct RadioConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	std::string PortName;
 //	long MsgPlannerTickTime; // us
 	long BufStatusIntervalTime; // ms
@@ -67,7 +67,7 @@ struct RadioConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("radio.TickTime");
-		Debug = pt.get<bool>("radio.Debug");
+		Debug = pt.get<int>("radio.Debug");
 		PortName = pt.get<std::string>("radio.PortName");
 //		MsgPlannerTickTime = pt.get<long>("msgPlanner.TickTime");
 		BufStatusIntervalTime = pt.get<long>("radio.BufStatusIntervalTime");

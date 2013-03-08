@@ -39,7 +39,7 @@ typedef std::deque<RadioMsg> RadioMsgBuf;
 struct RadioSimConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 //	long MsgPlannerTickTime; // us
 	long BufStatusIntervalTime; // ms
 
@@ -48,7 +48,7 @@ struct RadioSimConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("radioSim.TickTime");
-		Debug = pt.get<bool>("radioSim.Debug");
+		Debug = pt.get<int>("radioSim.Debug");
 //		MsgPlannerTickTime = pt.get<long>("msgPlanner.TickTime");
 		BufStatusIntervalTime = pt.get<long>("radio.BufStatusIntervalTime");
 	}

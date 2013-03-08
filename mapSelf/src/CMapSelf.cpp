@@ -121,8 +121,11 @@ void CMapSelf::Tick()
 	VecMsg = readFromAutoPilot(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << get_cur_1ms() << " MAPSELF " << ModuleId << " from AP: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << get_cur_1ms() << " MAPSELF " << ModuleId << " from AP: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 		int type = VecMsg->back();
 		VecMsg->pop_back();
 		switch (type)
@@ -225,8 +228,11 @@ void CMapSelf::Tick()
 	VecMsg = readFromRadio(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << get_cur_1ms() << " MAPSELF " << ModuleId << " from RADIO: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << get_cur_1ms() << " MAPSELF " << ModuleId << " from RADIO: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 		int type = VecMsg->back();
 		VecMsg->pop_back();
 		switch (type)
@@ -238,7 +244,8 @@ void CMapSelf::Tick()
 				{
 					boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
 
-					std::cout << "gsCmdMsg=" << gsCmdMsg << std::endl;
+					if (config.Debug > 0)
+						std::cout << "gsCmdMsg=" << gsCmdMsg << std::endl;
 
 					// Check if the msg is a valid msg
 					if (gsCmdMsg.UavId == 0)

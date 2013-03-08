@@ -59,7 +59,7 @@
 	"autoPilot":
 	{
 		"TickTime": 1000,
-		"Debug": false,
+		"Debug": 0,
 		"_PortName": "/dev/ttyUSB1",
 		"PortName": "/dev/ttyO0",
 		"SerialSpeed": 57600,
@@ -67,12 +67,16 @@
 		"WPStatustReqIntervalTime": 50,
 		"WPBoundReqIntervalTime": 250,
 		"SetModeIntervalTime": 500,
-		"SetLandingIntervalTime": 250
+		"SetLandingIntervalTime": 250,
+		"_PathFileName":"output/path_",
+		"_PlanFileName":"output/plan_",
+		"PathFileName":"",
+		"PlanFileName":""
 	},
 	"autoPilotSim":
 	{
 		"TickTime": 1000,
-		"Debug": false,
+		"Debug": 1,
 		"RollAngleGain": 1.1,
 		"VerticalSpeedGain": 0.1,
 		"CarrotReachTime": 0.5,
@@ -83,20 +87,20 @@
 	"fitnessGenBattery":
 	{
 		"TickTime": 10000,
-		"Debug": false,
+		"Debug": 0,
 		"IntervalTime": 125
 	},
 	"fitnessGenCollision":
 	{
 		"TickTime": 10000,
-		"Debug": false,
+		"Debug": 0,
 		"IntervalTime": 50,
 		"PredictAheadTime": 1.0
 	},
 	"fitnessGenCoverage":
 	{
 		"TickTime": 10000,
-		"Debug": false,
+		"Debug": 0,
 		"IntervalTime": 125,
 		"CoverageIntervalTime": 1000,
 		"CoverageSelfDelayTime": 3000,
@@ -106,7 +110,7 @@
 	"fitnessGenStatic":
 	{
 		"TickTime": 10000,
-		"Debug": false,
+		"Debug": 0,
 		"IntervalTime": 125,
 		"WallAmplitude": 1.1111E-04,
 		"WallSigma": 100.0
@@ -114,18 +118,18 @@
 	"groundStation":
 	{
 		"TickTime": 1000,
-		"Debug": false,
+		"Debug": 1,
 		"PortName": "/dev/ttyUSB2"
 	},
 	"groundStationSim":
 	{
 		"TickTime": 1000,
-		"Debug": false
+		"Debug": 1
 	},
 	"gsGuiInterface":
 	{
 		"TickTime": 1000,
-		"Debug": false,
+		"Debug": 1,
 		"_Host": "10.10.1.109",
 		"_Port": "13000",
 		"Host": "127.0.0.1",
@@ -135,21 +139,21 @@
 	"gsVisualizer":
 	{
 		"TickTime": 1000,
-		"Debug": false,
+		"Debug": 0,
 		"OutputFilePosName": "output/flight_output_gs",
 		"OutputPosIntervalTime": 1000
 	},
 	"mapFire":
 	{
 		"TickTime": 1000,
-		"Debug": false,
+		"Debug": 0,
 		"MapSize": 8388608,
 		"_comment":"72 * 10000 < 8*1024*1024"
 	},
 	"mapFitness":
 	{
 		"TickTime": 1000,
-		"Debug": false,
+		"Debug": 0,
 		"MapSize": 16777216,
 		"_comment":"10 * 3600 * 44B for 10 uavs that leave a 2d fitness each second for an hour",
 		"_comment2":"16*1024*1024 is about 10*estimate"
@@ -157,47 +161,47 @@
 	"mapSelf":
 	{
 		"TickTime": 100,
-		"Debug": false,
+		"Debug": 0,
 		"MapSize": 16384
 	},
 	"mapUAVs":
 	{
 		"TickTime": 100,
-		"Debug": false,
+		"Debug": 0,
 		"MapSize": 32768
 	},
 	"msgPlanner":
 	{
 		"TickTime": 10000,
-		"Debug": false,
+		"Debug": 0,
 		"RelayNumCmdMsg": 2
 	},
 	"radio":
 	{
 		"TickTime": 1000,
-		"Debug": false,
+		"Debug": 0,
 		"PortName": "/dev/ttyO3",
 		"BufStatusIntervalTime": 30
 	},
 	"radioSim":
 	{
 		"TickTime": 1000,
-		"Debug": false
+		"Debug": 1
 	},
 	"sensorCam":
 	{
 		"TickTime": 10000,
-		"Debug": false
+		"Debug": 0
 	},
 	"sensorCO":
 	{
 		"TickTime": 10000,
-		"Debug": false
+		"Debug": 0
 	},
 	"sim":
 	{
 		"TickTime": 1000,
-		"Debug": false,
+		"Debug": 1,
 		"TimeStep": 0.1,
 		"RadioRoundTime": 0.25,
 		"OutputFileName": "output/flight_output"
@@ -205,16 +209,16 @@
 	"templateModule":
 	{
 		"TickTime": 10000,
-		"Debug": false
+		"Debug": 0
 	},
 	"test":
 	{
 		"TickTime": 100,
-		"Debug": false
+		"Debug": 0
 	},
 	"wpPlanner":
 	{
-		"Debug": false,
+		"Debug": 0,
 		"PlanIntervalTime": 250,
 		"_NumWayPointPerPlan": 4,
 		"_WayPointDT": 3,

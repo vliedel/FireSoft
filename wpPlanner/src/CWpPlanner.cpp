@@ -138,7 +138,8 @@ void CWpPlanner::Tick()
 		LastPlanTime = get_cur_1ms();
 		long start = get_cur_1us();
 		Plan();
-		std::cout << get_cur_1ms() << " Planning took " << get_duration(start, get_cur_1us())/1000 << " ms" << std::endl;
+		if (config.Debug > 0)
+			std::cout << get_cur_1ms() << " Planning took " << get_duration(start, get_cur_1us())/1000 << " ms" << std::endl;
 
 		if (config.SaveFitnessMap)
 			WriteFitnessToFile();
@@ -182,7 +183,8 @@ void CWpPlanner::Plan()
 	}
 	if (!enablePlanner)
 	{
-		std::cout << get_cur_1ms() << " wp planner is disabled" << std::endl;
+		if (config.Debug > 0)
+			std::cout << get_cur_1ms() << " wp planner is disabled" << std::endl;
 		return;
 	}
 
@@ -199,7 +201,7 @@ void CWpPlanner::Plan()
 	}
 */
 
-	if (config.Debug)
+	if (config.Debug > 1)
 	{
 		std::cout << "Curwp num=" << curWps.WayPointsNum << " pos=[" << pos.transpose() << "]"
 				<< " state=" << state << " oldState=" << oldState;
@@ -221,7 +223,7 @@ void CWpPlanner::Plan()
 		if (newState == UAVSTATE_COLLISION_AVOIDING && state != UAVSTATE_COLLISION_AVOIDING)
 			newOldState = state;
 	}
-	if (config.Debug)
+	if (config.Debug > 1)
 		std::cout << std::endl;
 
 	// Update state in map self
@@ -289,7 +291,8 @@ void CWpPlanner::Plan()
 					if ((it->second.data.UavId < id && it->second.data.State == UAVSTATE_WAITING_TO_LAND)
 							|| it->second.data.State == UAVSTATE_LANDING)
 					{
-						std::cout << "Waiting for uav " << it->second.data.UavId << " to land" << std::endl;
+						if (config.Debug > 0)
+							std::cout << "Waiting for uav " << it->second.data.UavId << " to land" << std::endl;
 						land = false;
 						break;
 					}
@@ -297,7 +300,8 @@ void CWpPlanner::Plan()
 			}
 			if (land)
 			{
-				std::cout << "My turn to land" << std::endl;
+				if (config.Debug > 0)
+					std::cout << "My turn to land" << std::endl;
 				newState = UAVSTATE_LANDING;
 				VecMsgType vecMsg;
 				vecMsg.push_back(PROT_AP_SET_MODE);
@@ -319,7 +323,8 @@ void CWpPlanner::Plan()
 				{
 					if (it->second.data.State == UAVSTATE_LANDING)
 					{
-						std::cout << "Waiting for uav " << it->second.data.UavId << " to land" << std::endl;
+						if (config.Debug > 0)
+							std::cout << "Waiting for uav " << it->second.data.UavId << " to land" << std::endl;
 						land = false;
 						break;
 					}
@@ -327,7 +332,8 @@ void CWpPlanner::Plan()
 			}
 			if (!land)
 			{
-				std::cout << "Aborting landing" << std::endl;
+				if (config.Debug > 0)
+					std::cout << "Aborting landing" << std::endl;
 				newState = UAVSTATE_WAITING_TO_LAND;
 				VecMsgType vecMsg;
 				vecMsg.push_back(PROT_AP_SET_MODE);
@@ -381,9 +387,12 @@ void CWpPlanner::Plan()
 		for (itChoicesWp = bestChoicesWp.rbegin(); itChoicesWp != bestChoicesWp.rend(); ++itChoicesWp)
 			wps.push_back(*itChoicesWp);
 
-		std::cout << "bestchoices=";
-		dobots::print(bestChoices.rbegin(), bestChoices.rend());
-		dobots::print(bestChoicesWp.rbegin(), bestChoicesWp.rend());
+		if (config.Debug > 0)
+		{
+			std::cout << "bestchoices=";
+			dobots::print(bestChoices.rbegin(), bestChoices.rend());
+			dobots::print(bestChoicesWp.rbegin(), bestChoicesWp.rend());
+		}
 
 		VecMsgType vecMsg;
 		vecMsg.push_back(PROT_AP_SET_WAYPOINTS);
@@ -411,7 +420,7 @@ bool CWpPlanner::CheckCurPlan(float& dz, UAVState& curState, UAVState& oldState,
 	float stepDist = 2*std::min(config.CollisionSigmaX, config.CollisionSigmaY);
 	wps[0].GetPath(checkPos, distanceLeft, stepDist, &curPos);
 
-	if (config.Debug)
+	if (config.Debug > 1)
 		std::cout << " wp=" << wps[0];
 	std::vector<Position>::iterator itPos;
 	int uavId;
@@ -432,7 +441,7 @@ bool CWpPlanner::CheckCurPlan(float& dz, UAVState& curState, UAVState& oldState,
 		}
 	}
 
-	if (config.Debug)
+	if (config.Debug > 1)
 		std::cout << " distanceLeft=" << distanceLeft;
 	// If the current waypoint is far from done, we don't need to check the next one
 	// TODO: magic number
@@ -451,7 +460,7 @@ bool CWpPlanner::CheckCurPlan(float& dz, UAVState& curState, UAVState& oldState,
 		//return false; // Why?
 		return true;
 
-	if (config.Debug)
+	if (config.Debug > 1)
 		std::cout << " wp=" << wps[1];
 	checkPos.clear();
 	wps[1].GetPath(checkPos, distanceLeft, stepDist);
@@ -692,7 +701,7 @@ float CWpPlanner::GetColVal(int& uavId, const Position& pos)
 		}
 	}
 
-	if (config.Debug)
+	if (config.Debug > 1)
 		std::cout << " checkPos=[" << pos.transpose() << "]" << " fit=" << maxFit;
 	return maxFit;
 }

@@ -71,10 +71,23 @@ void CAutoPilot::Init(std::string module_id)
 
 	LastWpId = 0;
 
-	std::string fileName = "output/path_" + module_id + ".txt";
-	PathOutFile.open(fileName.c_str());
-	fileName = "output/plan_" + module_id + ".txt";
-	PlanOutFile.open(fileName.c_str());
+	if (config.PathFileName.size() > 0)
+	{
+		std::string fileName = config.PathFileName + module_id + ".txt";
+		PathOutFile.open(fileName.c_str());
+		logPath = true;
+	}
+	else
+		logPath = false;
+
+	if (config.PlanFileName.size() > 0)
+	{
+		std::string fileName = config.PlanFileName + module_id + ".txt";
+		PlanOutFile.open(fileName.c_str());
+		logPlan = true;
+	}
+	else
+		logPlan = false;
 }
 
 void CAutoPilot::Tick()
@@ -129,8 +142,11 @@ void CAutoPilot::Tick()
 	VecMsg = readFromWayPointPlanner(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "AP " << UavId << " from WpPlanner: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << "AP " << UavId << " from WpPlanner: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		VecMsgReply.clear();
 		std::vector<float>::iterator it = VecMsg->begin();
@@ -164,8 +180,11 @@ void CAutoPilot::Tick()
 	VecMsg = readFromMapSelf(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "AP " << UavId << " from MapSelf: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << "AP " << UavId << " from MapSelf: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		VecMsgReply.clear();
 		std::vector<float>::iterator it = VecMsg->begin();
@@ -220,7 +239,8 @@ bool CAutoPilot::SynchronizeUart(AutoPilotMsgHeader& msgHdr)
 	Serial->read((char*)&msgType, sizeof(msgType));
 	while (Serial->available() >= sizeof(AutoPilotMsgHeader))
 	{
-		std::cout << " header=" << header << " msgType=" << +msgType;
+		if (config.Debug > 0)
+			std::cout << " header=" << header << " msgType=" << +msgType;
 		if (header == AP_PROT_HEADER && msgType < AP_PROT_NUM)
 		{
 			msgHdr.Header = header;
@@ -236,9 +256,11 @@ bool CAutoPilot::SynchronizeUart(AutoPilotMsgHeader& msgHdr)
 		//header = (header << 8) | chr;
 		header = (header << 8) | msgType;
 		Serial->read((char*)&msgType, 1);
-		std::cout << " header=" << header << " msgType=" << +msgType;
+		if (config.Debug > 0)
+			std::cout << " header=" << header << " msgType=" << +msgType;
 	}
-	std::cout << std::endl;
+	if (config.Debug > 0)
+		std::cout << std::endl;
 	return false;
 }
 
@@ -252,7 +274,8 @@ void CAutoPilot::ReadUart()
 	{
 		if (!SynchronizeUart(LastReadHeader))
 			return;
-		std::cout << "Synched, header=" << LastReadHeader << std::endl;
+		if (config.Debug > 0)
+			std::cout << "Synched, header=" << LastReadHeader << std::endl;
 	}
 
 	// Check if we need to read a new header
@@ -263,7 +286,8 @@ void CAutoPilot::ReadUart()
 			Serial->read((char*)&LastReadHeader, sizeof(AutoPilotMsgHeader));
 			if (LastReadHeader.Header != AP_PROT_HEADER)
 			{
-				std::cout << "Error header doesn't match, header=" << LastReadHeader << std::endl;
+				if (config.Debug > 0)
+					std::cout << "Error header doesn't match, header=" << LastReadHeader << std::endl;
 				Synchronize = true;
 				return;
 			}
@@ -271,7 +295,7 @@ void CAutoPilot::ReadUart()
 		else
 			return;
 		LastReadHeaderUsed = false;
-		if (config.Debug)
+		if (config.Debug > 1)
 			std::cout << "Read new header: " << LastReadHeader << std::endl;
 	}
 
@@ -287,7 +311,8 @@ void CAutoPilot::ReadUart()
 		AutoPilotMsgSensorData data;
 		if (!ReadData((char*)&data, sizeof(AutoPilotMsgSensorData)))
 			return;
-		std::cout << get_cur_1ms() << " Received sensor data:" << data << std::endl;
+		if (config.Debug > 0)
+			std::cout << get_cur_1ms() << " Received sensor data:" << data << std::endl;
 
 
 		// Write to state to mapSelf
@@ -304,7 +329,8 @@ void CAutoPilot::ReadUart()
 		if (geom.Heading.angle() < -M_PI)
 			geom.Heading.angle() += 2*M_PI;
 
-		PathOutFile << geom.Pos.x() << " " << geom.Pos.y() << " " << geom.Heading.angle() << std::endl;
+		if (logPath)
+			PathOutFile << geom.Pos.x() << " " << geom.Pos.y() << " " << geom.Heading.angle() << std::endl;
 
 		geom.Yaw.angle() = data.Yaw;
 		geom.Pitch.angle() = data.Pitch;
@@ -368,13 +394,15 @@ void CAutoPilot::ReadUart()
 		AutoPilotMsgWpStatus data;
 		if (!ReadData((char*)&data, sizeof(AutoPilotMsgWpStatus)))
 			return;
-		std::cout << get_cur_1ms() << " Received wp status:" << data << std::endl;
+		if (config.Debug > 0)
+			std::cout << get_cur_1ms() << " Received wp status:" << data << std::endl;
 
 
 		// List current waypoints from back to front, remove ones that are not in the status msg
 		for (int j=CurWayPoints.WayPointsNum-1; j>=0; --j)
 		{
-			std::cout << "checking " << j << " num=" << CurWayPoints.WayPointsNum << std::endl;
+			if (config.Debug > 1)
+				std::cout << "checking " << j << " num=" << CurWayPoints.WayPointsNum << std::endl;
 			bool found = false;
 			for (int i=0; i<data.NumWaypoints; ++i)
 			{
@@ -386,7 +414,8 @@ void CAutoPilot::ReadUart()
 			}
 			if (!found)
 			{
-				std::cout << "removing " << j << std::endl;
+				if (config.Debug > 1)
+					std::cout << "removing " << j << std::endl;
 				CurWayPoints.remove(j);
 			}
 		}
@@ -408,7 +437,8 @@ void CAutoPilot::ReadUart()
 		AutoPilotMsgWpBounds data;
 		if (!ReadData((char*)&data, sizeof(AutoPilotMsgWpBounds)))
 			return;
-		std::cout << get_cur_1ms() << " Received wp bounds:" << data << std::endl;
+		if (config.Debug > 0)
+			std::cout << get_cur_1ms() << " Received wp bounds:" << data << std::endl;
 		break;
 	}
 	case AP_PROT_XBEE_MSG:
@@ -416,13 +446,15 @@ void CAutoPilot::ReadUart()
 		AutoPilotMsgXBeeMsg data;
 		if (!ReadData((char*)&data, sizeof(AutoPilotMsgXBeeMsg)))
 			return;
-		std::cout << get_cur_1ms() << " Received xbee msg:" << data << std::endl;
+		if (config.Debug > 0)
+			std::cout << get_cur_1ms() << " Received xbee msg:" << data << std::endl;
 		break;
 	}
 	default:
 	{
 		Synchronize = true;
-		std::cout << get_cur_1ms() << " Error: received unknown msg type from autopilot: " << LastReadHeader << std::endl;
+		if (config.Debug > 0)
+			std::cout << get_cur_1ms() << " Error: received unknown msg type from autopilot: " << LastReadHeader << std::endl;
 		break;
 	}
 	}
@@ -448,7 +480,8 @@ bool CAutoPilot::ReadData(char* data, size_t size)
 		checkSum2 += data[i];
 	if (checkSum1 != checkSum2)
 	{
-		std::cout << "Error: read checksum: " << +checkSum1 << " vs " << +checkSum2 << std::endl;
+		if (config.Debug > 0)
+			std::cout << "Error: read checksum: " << +checkSum1 << " vs " << +checkSum2 << std::endl;
 		return false;
 	}
 	return true;
@@ -465,7 +498,8 @@ bool CAutoPilot::SendHeader(EAutoPilotMsgType type, uint8_t dataSize)
 	//msgHdr.TimeStamp = 4919; // hex: 1337
 	msgHdr.DataSize = dataSize;
 
-	std::cout << "Writing header: " << msgHdr << std::endl;
+	if (config.Debug > 0)
+		std::cout << "Writing header: " << msgHdr << std::endl;
 	try
 	{
 		Serial->write((char*)&msgHdr, sizeof(AutoPilotMsgHeader));
@@ -484,7 +518,7 @@ bool CAutoPilot::SendHeader(EAutoPilotMsgType type, uint8_t dataSize)
 	if (dataSize == 0)
 		Serial->write(&CheckSumOut, sizeof(CheckSumOut));
 
-	if (config.Debug)
+	if (config.Debug > 1)
 	{
 		std::cout << get_cur_1ms() << " Written:";
 		for (int i=0; i<sizeof(AutoPilotMsgHeader); ++i)
@@ -504,7 +538,7 @@ bool CAutoPilot::SendData(char* data, size_t size)
 	Serial->write(data, size);
 	Serial->write(&CheckSumOut, sizeof(CheckSumOut));
 
-	if (config.Debug)
+	if (config.Debug > 1)
 	{
 		std::cout << get_cur_1ms() << " Written:";
 		for (int i=0; i<size; ++i)
@@ -517,21 +551,25 @@ bool CAutoPilot::SendData(char* data, size_t size)
 
 void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 {
-	if (config.Debug)
+	if (config.Debug > 1)
 		std::cout << get_cur_1ms() << " SetWayPoints num=" << wps.WayPointsNum << std::endl;
 	if (wps.WayPointsNum < 1)
 		return;
 
-	std::cout << wps << std::endl;
+	if (config.Debug > 0)
+		std::cout << wps << std::endl;
 
 	SendHeader(AP_PROT_SET_WAYPOINTS, sizeof(AutoPilotMsgWayPoints));
 
 	AutoPilotMsgWayPoints msgWps;
 	msgWps.NumWayPoints = wps.WayPointsNum;
 
-	Position startPos;
-	wps.WayPoints[0].GetStartPos(startPos);
-	PlanOutFile << startPos.x() << " " << startPos.y() << " ";
+	if (logPlan)
+	{
+		Position startPos;
+		wps.WayPoints[0].GetStartPos(startPos);
+		PlanOutFile << startPos.x() << " " << startPos.y() << " ";
+	}
 
 	for (int i=0; i<wps.WayPointsNum; ++i)
 	{
@@ -541,10 +579,12 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 		msgWps.WayPoints[i].GroundSpeed = config.CruiseSpeed;
 		msgWps.WayPoints[i].VerticalSpeed = wps.WayPoints[i].VerticalSpeed;
 
-		Position endPos;
-		wps.WayPoints[i].GetEndPos(endPos);
-
-		PlanOutFile << endPos.x() << " " << endPos.y() << " ";
+		if (logPlan)
+		{
+			Position endPos;
+			wps.WayPoints[i].GetEndPos(endPos);
+			PlanOutFile << endPos.x() << " " << endPos.y() << " ";
+		}
 
 		switch(wps.WayPoints[i].wpMode)
 		{
@@ -588,7 +628,8 @@ void CAutoPilot::SetWayPoints(WayPointsStruct& wps)
 	}
 	PlanOutFile << std::endl;
 
-	std::cout << msgWps << std::endl;
+	if (config.Debug > 0)
+		std::cout << msgWps << std::endl;
 
 	SendData((char*)&msgWps, sizeof(AutoPilotMsgWayPoints));
 

@@ -35,14 +35,14 @@ namespace rur {
 struct TemplateModuleConfig
 {
 	long TickTime;
-	bool Debug;
+	int Debug;
 
 	void load(const std::string &filename)
 	{
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("templateModule.TickTime");
-		Debug = pt.get<bool>("templateModule.Debug");
+		Debug = pt.get<int>("templateModule.Debug");
 	}
 };
 

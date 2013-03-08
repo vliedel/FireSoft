@@ -37,7 +37,7 @@ namespace rur {
 
 struct WpPlannerConfig
 {
-	bool Debug;
+	int Debug;
 	long PlanIntervalTime; // Time to wait between checking plan / making a new plan
 	int NumWayPointPerPlan; // Number of waypoints per plan
 //	int ChoicesPerWayPoint; // Number of choices per waypoint
@@ -63,7 +63,7 @@ struct WpPlannerConfig
 	{
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
-		Debug 						= pt.get<bool>("wpPlanner.Debug");
+		Debug 						= pt.get<int>("wpPlanner.Debug");
 		PlanIntervalTime 			= pt.get<long>("wpPlanner.PlanIntervalTime");
 		NumWayPointPerPlan 			= pt.get<int>("wpPlanner.NumWayPointPerPlan");
 //		ChoicesPerWayPoint 			= pt.get<int>("wpPlanner.ChoicesPerWayPoint");

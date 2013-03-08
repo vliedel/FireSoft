@@ -36,7 +36,7 @@ namespace rur {
 struct AutoPilotSimConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	float CruiseSpeed;
 	float MaxRollAngle;
 	float MaxVertSpeed;
@@ -59,7 +59,7 @@ struct AutoPilotSimConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("autoPilotSim.TickTime");
-		Debug = pt.get<bool>("autoPilotSim.Debug");
+		Debug = pt.get<int>("autoPilotSim.Debug");
 		CruiseSpeed 	= pt.get<float>("UAV.CruiseSpeed");
 		MaxRollAngle 	= pt.get<float>("UAV.MaxRollAngle");
 		MaxVertSpeed 	= pt.get<float>("UAV.MaxVertSpeed");

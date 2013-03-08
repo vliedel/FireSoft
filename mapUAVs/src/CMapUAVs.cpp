@@ -100,8 +100,11 @@ void CMapUAVs::Tick()
 	VecMsg = readFromRadio(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << get_cur_1ms() << " MAPUAVS " << ModuleId << " from Radio: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << get_cur_1ms() << " MAPUAVS " << ModuleId << " from Radio: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		VecMsgType::iterator it = VecMsg->begin();
 		while (it != VecMsg->end())
@@ -128,7 +131,7 @@ void CMapUAVs::Tick()
 		// Let the radio know we updated the uav map
 		writeToRadio(PROT_MAPUAV_STATUS_UPDATED);
 		VecMsg->clear();
-		if (config.Debug)
+		if (config.Debug > 1)
 			std::cout << *this << std::endl;
 	}
 			//Mutex->unlock();
@@ -211,7 +214,8 @@ void CMapUAVs::UpdateUav(RadioMsgRelay& msg)
 		uavOnMap.LastRadioReceiveTime = get_cur_1ms();
 		uavOnMap.LastRadioSentTime = get_cur_1ms() - 1000*3600; // One hour ago should do the trick..
 		Map->insert(MapUavValueType(Uav.UavId, uavOnMap));
-		std::cout << "Added uav" << std::endl;
+		if (config.Debug > 0)
+			std::cout << "Added uav" << std::endl;
 	}
 	else
 	{
@@ -224,7 +228,8 @@ void CMapUAVs::UpdateUav(RadioMsgRelay& msg)
 					&& (it->second.LastRadioMsgs[i].Pos.Y == msg.Pos.Y)
 					&& (it->second.LastRadioMsgs[i].Pos.State == msg.Pos.State))
 			{
-				std::cout << "Radio msg already received, ignoring update!" << std::endl;
+				if (config.Debug > 0)
+					std::cout << "Radio msg already received, ignoring update!" << std::endl;
 				return;
 				//found = true;
 				//break;
@@ -235,7 +240,8 @@ void CMapUAVs::UpdateUav(RadioMsgRelay& msg)
 		it->second.LastRadioMsgs[it->second.LastRadioMsgsIndex] = msg;
 		it->second.LastRadioReceiveTime = get_cur_1ms();
 		it->second.data = Uav;
-		std::cout << "Updated uav" << std::endl;
+		if (config.Debug > 0)
+			std::cout << "Updated uav" << std::endl;
 	}
 }
 

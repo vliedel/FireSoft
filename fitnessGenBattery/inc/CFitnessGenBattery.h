@@ -37,7 +37,7 @@ namespace rur {
 struct FitnessGenBatteryConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	long IntervalTime;
 	float CruiseSpeed;
 	float BatteryLowTime;
@@ -50,7 +50,7 @@ struct FitnessGenBatteryConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime		= pt.get<long>("fitnessGenBattery.TickTime");
-		Debug			= pt.get<bool>("fitnessGenBattery.Debug");
+		Debug			= pt.get<int>("fitnessGenBattery.Debug");
 		IntervalTime	= pt.get<long>("fitnessGenBattery.IntervalTime");
 		CruiseSpeed			= pt.get<float>("UAV.CruiseSpeed");
 		BatteryLowTime		= pt.get<float>("UAV.BatteryLowTime");

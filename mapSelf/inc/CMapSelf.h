@@ -39,7 +39,7 @@ namespace rur {
 struct MapSelfConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	long MapSize; // bytes
 	float BatteryTime; // seconds
 
@@ -64,7 +64,7 @@ struct MapSelfConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("mapSelf.TickTime");
-		Debug = pt.get<bool>("mapSelf.Debug");
+		Debug = pt.get<int>("mapSelf.Debug");
 		MapSize = pt.get<long>("mapSelf.MapSize");
 		BatteryTime = pt.get<float>("UAV.BatteryTime");
 

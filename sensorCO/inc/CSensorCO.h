@@ -35,14 +35,14 @@ namespace rur {
 struct SensorCOConfig
 {
 	long TickTime;
-	bool Debug;
+	int Debug;
 
 	void load(const std::string &filename)
 	{
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("sensorCO.TickTime");
-		Debug = pt.get<bool>("sensorCO.Debug");
+		Debug = pt.get<int>("sensorCO.Debug");
 	}
 };
 

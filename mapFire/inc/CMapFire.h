@@ -35,7 +35,7 @@
 struct MapFireConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	long MapSize; // bytes
 
 	void load(const std::string &filename)
@@ -43,7 +43,7 @@ struct MapFireConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("mapFire.TickTime");
-		Debug = pt.get<bool>("mapFire.Debug");
+		Debug = pt.get<int>("mapFire.Debug");
 		MapSize = pt.get<long>("mapFire.MapSize");
 	}
 };

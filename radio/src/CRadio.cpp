@@ -115,8 +115,11 @@ void CRadio::Tick()
 	VecMsg = readFromMsgPlanner(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << get_cur_1ms() << " RADIO " << ModuleId << " from MsgPlanner: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << get_cur_1ms() << " RADIO " << ModuleId << " from MsgPlanner: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 		// Should have more protocol here?
 		WriteToOutBuffer(VecMsg);
 		VecMsg->clear();
@@ -185,7 +188,8 @@ bool CRadio::SynchronizeUart(RadioMsgHeader& msgHdr)
 	if (Serial->available() < 2*sizeof(RadioMsgHeader))
 		return false;
 
-	std::cout << "Synchronizing the radio stream on start of the message with magic header.." << std::endl;
+	if (config.Debug > 0)
+		std::cout << "Synchronizing the radio stream on start of the message with magic header.." << std::endl;
 	char chr;
 	RadioMsgHeaderType header;
 	Serial->read((char*)&header, sizeof(RadioMsgHeaderType));
@@ -221,7 +225,8 @@ bool CRadio::ReadUart()
 	{
 		if (!SynchronizeUart(LastReadHeader))
 			return false;
-		std::cout << "Synched, header=" << LastReadHeader << std::endl;
+		if (config.Debug > 0)
+			std::cout << "Synched, header=" << LastReadHeader << std::endl;
 	}
 
 	// Check if we need to read a new header
@@ -232,7 +237,8 @@ bool CRadio::ReadUart()
 			Serial->read((char*)&LastReadHeader, sizeof(RadioMsgHeader));
 			if (LastReadHeader.Header != MYRIANED_HEADER)
 			{
-				std::cout << "Error header doesn't match, header=" << LastReadHeader << std::endl;
+				if (config.Debug > 0)
+					std::cout << "Error header doesn't match, header=" << LastReadHeader << std::endl;
 				Synchronize = true;
 				return false;
 			}
@@ -240,7 +246,8 @@ bool CRadio::ReadUart()
 		else
 			return false;
 		LastReadHeaderUsed = false;
-		std::cout << "Read new header: " << LastReadHeader << std::endl;
+		if (config.Debug > 0)
+			std::cout << "Read new header: " << LastReadHeader << std::endl;
 	}
 
 	// Header is read successfully, now read the data
@@ -257,7 +264,8 @@ bool CRadio::ReadUart()
 
 	RadioMsg msg;
 	msg.Unpack(data);
-	std::cout << get_cur_1ms() << " Received: " << msg << std::endl;
+	if (config.Debug > 0)
+		std::cout << get_cur_1ms() << " Received: " << msg << std::endl;
 	ReceiveBuffer.push_back(msg);
 	return true;
 }
@@ -302,7 +310,8 @@ bool CRadio::ReadData(char* data, size_t size)
 		return false;
 	}
 	if (chr != StopByte) {
-		std::cout << "StopByte error: " << +chr << " (should be 0x16=22) " << std::endl;
+		if (config.Debug > 0)
+			std::cout << "StopByte error: " << +chr << " (should be 0x16=22) " << std::endl;
 		return false;
 	}
 	return true;
@@ -319,7 +328,7 @@ void CRadio::WriteData(const char* data, ssize_t length) {
 	uint8_t dataSize = 28;
 	Serial->write((char*)&dataSize, 1);
 	Serial->write(data, length);
-	if (config.Debug)
+	if (config.Debug > 1)
 	{
 		std::cout << get_cur_1ms() << " written: " << +header << std::endl;
 		std::cout << get_cur_1ms() << " written: " << +dataSize << std::endl;
@@ -335,7 +344,7 @@ void CRadio::WriteData(const char* data, ssize_t length) {
 	Serial->write((char*)&crcMsb, 1);
 	Serial->write((char*)&crcLsb, 1);
 	Serial->write((char*)&StopByte, 1);
-	if (config.Debug)
+	if (config.Debug > 1)
 	{
 		std::cout << get_cur_1ms() << " written: " << +crcMsb << std::endl;
 		std::cout << get_cur_1ms() << " written: " << +crcLsb << std::endl;

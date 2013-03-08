@@ -131,8 +131,11 @@ void CMapFire::Tick()
 	VecMsg = readFromFireDetector(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "MapFire " << ModuleId << " from Detector: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << "MapFire " << ModuleId << " from Detector: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		VecMsgType::iterator it = VecMsg->begin();
 		while (it != VecMsg->end())
@@ -159,8 +162,11 @@ void CMapFire::Tick()
 	VecMsg = readFromRadio(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "MapFire " << ModuleId << " from Radio: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << "MapFire " << ModuleId << " from Radio: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		VecMsgType::iterator it = VecMsg->begin();
 		while (it != VecMsg->end())

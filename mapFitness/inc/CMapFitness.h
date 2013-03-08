@@ -41,7 +41,7 @@ namespace rur {
 struct MapFitnessConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	long MapSize; // bytes
 
 	void load(const std::string &filename)
@@ -49,7 +49,7 @@ struct MapFitnessConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("mapFitness.TickTime");
-		Debug = pt.get<bool>("mapFitness.Debug");
+		Debug = pt.get<int>("mapFitness.Debug");
 		MapSize = pt.get<long>("mapFitness.MapSize");
 	}
 };

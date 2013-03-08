@@ -37,7 +37,7 @@ namespace rur {
 struct FitnessGenStaticConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	long IntervalTime;
 //	float MaxX, MaxY; // Size of the field
 	float WallAmplitude; // Value of wall at 3 sigma
@@ -49,7 +49,7 @@ struct FitnessGenStaticConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("fitnessGenStatic.TickTime");
-		Debug = pt.get<bool>("fitnessGenStatic.Debug");
+		Debug = pt.get<int>("fitnessGenStatic.Debug");
 		IntervalTime = pt.get<long>("fitnessGenStatic.IntervalTime");
 //		MaxX = pt.get<float>("field.MaxX");
 //		MaxY = pt.get<float>("field.MaxY");

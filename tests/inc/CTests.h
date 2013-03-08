@@ -66,14 +66,14 @@ struct BitTest
 struct TestConfig
 {
 	long TickTime;
-	bool Debug;
+	int Debug;
 
 	void load(const std::string &filename)
 	{
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("test.TickTime");
-		Debug = pt.get<bool>("test.Debug");
+		Debug = pt.get<int>("test.Debug");
 //		BOOST_FOREACH(ptree::value_type &v, pt.get_child("debug.modules"))
 //			m_modules.insert(v.second.data());
 	}

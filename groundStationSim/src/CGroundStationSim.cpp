@@ -75,8 +75,11 @@ void CGroundStationSim::Tick()
 	VecMsg = readSim(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "GroundStation " << ModuleId << " from SIM: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << "GroundStation " << ModuleId << " from SIM: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		VecMsgType::iterator it = VecMsg->begin();
 		while (it != VecMsg->end())
@@ -98,7 +101,8 @@ void CGroundStationSim::Tick()
 					RadioRoundState = RADIO_STATE_ROUND_SENDRECEIVE;
 					RadioMsg bmsg;
 					it = FromCont(bmsg, it, VecMsg->end());
-					std::cout << "GroundStation " << ModuleId << " received bmsg: " << bmsg << std::endl;
+					if (config.Debug > 0)
+						std::cout << "GroundStation " << ModuleId << " received bmsg: " << bmsg << std::endl;
 					ReceiveBuffer.push_back(bmsg);
 					break;
 				}
@@ -110,8 +114,11 @@ void CGroundStationSim::Tick()
 
 					VecMsgType vecMsg;
 					vecMsg.push_back(PROT_SIMSTAT_ACK);
-					std::cout << "to sim: ";
-					dobots::print(vecMsg.begin(), vecMsg.end());
+					if (config.Debug > 0)
+					{
+						std::cout << "to sim: ";
+						dobots::print(vecMsg.begin(), vecMsg.end());
+					}
 					writeToSim(vecMsg);
 
 					// Fill outbuffer with "new" msg
@@ -128,8 +135,11 @@ void CGroundStationSim::Tick()
 		{
 			VecMsgType vecMsg;
 			vecMsg.push_back(PROT_SIMSTAT_ACK);
-			std::cout << "to sim: ";
-			dobots::print(vecMsg.begin(), vecMsg.end());
+			if (config.Debug > 0)
+			{
+				std::cout << "to sim: ";
+				dobots::print(vecMsg.begin(), vecMsg.end());
+			}
 			writeToSim(vecMsg);
 		}
 	}
@@ -137,8 +147,11 @@ void CGroundStationSim::Tick()
 	VecMsg = readFromGuiInterface(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "RADIO " << ModuleId << " from GuiInterface: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << "RADIO " << ModuleId << " from GuiInterface: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 		// Should have more protocol here?
 
 		VecMsgType::iterator it = VecMsg->begin();
@@ -181,7 +194,8 @@ void CGroundStationSim::ReadReceiveBuffer()
 					if ((uav.UavId > -1) && (uav.UavId != UavId))
 					{
 						uav.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Pos);
-						std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
+						if (config.Debug > 0)
+							std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i] << " === " << uav << std::endl;
 						VecMsgType vecMsg;
 						vecMsg.push_back(PROT_RADIO_MSG_RELAY);
 						ToCont(ReceiveBuffer.front().Data.Data[i], vecMsg);
@@ -202,7 +216,8 @@ void CGroundStationSim::ReadReceiveBuffer()
 					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[0]);
 					if (fire.UavId > -1)
 					{
-						std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[0] << std::endl;
+						if (config.Debug > 0)
+							std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[0] << std::endl;
 
 						vecMsg.push_back(PROT_FIRE_STRUCT);
 						ToCont(fire, vecMsg);
@@ -217,7 +232,8 @@ void CGroundStationSim::ReadReceiveBuffer()
 					fire.FromRadioMsg(ReceiveBuffer.front().Data.Data[i].Fires.Fire[1]);
 					if (fire.UavId > -1)
 					{
-						std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[1] << std::endl;
+						if (config.Debug > 0)
+							std::cout << "Received: " << ReceiveBuffer.front().Data.Data[i].Fires.Fire[1] << std::endl;
 
 						vecMsg.clear();
 						vecMsg.push_back(PROT_FIRE_STRUCT);
@@ -252,14 +268,18 @@ void CGroundStationSim::WriteToRadio()
 		ToCont(SendBuffer.front(), vecMsg);
 		SendBuffer.pop_front();
 	}
-	std::cout << "to sim: ";
-	dobots::print(vecMsg.begin(), vecMsg.end());
+	if (config.Debug > 0)
+	{
+		std::cout << "to sim: ";
+		dobots::print(vecMsg.begin(), vecMsg.end());
+	}
 	writeToSim(vecMsg);
 }
 
 void CGroundStationSim::WriteToOutBuffer(RadioMsg& msg)
 {
-	std::cout << "Requested msg to be sent: " << msg << std::endl;
+	if (config.Debug > 0)
+		std::cout << "Requested msg to be sent: " << msg << std::endl;
 
 	SendBuffer.push_back(msg);
 }

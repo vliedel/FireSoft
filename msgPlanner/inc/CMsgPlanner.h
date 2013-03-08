@@ -37,7 +37,7 @@ namespace rur {
 struct MsgPlannerConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	int RelayNumCmdMsg; // Number of times to relay a command message
 
 	void load(const std::string &filename)
@@ -45,7 +45,7 @@ struct MsgPlannerConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("msgPlanner.TickTime");
-		Debug = pt.get<bool>("msgPlanner.Debug");
+		Debug = pt.get<int>("msgPlanner.Debug");
 		RelayNumCmdMsg = pt.get<int>("msgPlanner.RelayNumCmdMsg");
 	}
 };

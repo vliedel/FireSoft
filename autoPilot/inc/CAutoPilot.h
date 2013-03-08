@@ -37,7 +37,7 @@ namespace rur {
 struct AutoPilotConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	std::string PortName;
 	int SerialSpeed;
 //	AutoPilotMsgField FieldGPS;
@@ -46,6 +46,8 @@ struct AutoPilotConfig
 	long WPBoundReqIntervalTime; // ms
 	long SetModeIntervalTime; // ms
 	long SetLandingIntervalTime; // ms
+	std::string PathFileName;
+	std::string PlanFileName;
 
 	float OriginX; // Mercator coordinates
 	float OriginY; // Mercator coordinates
@@ -61,7 +63,7 @@ struct AutoPilotConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("autoPilot.TickTime");
-		Debug = pt.get<bool>("autoPilot.Debug");
+		Debug = pt.get<int>("autoPilot.Debug");
 		PortName = pt.get<std::string>("autoPilot.PortName");
 		SerialSpeed = pt.get<int>("autoPilot.SerialSpeed");
 //		FieldGPS.Origin.GpsLat	= pt.get<float>("field.Origin.GpsLat");
@@ -79,8 +81,10 @@ struct AutoPilotConfig
 		SensorReqIntervalTime		= pt.get<long>("autoPilot.SensorReqIntervalTime");
 		WPStatustReqIntervalTime	= pt.get<long>("autoPilot.WPStatustReqIntervalTime");
 		WPBoundReqIntervalTime		= pt.get<long>("autoPilot.WPBoundReqIntervalTime");
-		SetModeIntervalTime		= pt.get<long>("autoPilot.SetModeIntervalTime");
+		SetModeIntervalTime			= pt.get<long>("autoPilot.SetModeIntervalTime");
 		SetLandingIntervalTime		= pt.get<long>("autoPilot.SetLandingIntervalTime");
+		PathFileName 				= pt.get<std::string>("autoPilot.PathFileName");
+		PlanFileName 				= pt.get<std::string>("autoPilot.PlanFileName");
 
 		OriginX = pt.get<float>("field.OriginX");
 		OriginY = pt.get<float>("field.OriginY");
@@ -125,6 +129,8 @@ class CAutoPilot : public autoPilot
 		uint32_t LastWpId;
 		//uint32_t CurWayPointIds[MAPSELF_MAX_WAYPOINTS];
 
+		bool logPath;
+		bool logPlan;
 		std::ofstream PathOutFile;
 		std::ofstream PlanOutFile;
 

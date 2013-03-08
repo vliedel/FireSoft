@@ -45,7 +45,7 @@ struct CoverageSelfTrace
 struct FitnessGenCoverageConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	long IntervalTime; // ms
 	float CoverageAmplitude;
 	float CoverageSigmaX;
@@ -63,7 +63,7 @@ struct FitnessGenCoverageConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("fitnessGenCoverage.TickTime");
-		Debug = pt.get<bool>("fitnessGenCoverage.Debug");
+		Debug = pt.get<int>("fitnessGenCoverage.Debug");
 		IntervalTime = pt.get<long>("fitnessGenCoverage.IntervalTime");
 		CoverageAmplitude	= pt.get<float>("fitness.CoverageAmplitude");
 		CoverageSigmaX		= pt.get<float>("fitness.CoverageSigmaX");

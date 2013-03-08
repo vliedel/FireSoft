@@ -36,7 +36,7 @@ namespace rur {
 struct SimConfig
 {
 	long TickTime; // us
-	bool Debug;
+	int Debug;
 	float TimeStep;
 	float RadioRoundTime;
 	float RadioRange;
@@ -50,7 +50,7 @@ struct SimConfig
 		boost::property_tree::ptree pt;
 		read_json(filename, pt);
 		TickTime = pt.get<long>("sim.TickTime");
-		Debug = pt.get<bool>("sim.Debug");
+		Debug = pt.get<int>("sim.Debug");
 		TimeStep = pt.get<float>("sim.TimeStep");
 		RadioRoundTime = pt.get<float>("sim.RadioRoundTime");
 		RadioRange = pt.get<float>("UAV.RadioRange");

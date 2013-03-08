@@ -85,8 +85,11 @@ void CAutoPilotSim::Tick()
 	VecMsg = readSimCommand(false);
 	if (!VecMsg->empty())
 	{
-		std::cout << "AP " << UavId << " from Sim: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << "AP " << UavId << " from Sim: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		// Reply with VecMsgReply, the different commands can add data to VecMsgReply
 		VecMsgReply.clear();
@@ -195,7 +198,8 @@ void CAutoPilotSim::Tick()
 				case PROT_AP_SET_WAYPOINTS:
 				{
 					it = FromCont(WayPoints, it, VecMsg->end());
-					std::cout << "Waypoints:" << WayPoints << std::endl;
+					if (config.Debug > 0)
+						std::cout << "Waypoints:" << WayPoints << std::endl;
 					break;
 				}
 			}
@@ -308,7 +312,8 @@ void CAutoPilotSim::TimeStep(float dt)
 		{
 			// Let's land
 			LandStraight = true;
-			std::cout << "Landing " << Landing.Heading.angle() << std::endl;
+			if (config.Debug > 0)
+				std::cout << "Landing " << Landing.Heading.angle() << std::endl;
 //			Heading = atan2(Geom.Pos.y()-Landing.Pos.y(), Geom.Pos.x()-Landing.Pos.x()) + M_PI;
 //			if (Heading > M_PI)
 //				Heading -= 2*M_PI;
@@ -324,7 +329,8 @@ void CAutoPilotSim::TimeStep(float dt)
 			float dy = Geom.Pos.y() - Landing.Pos.y();
 			if (sqrt(dx*dx+dy*dy) < 10)
 			{
-				std::cout << "Landed" << std::endl;
+				if (config.Debug > 0)
+					std::cout << "Landed" << std::endl;
 				Geom.Pos.z() = 0;
 				State = UAVSTATE_LANDED;
 				vecMsg.clear();
@@ -336,7 +342,8 @@ void CAutoPilotSim::TimeStep(float dt)
 
 		else
 		{
-			std::cout << "spiral downwards" << std::endl;
+			if (config.Debug > 0)
+				std::cout << "spiral downwards" << std::endl;
 			WayPoint wp;
 			wp.to = Landing.Pos;
 			wp.to.z() = 50;
@@ -369,13 +376,17 @@ void CAutoPilotSim::TimeStep(float dt)
 	vecMsg.push_back(PROT_MAPSELF_DATAIN_WAYPOINTS);
 	writeToMapSelf(vecMsg);
 
-	std::cout << get_cur_1ms();
+	if (config.Debug > 0)
+		std::cout << get_cur_1ms();
 	if (!WayPoints.empty())
 	{
-		std::cout << " pos=[" << Geom.Pos.transpose() << "]";
-		std::cout << " heading=" << Heading;
-		std::cout << " wp=[" << WayPoints[0] << "]";
-		std::cout << " carrot=[" << carrot.transpose() << "]" << std::endl;
+		if (config.Debug > 0)
+		{
+			std::cout << " pos=[" << Geom.Pos.transpose() << "]";
+			std::cout << " heading=" << Heading;
+			std::cout << " wp=[" << WayPoints[0] << "]";
+			std::cout << " carrot=[" << carrot.transpose() << "]" << std::endl;
+		}
 
 		// Calculate roll angle from given carrot
 		// Roll angle
@@ -396,7 +407,8 @@ void CAutoPilotSim::TimeStep(float dt)
 	}
 	else
 	{
-		std::cout << " Error: no waypoints to follow!" << std::endl;
+		if (config.Debug > 0)
+			std::cout << " Error: no waypoints to follow!" << std::endl;
 		RollAngle.angle() = 0;
 	}
 
@@ -562,7 +574,8 @@ bool CAutoPilotSim::GetCarrotCircle(Position& carrot, const WayPoint& wp, const 
 		u.x() = r*cos(theta+alpha+preBankAngle);
 		u.y() = r*sin(theta+alpha+preBankAngle);
 
-		std::cout << " rp=" << px*px+py*py << " theta=" << theta << " alpha=" << alpha << std::endl;
+		if (config.Debug > 1)
+			std::cout << " rp=" << px*px+py*py << " theta=" << theta << " alpha=" << alpha << std::endl;
 
 	}
 	// If the UAV is outside the circle, place carrot on circle so that the line to the UAV is tangent

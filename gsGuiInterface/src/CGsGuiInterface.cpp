@@ -48,7 +48,8 @@ void CGsGuiInterface::Init(std::string module_id)
 
 bool CGsGuiInterface::Connect()
 {
-	std::cout << "Connecting..." << std::endl;
+	if (config.Debug > 0)
+		std::cout << "Connecting..." << std::endl;
 	boost::asio::io_service io_service;
 	boost::asio::ip::tcp::resolver resolver(io_service);
 	boost::asio::ip::tcp::resolver::query query(boost::asio::ip::tcp::v4(), config.Host, config.Port);
@@ -58,12 +59,14 @@ bool CGsGuiInterface::Connect()
 	Socket->connect(*iterator, ec);
 	if (ec)
 	{
-		std::cout << "Failed to connect" << std::endl;
+		if (config.Debug > 0)
+			std::cout << "Failed to connect" << std::endl;
 		delete Socket;
 		Socket = NULL;
 		return false;
 	}
-	std::cout << "Connected" << std::endl;
+	if (config.Debug > 0)
+		std::cout << "Connected" << std::endl;
 
 	// Init state after connecting
 	ReadState = READSTATE_SIZE;
@@ -176,8 +179,11 @@ void CGsGuiInterface::Tick()
 
 	if (!VecMsg->empty())
 	{
-		std::cout << "GsGuiInterface from GroundStation: ";
-		dobots::print(VecMsg->begin(), VecMsg->end());
+		if (config.Debug > 0)
+		{
+			std::cout << "GsGuiInterface from GroundStation: ";
+			dobots::print(VecMsg->begin(), VecMsg->end());
+		}
 
 		std::stringstream ssJson;
 		std::stringstream ssOutput;
@@ -205,12 +211,14 @@ void CGsGuiInterface::Tick()
 			ssTime << bufTime << "." << tp.tv_nsec/1000 << "Z";
 
 			int type = *it++;
-			std::cout << "Type=" << type << std::endl;
+			if (config.Debug > 0)
+				std::cout << "Type=" << type << std::endl;
 			switch (type)
 			{
 				case PROT_RADIO_MSG_RELAY_POS: default:
 				{
-					std::cout << "Send position/state message" << std::endl;
+					if (config.Debug > 0)
+						std::cout << "Send position/state message" << std::endl;
 					it = FromCont(PosMsg, it, VecMsg->end());
 					Uav.FromRadioMsg(PosMsg);
 
@@ -257,7 +265,8 @@ void CGsGuiInterface::Tick()
 				}
 				case PROT_RADIO_MSG_RELAY_FIRE:
 				{
-					std::cout << "Send fire message" << std::endl;
+					if (config.Debug > 0)
+						std::cout << "Send fire message" << std::endl;
 					it = FromCont(FireMsg, it, VecMsg->end());
 					FireStruct fire;
 					fire.FromRadioMsg(FireMsg);
@@ -304,7 +313,8 @@ void CGsGuiInterface::Tick()
 				ssOutput << config.DataType << ssJson.str();
 #endif
 				//std::cout << "Send this: " << ssOutput.str() << std::dec << std::endl;
-				std::cout << "Send this: " << ssOutput.str() << std::endl;
+				if (config.Debug > 0)
+					std::cout << "Send this: " << ssOutput.str() << std::endl;
 				//boost::asio::write(*Socket, boost::asio::buffer(ssOutput.str(), ssOutput.str().size()));
 				if (!Write(boost::asio::buffer(ssOutput.str(), ssOutput.str().size())))
 					break; // Break out of while loop
@@ -344,9 +354,12 @@ void CGsGuiInterface::ReadGui()
 				BytesToRead -= bytesRead;
 				if (BytesToRead == 0)
 				{
-					std::cout << "Size = " << Size << std::endl;
 					JsonSize = atoi(Size) - HEADER_SIZE;
-					std::cout << "Json size: " << JsonSize << std::endl;
+					if (config.Debug > 1)
+					{
+						std::cout << "Size = " << Size << std::endl;
+						std::cout << "Json size: " << JsonSize << std::endl;
+					}
 					BytesToRead = HEADER_SIZE;
 					ReadState = READSTATE_HEADER;
 				}
@@ -364,9 +377,12 @@ void CGsGuiInterface::ReadGui()
 				BytesToRead -= bytesRead;
 				if (BytesToRead == 0)
 				{
-					std::cout << "Header = ";
-					std::cout.write(Header, HEADER_SIZE);
-					std::cout << std::endl;
+					if (config.Debug > 1)
+					{
+						std::cout << "Header = ";
+						std::cout.write(Header, HEADER_SIZE);
+						std::cout << std::endl;
+					}
 					if (!strcmp(Header, "0001"))
 						std::cout << "Error wrong msg type" << std::endl;
 					BytesToRead = JsonSize;
@@ -386,9 +402,12 @@ void CGsGuiInterface::ReadGui()
 				BytesToRead -= bytesRead;
 				if (BytesToRead == 0)
 				{
-					std::cout << "Json:" << std::endl;
-					std::cout.write(Json, JsonSize);
-					std::cout << std::endl;
+					if (config.Debug > 1)
+					{
+						std::cout << "Json:" << std::endl;
+						std::cout.write(Json, JsonSize);
+						std::cout << std::endl;
+					}
 					BytesToRead = SIZE_SIZE;
 					ReadState = READSTATE_SIZE;
 
@@ -406,7 +425,8 @@ void CGsGuiInterface::ReadGui()
 					}
 					std::string timeStamp = pt.get<std::string>("timestamp");
 					int version = pt.get<int>("version");
-					std::cout << "cmd_type=cmd" << " timestamp=" << timeStamp << " version=" << version << std::endl;
+					if (config.Debug > 1)
+						std::cout << "cmd_type=cmd" << " timestamp=" << timeStamp << " version=" << version << std::endl;
 
 					gsCmd.UavId = pt.get<int>("uav_id");
 					gsCmd.MsgId = pt.get<int>("message_id");
@@ -426,7 +446,8 @@ void CGsGuiInterface::ReadGui()
 
 					RadioMsgRelayCmd cmdMsg;
 					gsCmd.ToRadioMsg(cmdMsg);
-					std::cout << "gsCmd:" << gsCmd << " = " << cmdMsg;
+					if (config.Debug > 0)
+						std::cout << "gsCmd:" << gsCmd << " = " << cmdMsg;
 
 					VecMsgType vecMsg;
 					vecMsg.push_back(RADIO_MSG_RELAY_CMD);
