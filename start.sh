@@ -24,7 +24,7 @@ if [ $3 ]; then
 	NUM_RADIO=$3
 fi
 
-SIM_TIME=600
+SIM_TIME=3600
 if [ $4 ]; then
 	SIM_TIME=$4
 fi
@@ -41,6 +41,9 @@ fi
 if [ $6 -a $6 = "2" ]; then
 	GS_START="2"
 fi
+
+# First stop all modules
+./stop.sh
 
 # Check if the output dir exists, create if not
 if [ ! -e output ]; then
