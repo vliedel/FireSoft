@@ -129,11 +129,13 @@
 	"gsGuiInterface":
 	{
 		"TickTime": 1000,
-		"Debug": 1,
+		"Debug": 2,
 		"_Host": "10.10.1.109",
 		"_Port": "13000",
 		"Host": "127.0.0.1",
 		"Port": "8082",
+		"__Host": "82.161.90.185",
+		"__Port": "50013",
 		"DataType": "0001"
 	},
 	"gsVisualizer":
@@ -196,7 +198,8 @@
 	"sensorCO":
 	{
 		"TickTime": 10000,
-		"Debug": 0
+		"Debug": 0,
+		"PortName": "/dev/ttyO1"
 	},
 	"sim":
 	{
