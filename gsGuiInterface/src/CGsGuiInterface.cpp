@@ -27,6 +27,9 @@
 #include "CTime.h"
 #include <ctime>
 
+//#define DUMMY
+#define NODEJSSERVER
+
 using namespace rur;
 
 CGsGuiInterface::~CGsGuiInterface()
@@ -44,6 +47,7 @@ void CGsGuiInterface::Init(std::string module_id)
 //	Header[HEADER_SIZE] = 0; // To make it a nice string
 
 	Connect();
+
 }
 
 bool CGsGuiInterface::Connect()
@@ -145,9 +149,6 @@ bool CGsGuiInterface::Available(size_t& numBytes)
 }
 
 static char tick = 0;
-
-//#define DUMMY
-#define NODEJSSERVER
 
 void CGsGuiInterface::Tick()
 {
@@ -415,15 +416,16 @@ void CGsGuiInterface::ReadGui()
 					boost::property_tree::ptree pt;
 					std::stringstream ss;
 					ss.write(Json, JsonSize);
+
 					read_json(ss, pt);
 
 					GsCmdStruct gsCmd;
-					if (pt.get<std::string>("message_type") != "cmd")
+					if (pt.get<std::string>("type") != "cmd")
 					{
 						std::cout << "Error: wrong json type" << std::endl;
 						return;
 					}
-					std::string timeStamp = pt.get<std::string>("timestamp");
+					std::string timeStamp = pt.get<std::string>("time_stamp");
 					int version = pt.get<int>("version");
 					if (config.Debug > 1)
 						std::cout << "cmd_type=cmd" << " timestamp=" << timeStamp << " version=" << version << std::endl;
