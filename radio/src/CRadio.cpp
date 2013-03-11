@@ -77,7 +77,7 @@ void CRadio::Power(bool enable) {
 	/* Get ENA_VCOM as gpio */
 	fd_pwr = open("/sys/class/gpio/gpio38/value", O_WRONLY);
 	if(fd_pwr > 0)
-		std::cout << "ENA_VCOM succesfully opened" << std::endl;
+		std::cout << "ENA_VCOM successfully opened" << std::endl;
 
 	if (enable) {
 		// Power on the Vitelec PCB (active low pin!)
