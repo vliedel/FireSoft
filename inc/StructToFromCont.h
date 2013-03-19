@@ -275,6 +275,9 @@ struct SfC<InputForwardIter, OutputForwardIter, UavGeomStruct>
 		first = SfC<InputForwardIter, OutputForwardIter, Rotation2DType>::FromCont(struc.Roll, first, last);
 		first = SfC<InputForwardIter, OutputForwardIter, Rotation2DType>::FromCont(struc.Pitch, first, last);
 		struc.RotationUpToDate = *first++;
+		// Long is stored in 2 floats
+		struc.TimeStamp = (long(*first++) << 16) | long(*first++);
+		struc.GpsTimeStamp = (long(*first++) << 16) | long(*first++);
 		return first;
 	}
 };
@@ -293,6 +296,11 @@ struct StC<SequenceContainer, UavGeomStruct>
 		StC<SequenceContainer, Rotation2DType>::ToCont(struc.Roll, cont);
 		StC<SequenceContainer, Rotation2DType>::ToCont(struc.Pitch, cont);
 		cont.push_back(struc.RotationUpToDate);
+		// Store long in 2 floats, else precision will be lost
+		cont.push_back((struc.TimeStamp >> 16) & 0x000000000000FFFF);
+		cont.push_back(struc.TimeStamp & 0x000000000000FFFF);
+		cont.push_back((struc.GpsTimeStamp >> 16) & 0x000000000000FFFF);
+		cont.push_back(struc.GpsTimeStamp & 0x000000000000FFFF);
 	}
 };
 

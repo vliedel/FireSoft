@@ -62,6 +62,9 @@ void CTests::Init(std::string module_id)
 	config.load("config.json");
 //int id, FitnessSource source, Position& center, float amplitude, float sigmaX, float sigmaY, float rotation, float minVal=0, float maxVal=0)
 
+	std::cout << "sizeof(long)=" << sizeof(long) << " max=" << LONG_MAX << std::endl;
+	std::cout << "sizeof(float)=" << sizeof(float) << std::endl;
+
 	srand(get_cur_1ms());
 
 	int repeats = 100000;
@@ -80,7 +83,7 @@ void CTests::Init(std::string module_id)
 	for (int i=0; i<repeats; ++i)
 		f = rand()%1000/100-10;
 	std::cout << "none took " << get_cur_1us() - start << " us" << std::endl;
-	exit(0);
+//	exit(0);
 
 //	srand(get_cur_1ms());
 //	int repeats = 100*1000;
@@ -312,16 +315,16 @@ void CTests::Init(std::string module_id)
 //	Check<Rotation2DType>(rotation2DType, vec, vec2, "Rotation2DType");
 
 //	int geomSize = posSize+speedSize+rotSize;
-	int geomSize = posSize+speedSize+speedSize+rotMatSize+4*rot2DSize+1;
+	int geomSize = posSize+speedSize+speedSize+rotMatSize+4*rot2DSize+5; // longs are both 2 floats
 	vec.clear();
 	for (int i=0; i<geomSize; ++i)
 		vec.push_back(i);
-	vec[geomSize-1] = 1; // bool RotationUpToDate
+	vec[geomSize-5] = 1; // bool RotationUpToDate
 	UavGeomStruct uavGeomStruct;
 	Check<UavGeomStruct>(uavGeomStruct, vec, vec2, "UavGeomStruct");
 
 
-	int wayPointSize = 12;
+	int wayPointSize = 13;
 	vec.clear();
 	for (int i=0; i<wayPointSize; ++i)
 		vec.push_back(i);
@@ -515,6 +518,7 @@ void CTests::Init(std::string module_id)
 	std::cout << "three ints:" << std::endl << v3 << std::endl;
 	std::cout << "four floats:" << std::endl << v4/3 << std::endl;
 
+	exit(0);
 
 	// Testing the serial connection, act as autopilot
 	std::string devName = "/dev/ttyUSB" + module_id;

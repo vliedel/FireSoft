@@ -68,6 +68,8 @@ class UavGeomStruct
 		Rotation2DType Roll;
 		Rotation2DType Pitch;
 		bool RotationUpToDate;
+		long TimeStamp; // ms?
+		long GpsTimeStamp; // ms?
 
 		UavGeomStruct(): Heading(0), Yaw(0), Roll(0), Pitch(0), RotationUpToDate(false) {}
 
@@ -92,7 +94,7 @@ class UavGeomStruct
 			os << "Pos=" << struc.Pos.transpose() << " Speed=" << struc.GroundSpeed << " VerticalSpeed=" << struc.VerticalSpeed;
 			//os << " Rotation=" << struc.Rot;
 			os << " Heading=" << struc.Heading.angle() << " Yaw=" << struc.Yaw.angle() << " Roll=" << struc.Roll.angle() << " Pitch=" << struc.Pitch.angle();
-			os << " RotationUpToDate=" << struc.RotationUpToDate;
+			os << " RotationUpToDate=" << struc.RotationUpToDate << " TimeStamp=" << struc.TimeStamp << " GpsTimeStamp=" << struc.GpsTimeStamp;
 			os << " RotMat=" << struc.RotMat;
 			return os;
 		}
@@ -161,13 +163,16 @@ class UavStruct
 			Geom.Pitch.angle() = 0; // Assumption
 			Geom.RotationUpToDate = false;
 
+			Geom.TimeStamp = 0; // Any better ideas is this ever used at all?
+			Geom.GpsTimeStamp = 0;
+
 			Position from(Geom.Pos);
 			for (int i=0; i<UAVSTRUCT_NEXTWP_NUM; ++i)
 			{
 				WpNext[i].from = from;
-				// X and Y are -63 to 63, convert to -100 to 100
-				WpNext[i].to.x() = from.x() + msg.DX[i] * 100/63;
-				WpNext[i].to.y() = from.y() + msg.DY[i] * 100/63;
+				// X and Y are -63 to 63, convert to -200 to 200
+				WpNext[i].to.x() = from.x() + msg.DX[i] * 200/63;
+				WpNext[i].to.y() = from.y() + msg.DY[i] * 200/63;
 				//WpNext.to.z() = from.z() + msg.DZ[i];
 				WpNext[i].to.z() = from.z(); // Assumption
 				WpNext[i].wpMode = WP_LINE;
@@ -218,18 +223,18 @@ class UavStruct
 						WpNext[i].GetPath(posList, distLeft, 22*3, &to); // TODO: magic number
 						for (int j=0; i<UAVSTRUCT_NEXTWP_NUM; ++i, ++j)
 						{
-							// X and Y are -100 to 100, convert to -63 to 63
-							msg.DX[i] = std::min(std::max((int)(posList[j].x() * 63/100),-63),63);
-							msg.DY[i] = std::min(std::max((int)(posList[j].y() * 63/100),-63),63);
+							// X and Y are -200 to 200, convert to -63 to 63
+							msg.DX[i] = std::min(std::max((int)(posList[j].x() * 63/200),-63),63);
+							msg.DY[i] = std::min(std::max((int)(posList[j].y() * 63/200),-63),63);
 						}
 						break;
 					}
 					case WP_LINE:
 					case WP_ARC:
 						WpNext[i].GetEndPos(to);
-						// X and Y are -100 to 100, convert to -63 to 63
-						msg.DX[i] = std::min(std::max((int)((to.x() - from.x()) * 63/100),-63),63);
-						msg.DY[i] = std::min(std::max((int)((to.y() - from.y()) * 63/100),-63),63);
+						// X and Y are -200 to 200, convert to -63 to 63
+						msg.DX[i] = std::min(std::max((int)((to.x() - from.x()) * 63/200),-63),63);
+						msg.DY[i] = std::min(std::max((int)((to.y() - from.y()) * 63/200),-63),63);
 						break;
 					default:
 						msg.DX[i] = 0;

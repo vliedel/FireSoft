@@ -254,7 +254,7 @@ bool CAutoPilot::SynchronizeUart(AutoPilotMsgHeader& msgHdr)
 		}
 		//Serial->read(&chr, 1);
 		//header = (header << 8) | chr;
-		header = (header << 8) | msgType;
+		header = (header << 8) | (AutoPilotMsgHeaderType)msgType;
 		Serial->read((char*)&msgType, 1);
 		if (config.Debug > 0)
 			std::cout << " header=" << header << " msgType=" << +msgType;
@@ -335,6 +335,10 @@ void CAutoPilot::ReadUart()
 		geom.Yaw.angle() = data.Yaw;
 		geom.Pitch.angle() = data.Pitch;
 		geom.Roll.angle() = data.Roll;
+
+		geom.TimeStamp = get_cur_1ms();
+		geom.GpsTimeStamp = LastReadHeader.TimeStamp;
+
 		std::vector<float> vecMsg;
 		vecMsg.clear();
 		ToCont(geom, vecMsg);
