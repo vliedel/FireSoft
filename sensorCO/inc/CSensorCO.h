@@ -71,6 +71,8 @@ class CSensorCO : public sensorCO
 	char ReadBuf[SENSOR_CO_READBUF_SIZE];
 	ESensorCOState State;
 
+	void Write(const char c);
+
 	public:
 		~CSensorCO();
 		void Init(std::string module_id);
