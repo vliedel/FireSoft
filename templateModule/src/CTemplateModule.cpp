@@ -39,5 +39,6 @@ void CTemplateModule::Init(std::string module_id)
 
 void CTemplateModule::Tick()
 {
+	templateModule::Tick();
 	usleep(config.TickTime);
 }
