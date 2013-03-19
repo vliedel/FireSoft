@@ -5,8 +5,8 @@
 		"_OriginY": 9000.0,
 		"__OriginX": 359286.0,
 		"__OriginY": 4812590.0,
-		"OriginX": 594624.0,
-		"OriginY": 5760490.0,
+		"OriginX": 593400.0,
+		"OriginY": 5759700.0,
 		"AreaOriginX": 1000.0,
 		"AreaOriginY": 500.0,
 		"_AreaSizeX": 500.0,
@@ -59,7 +59,7 @@
 	"autoPilot":
 	{
 		"TickTime": 1000,
-		"Debug": 0,
+		"Debug": 1,
 		"_PortName": "/dev/ttyUSB1",
 		"PortName": "/dev/ttyO0",
 		"SerialSpeed": 57600,
@@ -90,6 +90,13 @@
 		"Debug": 0,
 		"IntervalTime": 125
 	},
+	"comSalland":
+	{
+		"TickTime": 1000,
+		"Debug": 1,
+		"PortName": "/dev/ttyUSB0",
+		"IntervalTimeUis": 250
+	},
 	"fitnessGenCollision":
 	{
 		"TickTime": 10000,
@@ -119,7 +126,7 @@
 	{
 		"TickTime": 1000,
 		"Debug": 1,
-		"PortName": "/dev/ttyUSB2"
+		"PortName": "/dev/ttyUSB1"
 	},
 	"groundStationSim":
 	{
@@ -181,7 +188,7 @@
 	"radio":
 	{
 		"TickTime": 1000,
-		"Debug": 0,
+		"Debug": 1,
 		"PortName": "/dev/ttyO3",
 		"BufStatusIntervalTime": 30
 	},

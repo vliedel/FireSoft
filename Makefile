@@ -7,6 +7,7 @@ all:
 	cd serial && make
 	cd autoPilot && make
 	cd autoPilotSim && make
+	cd comSalland && make
 	cd fitnessGenBattery && make
 	cd fitnessGenCollision && make
 	cd fitnessGenCoverage && make
@@ -25,6 +26,7 @@ all:
 #	cd pong && make
 	cd radio && make
 	cd radioSim && make
+	cd sensorCO && make
 	cd sim && make
 	cd tests && make
 	cd wpPlanner && make
@@ -34,6 +36,7 @@ debug:
 	cd serial && make debug
 	cd autoPilot && make debug
 	cd autoPilotSim && make debug
+	cd comSalland && make debug
 	cd fitnessGenBattery && make debug
 	cd fitnessGenCollision && make debug
 	cd fitnessGenCoverage && make debug
@@ -52,6 +55,7 @@ debug:
 #	cd pong && make debug
 	cd radio && make debug
 	cd radioSim && make debug
+	cd sensorCO && make debug
 	cd sim && make debug
 	cd tests && make debug
 	cd wpPlanner && make debug
@@ -60,6 +64,7 @@ gumstix:
 	cd serial && make gumstix
 	cd autoPilot && make gumstix
 	cd autoPilotSim && make gumstix
+	cd comSalland && make gumstix
 	cd fitnessGenBattery && make gumstix
 	cd fitnessGenCollision && make gumstix
 	cd fitnessGenCoverage && make gumstix
@@ -78,6 +83,7 @@ gumstix:
 #	cd pong && make gumstix
 	cd radio && make gumstix
 	cd radioSim && make gumstix
+	cd sensorCO && make gumstix
 	cd sim && make gumstix
 	cd tests && make gumstix
 	cd wpPlanner && make gumstix
@@ -86,6 +92,7 @@ clean:
 	cd serial && make clean
 	cd autoPilot && make clean
 	cd autoPilotSim && make clean
+	cd comSalland && make clean
 	cd fitnessGenBattery && make clean
 	cd fitnessGenCollision && make clean
 	cd fitnessGenCoverage && make clean
@@ -102,6 +109,7 @@ clean:
 #	cd pong && make clean
 	cd radio && make clean
 	cd radioSim && make clean
+	cd sensorCO && make clean
 	cd sim && make clean
 	cd tests && make clean
 	cd wpPlanner && make clean
