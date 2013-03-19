@@ -23,27 +23,49 @@
 
 
 #include "CRadio.h"
+#include <csignal>
 //#include <cstdlib>
 //#include <unistd.h>
 
 using namespace rur;
 
-int main(int argc, char *argv[]) {
+CRadio* Radio;
+
+// Function to handle termination signals
+void SignalHandler(int signum)
+{
+	// Cleanup and close up stuff here
+	if (Radio != NULL)
+		Radio->Close();
+	delete Radio;
+
+	// Terminate program
+	exit(signum);
+}
+
+int main(int argc, char *argv[])
+{
 	if (argc < 2) {
 		printf("Use an identifier as argument for this instance\n");
 		return EXIT_FAILURE;
 	}
-	CRadio* radio = new CRadio;
-	std::string identifier = argv[1];
-	radio->Init(identifier);
 
+	// Register signal and signal handler
+	signal(SIGINT, SignalHandler);
+	signal(SIGTERM, SignalHandler);
+
+	// Initialize the module
+	Radio = new CRadio;
+	std::string identifier = argv[1];
+	Radio->Init(identifier);
+
+	// Run the module
 	do {
-		radio->Tick();
-//		usleep(100); // 100 micro seconds to respond
+		Radio->Tick();
 	} while (true);
 
-	radio->Close();
-	delete radio;
-
+	// We never get here :)
+	Radio->Close();
+	delete Radio;
 	return EXIT_SUCCESS;
 }

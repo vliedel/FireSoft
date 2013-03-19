@@ -22,10 +22,25 @@
  */
 
 #include "CSensorCO.h"
+#include <csignal>
 //#include <cstdlib>
 //#include <unistd.h>
 
 using namespace rur;
+
+CSensorCO* SensorCO;
+
+// Function to handle termination signals
+void SignalHandler(int signum)
+{
+	// Cleanup and close up stuff here
+	if (SensorCO != NULL)
+		SensorCO->Close();
+	delete SensorCO;
+
+	// Terminate program
+	exit(signum);
+}
 
 int main(int argc, char *argv[])
 {
@@ -33,17 +48,23 @@ int main(int argc, char *argv[])
 		printf("Use an identifier as argument for this instance\n");
 		return EXIT_FAILURE;
 	}
-	CSensorCO* sensorCO = new CSensorCO;
-	std::string identifier = argv[1];
-	sensorCO->Init(identifier);
 
+	// Register signal and signal handler
+	signal(SIGINT, SignalHandler);
+	signal(SIGTERM, SignalHandler);
+
+	// Init the module
+	SensorCO = new CSensorCO;
+	std::string identifier = argv[1];
+	SensorCO->Init(identifier);
+
+	// Run the module
 	do {
-		sensorCO->Tick();
-//		usleep(100);
+		SensorCO->Tick();
 	} while (true);
 
-	sensorCO->Close();
-	delete sensorCO;
-
+	// We never get here :)
+	SensorCO->Close();
+	delete SensorCO;
 	return EXIT_SUCCESS;
 }
