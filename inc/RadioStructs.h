@@ -287,8 +287,8 @@ struct RadioMsgRelayFire
 // 55 bits
 #define RADIO_STRUCT_FIRE(n) \
 	unsigned _##n##_UavId : 4; \
-	signed _##n##_X : 10; \
-	signed _##n##_Y : 10; \
+	unsigned _##n##_X : 11; \
+	unsigned _##n##_Y : 11; \
 	unsigned _##n##_VarX : 4; \
 	unsigned _##n##_VarY : 4; \
 	unsigned _##n##_Rot : 4; \
@@ -296,8 +296,8 @@ struct RadioMsgRelayFire
 	unsigned _##n##_PTPA : 4; \
 	unsigned _##n##_PGas : 4; \
 	unsigned _##n##_Z : 5; \
-	unsigned _##n##_Forwards : 1; \
-	unsigned _##n##_Unused : 1;
+//	unsigned _##n##_Forwards : 0; \
+//	unsigned _##n##_Unused : 0;
 
 #define RADIO_STRUCT_FIRE_GET(struc, n, var) struc._##n##_##var
 
@@ -312,7 +312,7 @@ struct RadioMsgRelayFire
 	unpacked.PTPA = 	packed._##n##_PTPA; \
 	unpacked.PGas = 	packed._##n##_PGas; \
 	unpacked.Z = 		packed._##n##_Z; \
-	unpacked.Forwards = packed._##n##_Forwards;
+//	unpacked.Forwards = packed._##n##_Forwards;
 
 #define RADIO_STRUCT_FIRE_PACK(unpacked, packed, n) \
 	packed._##n##_UavId = 		unpacked.UavId; \
@@ -325,7 +325,7 @@ struct RadioMsgRelayFire
 	packed._##n##_PTPA = 		unpacked.PTPA; \
 	packed._##n##_PGas = 		unpacked.PGas; \
 	packed._##n##_Z = 			unpacked.Z; \
-	packed._##n##_Forwards = 	unpacked.Forwards;
+//	packed._##n##_Forwards = 	unpacked.Forwards;
 
 struct RadioMsgRelayFires
 {
@@ -538,7 +538,7 @@ struct RadioMsg
 				RADIO_STRUCT_POS_UNPACK(Data.Data[0].Pos, msg.Pos, 0)
 				Data.Data[0].MessageType = RADIO_MSG_RELAY_POS;
 				RADIO_STRUCT_POS_UNPACK(Data.Data[1].Pos, msg.Pos, 1)
-				Data.Data[0].MessageType = RADIO_MSG_RELAY_POS;
+				Data.Data[1].MessageType = RADIO_MSG_RELAY_POS;
 				break;
 			}
 			case RADIO_MSG_POS_2FIRE:
