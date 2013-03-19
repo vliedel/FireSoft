@@ -22,10 +22,25 @@
  */
 
 #include "CTemplateModule.h"
+#include <csignal>
 //#include <cstdlib>
 //#include <unistd.h>
 
 using namespace rur;
+
+CTemplateModule* TemplateModule;
+
+// Function to handle termination signals
+void SignalHandler(int signum)
+{
+	// Cleanup and close up stuff here
+	if (TemplateModule != NULL)
+		TemplateModule->Close();
+	delete TemplateModule;
+
+	// Terminate program
+	exit(signum);
+}
 
 int main(int argc, char *argv[])
 {
@@ -33,17 +48,23 @@ int main(int argc, char *argv[])
 		printf("Use an identifier as argument for this instance\n");
 		return EXIT_FAILURE;
 	}
-	CTemplateModule* templateModule = new CTemplateModule;
-	std::string identifier = argv[1];
-	templateModule->Init(identifier);
 
+	// Register signal and signal handler
+	signal(SIGINT, SignalHandler);
+	signal(SIGTERM, SignalHandler);
+
+	// Initialize the module
+	TemplateModule = new CTemplateModule;
+	std::string identifier = argv[1];
+	TemplateModule->Init(identifier);
+
+	// Run the module
 	do {
-		templateModule->Tick();
-//		usleep(100);
+		TemplateModule->Tick();
 	} while (true);
 
-	templateModule->Close();
-	delete templateModule;
-
+	// We never get here :)
+	TemplateModule->Close();
+	delete TemplateModule;
 	return EXIT_SUCCESS;
 }
