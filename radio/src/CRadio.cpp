@@ -35,8 +35,8 @@ CRadio::CRadio(): ModuleId("Anonymous"), UavId(0), IntMsg(NULL), Serial(NULL), f
 CRadio::~CRadio()
 {
 	close(fd_cts);
-	Power(false);
 	delete Serial;
+	Power(false);
 }
 
 void CRadio::Init(std::string &module_id) {
@@ -81,14 +81,16 @@ void CRadio::Power(bool enable) {
 
 	if (enable) {
 		// Power on the Vitelec PCB (active low pin!)
-		if (write(fd_pwr, "0", 2) < 0) {
+		if (write(fd_pwr, "0", 2) < 0)
 			std::cerr << "Could not write byte to turn on radio" << std::endl;
-		}
+		else
+			std::cout << "Powered on the radio" << std::endl;
 	}
 	else {
-		if (write(fd_pwr, "1", 2) < 0) {
+		if (write(fd_pwr, "1", 2) < 0)
 			std::cerr << "Could not write byte to turn off radio" << std::endl;
-		}
+		else
+			std::cout << "Powered down the radio" << std::endl;
 	}
 
 	/* Close filehandle again */
@@ -208,7 +210,7 @@ bool CRadio::SynchronizeUart(RadioMsgHeader& msgHdr)
 		}
 		Serial->read(&chr, 1);
 		//header = (header << 8) | chr;
-		header = (uint8_t) chr;
+		header = (RadioMsgHeaderType) chr;
 		//std::cout << +header << std::endl;
 	}
 	//std::cout << std::endl;
@@ -443,6 +445,9 @@ void CRadio::WriteToRadio()
 		LastWriteTime = get_cur_1ms();
 		radioMsg = SendBuffer.front();
 		SendBuffer.pop_front();
+
+		if (config.Debug > 1)
+			std::cout << get_cur_1ms() << " Sending: " << radioMsg << std::endl;
 
 		RadioMsgPacked data;
 		radioMsg.Pack(data);

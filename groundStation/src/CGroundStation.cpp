@@ -264,7 +264,7 @@ void CGroundStation::ReadUart()
 	RadioMsg msg;
 	msg.Unpack(data);
 	if (config.Debug > 0)
-		std::cout << "Received: " << msg << std::endl;
+		std::cout << get_cur_1ms() << " Received: " << msg << std::endl;
 	ReceiveBuffer.push_back(msg);
 }
 

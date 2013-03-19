@@ -49,7 +49,7 @@ void CWpPlanner::Init(std::string module_id)
 	ShMemNameSelf = "mapSelf_" + module_id;
 	ShMemNameUavs = "mapUAV_" + module_id;
 	UavId = atoi(module_id.c_str());
-	srand(UavId+2); // seed of 0 and 1 are special cases
+//	srand(UavId+2); // seed of 0 and 1 are special cases
 
 	config.load("config.json");
 
@@ -112,7 +112,7 @@ void CWpPlanner::Init(std::string module_id)
 		delete ShMemFitness;
 		delete ShMemSelf;
 		delete ShMemUavs;
-		std::cout << "Error in " << ShMemNameFitness << " or " << ShMemSelf << std::endl;
+		std::cout << "Error in " << ShMemNameFitness << " or " << ShMemNameSelf << " or " << ShMemNameFitness << std::endl;
 		throw;
 	}
 

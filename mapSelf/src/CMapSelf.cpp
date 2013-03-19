@@ -135,12 +135,16 @@ void CMapSelf::Tick()
 				UavGeomStruct geom;
 				if (VecMsg->end() == FromCont(geom, VecMsg->begin(), VecMsg->end()))
 				{
-					boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
-					Map->UavData.Geom = geom;
+					{
+						boost::interprocess::scoped_lock<MapMutexType> lock(*Mutex);
+						Map->UavData.Geom = geom;
+					}
+					if (config.Debug > 1)
+						std::cout << "Set UavData.Geom to: " << geom << std::endl;
 					//Map->Heading = atan2(geom.Speed.x(), geom.Speed.y());
 				}
 				else
-					std::cout << "Error: invalid vector to create a UAVStruct" << std::endl;
+					std::cout << "Error: invalid vector to create an UavGeomStruct" << std::endl;
 					//printf("Invalid vector to create an UAVStruct!\n");
 				break;
 			}
