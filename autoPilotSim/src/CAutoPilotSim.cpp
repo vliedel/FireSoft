@@ -454,6 +454,9 @@ void CAutoPilotSim::TimeStep(float dt)
 	Geom.Roll = RollAngle;
 	Geom.Pitch = atan2(Geom.VerticalSpeed, GroundSpeed);
 
+	Geom.TimeStamp = get_cur_1ms();
+	Geom.GpsTimeStamp = get_cur_1ms();
+
 
 	BatteryTimeLeft -= dt; // TODO: way too simple, should depend on speed etc
 
